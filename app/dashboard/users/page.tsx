@@ -27,7 +27,6 @@ import { DataTable, type Column } from "@/components/ui/data-table"
 import type { User } from "@/app/api/modules/users/users.type"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { Field, FieldLabel } from "@/components/ui/field"
 
@@ -52,8 +51,8 @@ export default function UsersPage() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const [userToDelete, setUserToDelete] = useState<User | null>(null)
     const [formData, setFormData] = useState(emptyUser)
-    const [isLoading, setIsLoading] = useState(true)
     const [toggleLoading, setToggleLoading] = useState<Record<string, boolean>>({})
+    const [isLoading, setIsLoading] = useState(true)
 
   const handleAdd = () => {
     setFormData(emptyUser)
@@ -224,26 +223,6 @@ export default function UsersPage() {
 
   return (
     <>
-      {isLoading ? (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <Skeleton className="h-10 w-40" />
-            <Skeleton className="h-10 w-28" />
-          </div>
-          <div className="rounded-lg border border-border bg-card overflow-hidden">
-            <div className="space-y-3 p-4">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="grid grid-cols-6 gap-4 items-center">
-                  <Skeleton className="h-8 col-span-2" />
-                  <Skeleton className="h-8 col-span-2" />
-                  <Skeleton className="h-8 col-span-1" />
-                  <Skeleton className="h-8 col-span-1" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
         <DataTable
           data={users}
           columns={columns}
@@ -254,9 +233,9 @@ export default function UsersPage() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
+          isLoading={isLoading}
           addButtonText="Add User"
         />
-      )}
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

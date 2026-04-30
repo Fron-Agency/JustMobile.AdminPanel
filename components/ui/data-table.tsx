@@ -5,6 +5,7 @@ import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Skeleton } from "./skeleton"
 
 export interface Column<T> {
   key: keyof T | string
@@ -26,6 +27,7 @@ interface DataTableProps<T> {
   searchFields?: (keyof T)[]
   emptyMessage?: string
   addButtonText?: string
+  isLoading?: boolean
 }
 
 export function DataTable<T extends { id: string }>({
@@ -38,7 +40,7 @@ export function DataTable<T extends { id: string }>({
   onDelete,
   onView,
   searchFields = [],
-  emptyMessage = "No items found.",
+  isLoading = false,
   addButtonText = "Add Item",
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("")
@@ -95,12 +97,18 @@ export function DataTable<T extends { id: string }>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length + (onEdit || onDelete || onView ? 1 : 0)} className="text-center py-12 text-muted-foreground">
-                  {emptyMessage}
-                </TableCell>
-              </TableRow>
+            {isLoading ? (
+                <>
+                {Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={index}>
+                    <TableCell colSpan={columns.length + 1}>
+                    <div className="flex w-full max-w-xs flex-col gap-2">
+                        <Skeleton className="h-4 w-full" />
+                    </div>
+                    </TableCell>
+                </TableRow>
+                ))}
+            </>
             ) : (
               filtered.map((item) => (
                 <TableRow key={item.id} className="hover:bg-muted/20">
