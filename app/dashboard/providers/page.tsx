@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -25,9 +25,10 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DataTable, type Column } from "@/components/ui/data-table"
-import { mockProviders as initialProviders, mockCategories } from "@/lib/mock-data"
-import type { Provider } from "@/lib/types"
+import type { Provider } from "@/app/api/modules/providers/providers.type"
+import type { Category } from "@/app/api/modules/categories/categories.type"
 import { Field, FieldLabel } from "@/components/ui/field"
+import { Spinner } from "@/components/ui/spinner"
 
 const emptyProvider: Omit<Provider, "id" | "created_at"> = {
   category_id: "",
@@ -35,76 +36,197 @@ const emptyProvider: Omit<Provider, "id" | "created_at"> = {
   is_active: true,
 }
 
-const columns: Column<Provider>[] = [
-  {
-    key: "name",
-    label: "Name",
-    render: (value) => <span className="font-medium text-foreground">{value}</span>,
-  },
-  {
-    key: "category_id",
-    label: "Category",
-    render: (value) => {
-      const category = mockCategories.find((c) => c.id === value)
-      return <span className="text-muted-foreground text-sm">{category?.name ?? "—"}</span>
-    },
-  },
-  {
-    key: "created_at",
-    label: "Created",
-    render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
-    hidden: true,
-  },
-    {
-    key: "is_active",
-    label: "Active",
-    render: (value) => (
-      <Field orientation="horizontal">
-        <Switch checked={value} />
-        <FieldLabel>{value ? "On" : "Off"}</FieldLabel>
-      </Field>
-    ),
-  },
-]
-
 export default function ProvidersPage() {
-  const [providers, setProviders] = useState<Provider[]>(initialProviders)
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [providers, setProviders] = useState<Provider[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [editing, setEditing] = useState<Provider | null>(null)
-  const [form, setForm] = useState<Omit<Provider, "id" | "created_at">>(emptyProvider)
+  const [formData, setFormData] = useState(emptyProvider)
+  const [providerToDelete, setProviderToDelete] = useState<Provider | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [toggleLoading, setToggleLoading] = useState<Record<string, boolean>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const openCreate = () => {
-    setEditing(null)
-    setForm(emptyProvider)
-    setDialogOpen(true)
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.name.trim()) newErrors.name = "Name is required"
+    if (!formData.category_id) newErrors.category_id = "Category is required"
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
-  const openEdit = (provider: Provider) => {
-    setEditing(provider)
-    setForm({ category_id: provider.category_id, name: provider.name, is_active: provider.is_active })
-    setDialogOpen(true)
+  const handleAdd = () => {
+    setFormData(emptyProvider)
+    setErrors({})
+    setIsAddDialogOpen(true)
+  }
+
+  const handleEdit = (prov: Provider) => {
+    setEditing(prov)
+    setFormData({ category_id: prov.category_id, name: prov.name, is_active: prov.is_active })
+    setErrors({})
+    setIsEditDialogOpen(true)
   }
 
   const handleDelete = (provider: Provider) => {
-    setDeleteId(provider.id)
+    setProviderToDelete(provider)
+    setIsDeleteDialogOpen(true)
   }
 
-  const confirmDelete = () => {
-    if (deleteId) {
-      setProviders((prev) => prev.filter((p) => p.id !== deleteId))
-      setDeleteId(null)
+  const handleToggleActive = async (prov: Provider, isActive: boolean) => {
+    setToggleLoading((prev) => ({ ...prev, [prov.id]: true }))
+
+    try {
+      const res = await fetch(`/api/providers/${prov.id}/active`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: isActive }),
+      })
+
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(errorText || "Failed to update provider status")
+      }
+
+      const updated = await res.json()
+      setProviders((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+    } finally {
+      setToggleLoading((prev) => ({ ...prev, [prov.id]: false }))
     }
   }
 
-  const handleSave = () => {
-    if (editing) {
-      setProviders((prev) => prev.map((p) => (p.id === editing.id ? { ...editing, ...form } : p)))
-    } else {
-      setProviders((prev) => [{ id: `prov-${Date.now()}`, created_at: new Date().toISOString().split("T")[0], ...form }, ...prev])
-    }
-    setDialogOpen(false)
+  const columns: Column<Provider>[] = [
+    {
+      key: "name",
+      label: "Name",
+      render: (value) => <span className="font-medium text-foreground">{value}</span>,
+    },
+    {
+      key: "category_id",
+      label: "Category",
+      render: (value) => {
+        const category = categories.find((c) => c.id === value)
+        return <span className="text-muted-foreground text-sm">{category?.name ?? "—"}</span>
+      },
+    },
+    {
+      key: "created_at",
+      label: "Created",
+      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+      hidden: true,
+    },
+    {
+      key: "is_active",
+      label: "Active",
+      render: (value, item) => {
+        const isToggling = toggleLoading[item.id]
+        return (
+          <Field orientation="horizontal">
+            <Switch
+              checked={value}
+              disabled={isToggling}
+              onCheckedChange={(checked) => handleToggleActive(item, checked === true)}
+            />
+            {isToggling ? (
+              <Spinner className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <FieldLabel>{value ? "On" : "Off"}</FieldLabel>
+            )}
+          </Field>
+        )
+      },
+    },
+  ]
+
+  const confirmAdd = async () => {
+    if (!validateForm()) return
+
+    const res = await fetch("/api/providers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: formData.name,
+        category_id: formData.category_id,
+      }),
+    })
+
+    const created = await res.json()
+    setProviders((prev) => [created, ...prev])
+    setIsAddDialogOpen(false)
   }
+
+  const confirmEdit = async () => {
+    if (!editing) return
+
+    if (!validateForm()) return
+
+    const payload: Partial<Provider> = {
+      name: formData.name,
+      category_id: formData.category_id,
+      is_active: formData.is_active,
+    }
+
+    const res = await fetch(`/api/providers/${editing.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(text || "Request failed")
+    }
+
+    const contentType = res.headers.get("content-type")
+
+    const data = contentType?.includes("application/json")
+      ? await res.json()
+      : null
+
+    setProviders((prev) => prev.map((p) => (p.id === editing.id ? data : p)))
+
+    setIsEditDialogOpen(false)
+    setEditing(null)
+  }
+
+  const confirmDelete = async () => {
+    if(!providerToDelete) return
+
+    await fetch(`/api/providers/${providerToDelete.id}`, {
+      method: "DELETE",
+    })
+
+    setProviders((prev) => prev.filter((p) => p.id !== providerToDelete.id))
+    setIsDeleteDialogOpen(false)
+    setProviderToDelete(null)
+  }
+
+  const handleView = (provider: Provider) => {
+    // For future expansion - maybe show provider details or associated plans?
+    alert(`Viewing provider: ${provider.name}`)
+  }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        const [providersRes, categoriesRes] = await Promise.all([
+          fetch("/api/providers"),
+          fetch("/api/categories")
+        ])
+        const providersData = await providersRes.json()
+        const categoriesData = await categoriesRes.json()
+        setProviders(providersData)
+        setCategories(categoriesData)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
 
   return (
     <>
@@ -114,59 +236,129 @@ export default function ProvidersPage() {
         title="Providers"
         searchPlaceholder="Search providers..."
         searchFields={["name"]}
-        onAdd={openCreate}
-        onEdit={openEdit}
+        onAdd={handleAdd}
+        onEdit={handleEdit}
         onDelete={handleDelete}
+        onView={handleView}
+        isLoading={isLoading}
         addButtonText="Add Provider"
       />
 
-      {/* Create / Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-card">
+      {/* Add Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-foreground">{editing ? "Edit Provider" : "Add New Provider"}</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {editing ? "Update provider details." : "Add a new telecom provider."}
+            <DialogTitle>Add Provider</DialogTitle>
+            <DialogDescription>
+              Add a new provider to the system.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-2">
-            <div className="flex flex-col gap-2">
-              <Label className="text-foreground">Provider Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-background border-input" />
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className={errors.name ? "border-red-500" : ""}
+                />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label className="text-foreground">Category</Label>
-              <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-                <SelectTrigger className="bg-background border-input w-full">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockCategories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">
+                Category
+              </Label>
+              <div className="col-span-3">
+                <Select value={formData.category_id} onValueChange={(v) => setFormData({ ...formData, category_id: v })}>
+                  <SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.category_id && <p className="text-red-500 text-sm mt-1">{errors.category_id}</p>}
+              </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} className="bg-primary text-primary-foreground">{editing ? "Save Changes" : "Create Provider"}</Button>
+            <Button onClick={confirmAdd}>Add Provider</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="bg-card">
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Provider</DialogTitle>
+            <DialogDescription>
+              Update provider information.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">
+                Name
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className={errors.name ? "border-red-500" : ""}
+                />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-category" className="text-right">
+                Category
+              </Label>
+              <div className="col-span-3">
+                <Select value={formData.category_id} onValueChange={(v) => setFormData({ ...formData, category_id: v })}>
+                  <SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.category_id && <p className="text-red-500 text-sm mt-1">{errors.category_id}</p>}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={confirmEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground">Delete Provider</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              This action cannot be undone. The provider will be permanently removed.
+            <AlertDialogTitle>Delete Provider</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {providerToDelete?.name}? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-white hover:bg-destructive/90">Delete</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

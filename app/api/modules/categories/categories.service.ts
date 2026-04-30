@@ -26,7 +26,6 @@ export const CategoryService = {
   },
 
   async delete(id: string): Promise<void> {
-    await CategoryService.getById(id)
     return CategoryRepository.delete(id)
   },
 }

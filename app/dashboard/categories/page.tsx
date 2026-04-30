@@ -46,15 +46,25 @@ export default function CategoriesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [toggleLoading, setToggleLoading] = useState<Record<string, boolean>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.name.trim()) newErrors.name = "Name is required"
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleAdd = () => {
     setFormData(emptyCategory)
+    setErrors({})
     setIsAddDialogOpen(true)
   }
 
   const handleEdit = (cat: Category) => {
     setEditing(cat)
     setFormData({ name: cat.name, is_active: cat.is_active })
+    setErrors({})
     setIsEditDialogOpen(true)
   }
 
@@ -125,6 +135,8 @@ export default function CategoriesPage() {
   ]
 
   const confirmAdd = async () => {
+    if (!validateForm()) return
+
     const res = await fetch("/api/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -138,6 +150,8 @@ export default function CategoriesPage() {
 
   const confirmEdit = async () => {
     if (!editing) return
+
+    if (!validateForm()) return
 
     const payload: Partial<Category> = {
       name: formData.name,
@@ -167,17 +181,20 @@ export default function CategoriesPage() {
     setEditing(null)
   }
 
-  const confirmDelete = async () => {
-    if(!categoryToDelete) return
+    const confirmDelete = async () => {
+      if (!categoryToDelete) return
 
-    await fetch(`/api/categories/${categoryToDelete.id}`, {
-      method: "DELETE",
-    })
+      await fetch(`/api/categories/${categoryToDelete.id}`, {
+          method: "DELETE",
+      })
 
-    setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id))
-    setIsDeleteDialogOpen(false)
-    setCategoryToDelete(null)
-  }
+      setCategories((prev) =>
+          prev.filter((category) => category.id !== categoryToDelete.id)
+      )
+
+      setIsDeleteDialogOpen(false)
+      setCategoryToDelete(null)
+    }
 
   const handleView = (category: Category) => {
     // For future expansion - maybe show category details or associated providers?
@@ -203,7 +220,7 @@ export default function CategoriesPage() {
         searchFields={["name"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        // onDelete={handleDelete}
         onView={handleView}
         isLoading={isLoading}
         addButtonText="Add Category"
@@ -223,14 +240,17 @@ export default function CategoriesPage() {
               <Label htmlFor="name" className="text-right">
                 Name
               </Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className={errors.name ? "border-red-500" : ""}
+                />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -253,14 +273,17 @@ export default function CategoriesPage() {
               <Label htmlFor="edit-name" className="text-right">
                 Name
               </Label>
-              <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className={errors.name ? "border-red-500" : ""}
+                />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -270,7 +293,7 @@ export default function CategoriesPage() {
       </Dialog>
 
       {/* Delete Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {/* <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Category</AlertDialogTitle>
@@ -284,7 +307,7 @@ export default function CategoriesPage() {
             <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog> */}
     </>
   ) 
 }

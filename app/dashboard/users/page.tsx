@@ -53,9 +53,21 @@ export default function UsersPage() {
     const [formData, setFormData] = useState(emptyUser)
     const [toggleLoading, setToggleLoading] = useState<Record<string, boolean>>({})
     const [isLoading, setIsLoading] = useState(true)
+    const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.fullname.trim()) newErrors.fullname = "Full name is required"
+    if (!formData.email.trim()) newErrors.email = "Email is required"
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email address"
+    if (!formData.role) newErrors.role = "Role is required"
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleAdd = () => {
     setFormData(emptyUser)
+    setErrors({})
     setIsAddDialogOpen(true)
   }
 
@@ -67,6 +79,7 @@ export default function UsersPage() {
       role: user.role,
       is_active: user.is_active,
     })
+    setErrors({})
     setIsEditDialogOpen(true)
   }
 
@@ -151,6 +164,8 @@ export default function UsersPage() {
   ]
 
   const confirmAdd = async () => {
+    if (!validateForm()) return
+
     const res = await fetch("/api/users", {
         method: "POST",
         headers: {
@@ -159,6 +174,12 @@ export default function UsersPage() {
         body: JSON.stringify(formData),
     })
 
+    if (!res.ok) {
+      const errorText = await res.text()
+      alert(`Error: ${errorText}`)
+      return
+    }
+
     const created = await res.json()
 
     setUsers((prev) => [...prev, created])
@@ -166,7 +187,9 @@ export default function UsersPage() {
   }
 
   const confirmEdit = async () => {
-        if (!editingUser) return
+    if (!editingUser) return
+
+    if (!validateForm()) return
 
         const payload: Partial<typeof formData> = {
         fullname: formData.fullname,
@@ -183,7 +206,8 @@ export default function UsersPage() {
 
         if (!res.ok) {
             const errorText = await res.text()
-            throw new Error(errorText || "Failed to update user")
+            alert(`Error: ${errorText}`)
+            return
         }
 
 
@@ -251,48 +275,57 @@ export default function UsersPage() {
               <Label htmlFor="fullname" className="text-right">
                 Full Name
               </Label>
-              <Input
-                id="fullname"
-                value={formData.fullname}
-                onChange={(e) =>
-                  setFormData({ ...formData, fullname: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="fullname"
+                  value={formData.fullname}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fullname: e.target.value })
+                  }
+                  className={errors.fullname ? "border-red-500" : ""}
+                />
+                {errors.fullname && <p className="text-red-500 text-sm mt-1">{errors.fullname}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
                 Email
               </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className={errors.email ? "border-red-500" : ""}
+                />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="role" className="text-right">
                 Role
               </Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value: User["role"]) =>
-                  setFormData({ ...formData, role: value })
-                }
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="agent">Agent</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="col-span-3">
+                <Select
+                  value={formData.role}
+                  onValueChange={(value: User["role"]) =>
+                    setFormData({ ...formData, role: value })
+                  }
+                >
+                  <SelectTrigger className={errors.role ? "border-red-500" : ""}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="agent">Agent</SelectItem>
+                    <SelectItem value="viewer">Viewer</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -315,48 +348,57 @@ export default function UsersPage() {
               <Label htmlFor="edit-fullname" className="text-right">
                 Full Name
               </Label>
-              <Input
-                id="edit-fullname"
-                value={formData.fullname}
-                onChange={(e) =>
-                  setFormData({ ...formData, fullname: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="edit-fullname"
+                  value={formData.fullname}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fullname: e.target.value })
+                  }
+                  className={errors.fullname ? "border-red-500" : ""}
+                />
+                {errors.fullname && <p className="text-red-500 text-sm mt-1">{errors.fullname}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-email" className="text-right">
                 Email
               </Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className={errors.email ? "border-red-500" : ""}
+                />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-role" className="text-right">
                 Role
               </Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value: User["role"]) =>
-                  setFormData({ ...formData, role: value })
-                }
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="agent">Agent</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="col-span-3">
+                <Select
+                  value={formData.role}
+                  onValueChange={(value: User["role"]) =>
+                    setFormData({ ...formData, role: value })
+                  }
+                >
+                  <SelectTrigger className={errors.role ? "border-red-500" : ""}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="agent">Agent</SelectItem>
+                    <SelectItem value="viewer">Viewer</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+              </div>
             </div>
           </div>
           <DialogFooter>

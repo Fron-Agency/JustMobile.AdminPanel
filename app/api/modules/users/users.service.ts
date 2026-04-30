@@ -36,7 +36,7 @@ export const UserService = {
   },
 
   async delete(id: string): Promise<void> {
-    await UserService.getById(id)
+    // await UserService.getById(id)
     return UserRepository.delete(id)
   },
 }
