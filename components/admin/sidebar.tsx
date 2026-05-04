@@ -26,6 +26,7 @@ const navItems = [
   { href: "/dashboard/providers", label: "Providers", icon: Building2 },
   { href: "/dashboard/categories", label: "Categories", icon: Tag },
   { href: "/dashboard/users", label: "Users", icon: Users },
+  { href: "/dashboard/partners", label: "Partners", icon: Users },
 ]
 
 export default function Sidebar() {

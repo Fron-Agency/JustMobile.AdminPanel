@@ -11,21 +11,31 @@ export const PlanRepository = {
     const supabase = await client()
     const { data, error } = await supabase
       .from("plans")
-      .select("*")
-      
+      .select(`*, countries(name), providers(name)`)
+
     if (error) throw new Error(error.message)
-    return data
+    return data.map(({ providers: providerObj, countries: countriesArr, ...rest }: any) => ({
+      ...rest,
+      provider_name: providerObj?.name ?? "",
+      countries: countriesArr.map((c: any) => c.name),
+    }))
   },
 
   async findById(id: string): Promise<Plan | null> {
     const supabase = await client()
     const { data, error } = await supabase
       .from("plans")
-      .select("*")
+      .select(`*, countries(name), providers(name)`)
       .eq("id", id)
       .maybeSingle()
     if (error) throw new Error(error.message)
-    return data
+    if (!data) return null
+    const { providers: providerObj, countries: countriesArr, ...rest } = data as any
+    return {
+      ...rest,
+      provider_name: providerObj?.name ?? "",
+      countries: countriesArr?.map((c: any) => c.name) ?? [],
+    }
   },
 
   async create(payload: CreatePlanDto): Promise<Plan> {
@@ -54,6 +64,27 @@ export const PlanRepository = {
   async delete(id: string): Promise<void> {
     const supabase = await client()
     const { error } = await supabase.from("plans").delete().eq("id", id)
+    if (error) throw new Error(error.message)
+  },
+
+  async insertCountries(planId: string, countries: string[]) {
+    const supabase = await client()
+
+    const payload = countries.map((name) => ({
+      name,
+      plan_id: planId,
+    }))
+
+    const { error } = await supabase
+      .from("countries")
+      .insert(payload)
+
+    if (error) throw new Error(error.message)
+  },
+
+  async deleteCountries(planId: string) : Promise<void> {
+    const supabase = await client()
+    const { error } = await supabase.from("countries").delete().eq("plan_id", planId)
     if (error) throw new Error(error.message)
   },
 }

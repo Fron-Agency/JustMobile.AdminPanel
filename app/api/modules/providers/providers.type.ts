@@ -4,6 +4,7 @@ export type Provider = {
   category_id: string
   created_at: string
   is_active: boolean
+  file_url: string | null
 }
 
 export type CreateProviderDto = {
@@ -11,6 +12,7 @@ export type CreateProviderDto = {
   category_id: string
   created_at: string
   is_active: boolean
+  file_url?: string | null
 }
 
 export type UpdateProviderDto = Partial<CreateProviderDto>

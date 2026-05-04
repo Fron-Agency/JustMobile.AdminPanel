@@ -2,12 +2,14 @@ export type Plan = {
     id: string
     name: string
     provider_id: string
+    provider_name: string
     price: number
     data_gb: number
     network_technology: string
     contract_length: number
     discount: number
     is_favorite: boolean
+    countries: string[]
   }
   
   export type CreatePlanDto = {

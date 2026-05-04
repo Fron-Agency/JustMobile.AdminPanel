@@ -13,18 +13,38 @@ export const PlanService = {
     if (!plan) throw new Error("Plan not found")
     return plan
   },
+
   async create(input: CreatePlanInput): Promise<Plan> {
-    return PlanRepository.create({
-      ...input,
-      contract_length: 0, // Default value, adjust as needed
-      discount: 0, // Default value, adjust as needed
-      is_favorite: input.is_favorite ?? false, // Default to false if not provided
+    const { countries, ...planData } = input
+
+    const plan = await PlanRepository.create({
+      ...planData,
+      contract_length: 0,
+      discount: 0,
+      is_favorite: input.is_favorite ?? false,
     })
+
+    await PlanRepository.insertCountries(plan.id, countries)
+
+    return (await PlanRepository.findById(plan.id))!
   },
 
-  async update(id: string, input: UpdatePlanInput): Promise<Plan> {
+  async update(
+    id: string,
+    input: UpdatePlanInput & { countries?: string[] }
+  ): Promise<Plan> {
     await PlanService.getById(id)
-    return PlanRepository.update(id, input)
+
+    const { countries, ...planData } = input
+
+    if (countries !== undefined) {
+      await PlanRepository.deleteCountries(id)
+      await PlanRepository.insertCountries(id, countries)
+    }
+
+    await PlanRepository.update(id, planData)
+
+    return (await PlanRepository.findById(id))!
   },
 
   async delete(id: string): Promise<void> {

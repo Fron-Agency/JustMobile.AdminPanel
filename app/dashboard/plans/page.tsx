@@ -21,15 +21,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select , SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import type { Plan } from "@/app/api/modules/plans/plans.type"
 import { Button } from "@/components/ui/button"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
+import ReactSelect from "react-select"
+import { useCountries } from "@/hooks/useCountries"
 
-const emptyPlan: Omit<Plan, "id"> = {
+const emptyPlan: Omit<Plan, "id" | "provider_name"> = {
   provider_id: "",
   price: 0,
   data_gb: 0,
@@ -38,6 +40,7 @@ const emptyPlan: Omit<Plan, "id"> = {
   name: "",
   discount: 0,
   is_favorite: false,
+  countries: [],
 }
 
 export default function PlansPage() {
@@ -56,7 +59,8 @@ export default function PlansPage() {
     title: string
     description?: string
   } | null>(null)
-  
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([])
+  const { countries, loading } = useCountries()
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -68,9 +72,13 @@ export default function PlansPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     setFormData(emptyPlan)
     setErrors({})
+    if (providers.length === 0) {
+      const res = await fetch("/api/providers")
+      setProviders(await res.json())
+    }
     setIsAddDialogOpen(true)
   }
 
@@ -86,7 +94,9 @@ export default function PlansPage() {
       contract_length: plan.contract_length,
       discount: plan.discount,
       is_favorite: plan.is_favorite,
+      countries: plan.countries,
     })
+    setSelectedCountries(plan.countries)
     setErrors({})
     setIsEditDialogOpen(true)
   }
@@ -143,12 +153,9 @@ export default function PlansPage() {
     ),
   },
   {
-    key: "provider_id",
+    key: "provider_name",
     label: "Provider",
-    render: (value) => {
-      const provider = providers.find((p) => p.id === value)
-      return <span className="text-muted-foreground text-sm">{provider?.name ?? "—"}</span>
-    },
+    render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
   },
   {
     key: "price",
@@ -175,6 +182,15 @@ export default function PlansPage() {
     label: "Discount",
     render: (value) => value > 0 ? <span className="text-green-600 text-sm">{value}% off</span> : <span className="text-muted-foreground text-sm">—</span>,
   },
+  {
+    key: "countries",
+    label: "Countries",
+    render: (value) => (
+      <span className="text-sm text-muted-foreground">
+        {value?.join(", ") ?? "—"}
+      </span>
+    ),
+  }
 ]
 
   const handleView = (plan: Plan) => {
@@ -189,7 +205,12 @@ export default function PlansPage() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(
+        {
+          ...formData,
+          countries: selectedCountries,
+        }
+      ),
     })
 
     if (!res.ok) {
@@ -227,6 +248,7 @@ export default function PlansPage() {
       contract_length: formData.contract_length,
       discount: formData.discount,
       is_favorite: formData.is_favorite,
+      countries: selectedCountries,
     }
 
     const res = await fetch(`/api/plans/${editingPlan.id}`, {
@@ -295,14 +317,8 @@ export default function PlansPage() {
     const fetchData = async () => {
       setIsLoading(true)
       try {
-        const [plansRes, providersRes] = await Promise.all([
-          fetch("/api/plans"),
-          fetch("/api/providers")
-        ])
-        const plansData = await plansRes.json()
-        const providersData = await providersRes.json()
-        setPlans(plansData)
-        setProviders(providersData)
+        const plansRes = await fetch("/api/plans")
+        setPlans(await plansRes.json())
       } catch (error) {
         console.error("Failed to fetch data", error)
       } finally {
@@ -379,7 +395,7 @@ export default function PlansPage() {
                     <SelectValue placeholder="Select provider" />
                   </SelectTrigger>
                   <SelectContent>
-                    {providers.map((p) => (
+                    {providers.filter(v => v.is_active === true).map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -471,6 +487,23 @@ export default function PlansPage() {
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Countries</Label>
+
+              <div className="col-span-3">
+                <ReactSelect
+                  isMulti
+                  isLoading={loading}
+                  options={countries}
+                  value={countries.filter((c) =>
+                    selectedCountries.includes(c.value)
+                  )}
+                  onChange={(values) =>
+                    setSelectedCountries(values.map((v: any) => v.value))
+                  }
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="is_favorite" className="text-right">
                 Favorite
               </Label>
@@ -517,29 +550,24 @@ export default function PlansPage() {
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+            {/* <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-provider" className="text-right">
                 Provider
               </Label>
               <div className="col-span-3">
-                <Select
-                  value={formData.provider_id}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, provider_id: value })
+                <ReactSelect
+                  isMulti
+                  options={countries}
+                  value={countries.filter((c) =>
+                    selectedCountries.includes(c.value)
+                  )}
+                  onChange={(values) =>
+                    setSelectedCountries(values.map((v: any) => v.value))
                   }
-                >
-                  <SelectTrigger className={errors.provider_id ? "border-red-500" : ""}>
-                    <SelectValue placeholder="Select provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {providers.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
                 {errors.provider_id && <p className="text-red-500 text-sm mt-1">{errors.provider_id}</p>}
               </div>
-            </div>
+            </div> */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-price" className="text-right">
                 Price
@@ -621,6 +649,20 @@ export default function PlansPage() {
                   className={errors.contract_length ? "border-red-500" : ""}
                 />
                 {errors.contract_length && <p className="text-red-500 text-sm mt-1">{errors.contract_length}</p>}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Countries</Label>
+              <div className="col-span-3">
+                <ReactSelect
+                  isMulti
+                  isLoading={loading}
+                  options={countries}
+                  value={countries.filter((c) => selectedCountries.includes(c.value))}
+                  onChange={(values) =>
+                    setSelectedCountries(values.map((v: any) => v.value))
+                  }
+                />
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
