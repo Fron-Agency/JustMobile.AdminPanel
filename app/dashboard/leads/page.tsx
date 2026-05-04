@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -24,9 +24,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { DataTable, type Column } from "@/components/ui/data-table"
-import { mockLeads as initialLeads, mockPlans } from "@/lib/mock-data"
-import type { Lead } from "@/lib/types"
 import { Button } from "@/components/ui/button"
+import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
+import type { Lead } from "@/app/api/modules/leads/leads.type"
+import type { Plan } from "@/app/api/modules/plans/plans.type"
 
 const statusConfig: Record<Lead["status"], { label: string; className: string }> = {
   new: { label: "New", className: "bg-primary/10 text-primary border-primary/20" },
@@ -40,180 +41,338 @@ const emptyLead: Omit<Lead, "id" | "created_at"> = {
   email: "",
   phone: "",
   plan_id: "",
-  file_url: "",
+  file_url: null,
   status: "new",
 }
 
-const columns: Column<Lead>[] = [
-  {
-    key: "fullname",
-    label: "Name",
-    render: (value) => <span className="font-medium text-foreground">{value}</span>,
-  },
-  {
-    key: "email",
-    label: "Email",
-    render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
-  },
-  {
-    key: "phone",
-    label: "Phone",
-    render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
-  },
-  {
-    key: "plan_id",
-    label: "Plan",
-    render: (value) => {
-      const plan = mockPlans.find((p) => p.id === value)
-      return <span className="text-muted-foreground text-sm">{plan?.name ?? "—"}</span>
-    },
-  },
-  {
-    key: "status",
-    label: "Status",
-    render: (value) => (
-      <Badge className={statusConfig[value as Lead["status"]].className}>
-        {statusConfig[value as Lead["status"]].label}
-      </Badge>
-    ),
-  },
-  {
-    key: "created_at",
-    label: "Created",
-    render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
-    hidden: true,
-  },
-]
-
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>(initialLeads)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [plans, setPlans] = useState<Plan[]>([])
   const [editing, setEditing] = useState<Lead | null>(null)
-  const [form, setForm] = useState<Omit<Lead, "id" | "created_at">>(emptyLead)
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [formData, setFormData] = useState(emptyLead)
+  const [isLoading, setIsLoading] = useState(true)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [feedback, setFeedback] = useState<{
+    tone: FeedbackAlertTone
+    title: string
+    description?: string
+  } | null>(null)
 
-  const openCreate = () => {
-    setEditing(null)
-    setForm(emptyLead)
-    setDialogOpen(true)
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.fullname.trim()) newErrors.fullname = "Full name is required"
+    if (!formData.email.trim()) newErrors.email = "Email is required"
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email address"
+    if (!formData.phone.trim()) newErrors.phone = "Phone is required"
+    if (!formData.plan_id) newErrors.plan_id = "Plan is required"
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
-  const openEdit = (lead: Lead) => {
+  const handleAdd = () => {
+    setFormData(emptyLead)
+    setErrors({})
+    setIsAddDialogOpen(true)
+  }
+
+  const handleEdit = (lead: Lead) => {
+    setFeedback(null)
     setEditing(lead)
-    setForm({ fullname: lead.fullname, email: lead.email, phone: lead.phone, plan_id: lead.plan_id, file_url: lead.file_url, status: lead.status })
-    setDialogOpen(true)
+    setFormData({
+      fullname: lead.fullname,
+      email: lead.email,
+      phone: lead.phone,
+      plan_id: lead.plan_id,
+      file_url: lead.file_url,
+      status: lead.status,
+    })
+    setErrors({})
+    setIsEditDialogOpen(true)
   }
 
-  const handleDelete = () => {
-    console.log("Deleting lead with ID:", deleteId)
+  const handleDelete = (lead: Lead) => {
+    setLeadToDelete(lead)
+    setIsDeleteDialogOpen(true)
   }
 
-  const confirmDelete = () => {
-    if (deleteId) {
-      setLeads((prev) => prev.filter((l) => l.id !== deleteId))
-      setDeleteId(null)
+  const columns: Column<Lead>[] = [
+    {
+      key: "fullname",
+      label: "Name",
+      render: (value) => <span className="font-medium text-foreground">{value}</span>,
+    },
+    {
+      key: "email",
+      label: "Email",
+      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+    },
+    {
+      key: "plan_id",
+      label: "Plan",
+      render: (value) => {
+        const plan = plans.find((p) => p.id === value)
+        return <span className="text-muted-foreground text-sm">{plan?.name ?? "—"}</span>
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => (
+        <Badge className={statusConfig[value as Lead["status"]].className}>
+          {statusConfig[value as Lead["status"]].label}
+        </Badge>
+      ),
+    },
+    {
+      key: "created_at",
+      label: "Created",
+      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+      hidden: true,
+    },
+  ]
+
+  const confirmAdd = async () => {
+    if (!validateForm()) return
+
+    const res = await fetch("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      setFeedback({
+        tone: "destructive",
+        title: "Could not add lead",
+        description: errorText || "Request failed",
+      })
+      return
     }
+
+    const created = await res.json()
+    setLeads((prev) => [created, ...prev])
+    setIsAddDialogOpen(false)
+    setFeedback({
+      tone: "success",
+      title: "Lead added",
+      description: `${created.fullname} has been created.`,
+    })
   }
 
-  const handleSave = () => {
-    if (editing) {
-      setLeads((prev) => prev.map((l) => (l.id === editing.id ? { ...editing, ...form } : l)))
-    } else {
-      const newLead: Lead = { id: `lead-${Date.now()}`, created_at: new Date().toISOString().split("T")[0], ...form }
-      setLeads((prev) => [newLead, ...prev])
+  const confirmEdit = async () => {
+    if (!editing) return
+    if (!validateForm()) return
+
+    const res = await fetch(`/api/leads/${editing.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      setFeedback({
+        tone: "destructive",
+        title: "Could not update lead",
+        description: errorText || "Request failed",
+      })
+      return
     }
-    setDialogOpen(false)
+
+    const updated = await res.json()
+    setLeads((prev) => prev.map((l) => (l.id === editing.id ? updated : l)))
+    setIsEditDialogOpen(false)
+    setEditing(null)
+    setFeedback({
+      tone: "success",
+      title: "Lead updated",
+      description: `${updated.fullname} has been updated.`,
+    })
   }
+
+  const confirmDelete = async () => {
+    if (!leadToDelete) return
+
+    const res = await fetch(`/api/leads/${leadToDelete.id}`, { method: "DELETE" })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      setFeedback({
+        tone: "destructive",
+        title: "Could not delete lead",
+        description: errorText || "Request failed",
+      })
+      return
+    }
+
+    const name = leadToDelete.fullname
+    setLeads((prev) => prev.filter((l) => l.id !== leadToDelete.id))
+    setIsDeleteDialogOpen(false)
+    setLeadToDelete(null)
+    setFeedback({
+      tone: "success",
+      title: "Lead deleted",
+      description: `${name} has been removed.`,
+    })
+  }
+
+  useEffect(() => {
+    setIsLoading(true)
+    Promise.all([fetch("/api/leads"), fetch("/api/plans")])
+      .then(([leadsRes, plansRes]) => Promise.all([leadsRes.json(), plansRes.json()]))
+      .then(([leadsData, plansData]) => {
+        setLeads(leadsData)
+        setPlans(plansData)
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const formFields = (
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Full Name</Label>
+        <div className="col-span-3">
+          <Input
+            value={formData.fullname}
+            onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
+            className={errors.fullname ? "border-red-500" : ""}
+          />
+          {errors.fullname && <p className="text-red-500 text-sm mt-1">{errors.fullname}</p>}
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Email</Label>
+        <div className="col-span-3">
+          <Input
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            className={errors.email ? "border-red-500" : ""}
+          />
+          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Phone</Label>
+        <div className="col-span-3">
+          <Input
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            className={errors.phone ? "border-red-500" : ""}
+          />
+          {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Plan</Label>
+        <div className="col-span-3">
+          <Select value={formData.plan_id} onValueChange={(v) => setFormData({ ...formData, plan_id: v })}>
+            <SelectTrigger className={errors.plan_id ? "border-red-500" : ""}>
+              <SelectValue placeholder="Select plan" />
+            </SelectTrigger>
+            <SelectContent>
+              {plans.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.plan_id && <p className="text-red-500 text-sm mt-1">{errors.plan_id}</p>}
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Status</Label>
+        <div className="col-span-3">
+          <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Lead["status"] })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="contacted">Contacted</SelectItem>
+              <SelectItem value="converted">Converted</SelectItem>
+              <SelectItem value="lost">Lost</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <>
+      {feedback ? (
+        <div className="mb-4">
+          <FeedbackAlert
+            tone={feedback.tone}
+            title={feedback.title}
+            description={feedback.description}
+            onAutoDismiss={() => setFeedback(null)}
+          />
+        </div>
+      ) : null}
       <DataTable
         data={leads}
         columns={columns}
         title="Leads"
         searchPlaceholder="Search leads..."
         searchFields={["fullname", "email", "phone"]}
-        onAdd={openCreate}
-        onEdit={openEdit}
+        onAdd={handleAdd}
+        onEdit={handleEdit}
         onDelete={handleDelete}
+        isLoading={isLoading}
         addButtonText="Add Lead"
       />
 
-      {/* Create / Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg bg-card">
+      {/* Add Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-foreground">{editing ? "Edit Lead" : "Add New Lead"}</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {editing ? "Update the lead information below." : "Fill in the lead details to create a new entry."}
-            </DialogDescription>
+            <DialogTitle>Add Lead</DialogTitle>
+            <DialogDescription>Add a new lead to the system.</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-2">
-            <div className="col-span-2 flex flex-col gap-2">
-              <Label htmlFor="lead-fullname" className="text-foreground">Full Name</Label>
-              <Input id="lead-fullname" value={form.fullname} onChange={(e) => setForm({ ...form, fullname: e.target.value })} className="bg-background border-input" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="lead-email" className="text-foreground">Email</Label>
-              <Input id="lead-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="bg-background border-input" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="lead-phone" className="text-foreground">Phone</Label>
-              <Input id="lead-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="bg-background border-input" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="lead-plan" className="text-foreground">Plan</Label>
-              <Select value={form.plan_id} onValueChange={(v) => setForm({ ...form, plan_id: v })}>
-                <SelectTrigger id="lead-plan" className="bg-background border-input w-full">
-                  <SelectValue placeholder="Select plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockPlans.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="lead-status" className="text-foreground">Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Lead["status"] })}>
-                <SelectTrigger id="lead-status" className="bg-background border-input w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="contacted">Contacted</SelectItem>
-                  <SelectItem value="converted">Converted</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {/* <div className="col-span-2 flex flex-col gap-2">
-              <Label htmlFor="lead-file" className="text-foreground">File URL</Label>
-              <Input id="lead-file" value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} className="bg-background border-input" placeholder="https://..." />
-            </div> */}
-          </div>
+          {formFields}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} className="bg-primary text-primary-foreground">{editing ? "Save Changes" : "Create Lead"}</Button>
+            <Button onClick={confirmAdd}>Add Lead</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="bg-card">
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Lead</DialogTitle>
+            <DialogDescription>Update lead information.</DialogDescription>
+          </DialogHeader>
+          {formFields}
+          <DialogFooter>
+            <Button onClick={confirmEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground">Delete Lead</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              This action cannot be undone. The lead will be permanently removed.
+            <AlertDialogTitle>Delete Lead</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {leadToDelete?.fullname}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -5,7 +5,7 @@ export const createUserSchema = z.object({
   role: z.string().min(1, "Role is required").refine((val) => ["admin", "agent", "viewer"].includes(val), {
     message: "Role must be one of: admin, agent, viewer",
   }),
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  email: z.string().min(1, "Email is required"),
 })
 
 export const updateUserSchema = createUserSchema.partial().extend({

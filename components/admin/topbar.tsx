@@ -1,7 +1,7 @@
 "use client"
 
-import { usePathname } from "next/navigation"
-import { Bell } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { Bell, LogOut } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,13 +19,21 @@ const pageTitles: Record<string, string> = {
   "/dashboard/plans": "Plans",
   "/dashboard/providers": "Providers",
   "/dashboard/categories": "Categories",
+  "/dashboard/partners": "Partners",
   "/dashboard/users": "Users",
   "/dashboard/settings": "Settings",
 }
 
 export default function Topbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const title = pageTitles[pathname] ?? "Admin"
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
     <header className="h-16 flex items-center justify-between px-6 bg-card border-b border-border">
@@ -54,13 +62,15 @@ export default function Topbar() {
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>
               <p className="text-sm font-medium text-foreground">Admin User</p>
-              <p className="text-xs text-muted-foreground">admin@justmobile.com</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">Log out</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive cursor-pointer"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

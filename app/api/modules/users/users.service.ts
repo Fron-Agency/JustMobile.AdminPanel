@@ -1,13 +1,10 @@
 import { UserRepository } from "./users.repository"
 import type { CreateUserInput, UpdateUserInput } from "./users.validation"
 import type { User } from "./users.type"
+import { hashPassword } from "@/lib/password"
 
-function generatePassword(fullname: string) {
-  const parts = fullname.trim().split(/\s+/)
-  const firstName = parts[0] ?? ""
-  const rest = parts.slice(1).join("")
-  const firstPart = firstName.slice(0, 4)
-  return `${firstPart}${rest}`
+function generatePassword(fullname: string): string {
+  return fullname.trim().split(/\s+/).join("")
 }
 
 export const UserService = {
@@ -22,11 +19,14 @@ export const UserService = {
   },
 
   async create(input: CreateUserInput): Promise<User> {
+    const plainPassword = generatePassword(input.fullname)
+    const hashedPassword = await hashPassword(plainPassword)
     return UserRepository.create({
       ...input,
-      password: generatePassword(input.fullname),
+      password: hashedPassword,
       created_at: new Date().toISOString().split("T")[0],
       is_active: true,
+      first_login_executed: false,
     })
   },
 
@@ -36,7 +36,6 @@ export const UserService = {
   },
 
   async delete(id: string): Promise<void> {
-    // await UserService.getById(id)
     return UserRepository.delete(id)
   },
 }

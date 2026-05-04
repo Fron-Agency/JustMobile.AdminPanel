@@ -43,7 +43,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Email Settings</CardTitle>
             <CardDescription>
@@ -73,7 +73,7 @@ export default function SettingsPage() {
             </div>
             <Button>Test Connection</Button>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card>
           <CardHeader>

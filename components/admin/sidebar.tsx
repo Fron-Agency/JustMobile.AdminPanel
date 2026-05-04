@@ -101,17 +101,6 @@ export default function Sidebar() {
           <Settings className="w-4 h-4 flex-shrink-0" />
           {!collapsed && <span>Settings</span>}
         </Link>
-        <Button
-          variant="ghost"
-          className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:bg-destructive/20 hover:text-destructive justify-start h-auto",
-            collapsed && "justify-center px-2"
-          )}
-          title={collapsed ? "Log out" : undefined}
-        >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          {!collapsed && <span>Log out</span>}
-        </Button>
       </div>
     </aside>
   )
