@@ -7,6 +7,13 @@ export type Provider = {
   file_url: string | null
 }
 
+export type ProviderWithCategory = {
+  id: string
+  name: string
+  category_id: string
+  category_name: string
+}
+
 export type CreateProviderDto = {
   name: string
   category_id: string

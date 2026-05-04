@@ -76,7 +76,7 @@ export default function PlansPage() {
     setFormData(emptyPlan)
     setErrors({})
     if (providers.length === 0) {
-      const res = await fetch("/api/providers")
+      const res = await fetch("/api/providers/category")
       setProviders(await res.json())
     }
     setIsAddDialogOpen(true)
@@ -395,8 +395,8 @@ export default function PlansPage() {
                     <SelectValue placeholder="Select provider" />
                   </SelectTrigger>
                   <SelectContent>
-                    {providers.filter(v => v.is_active === true).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    {providers.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name} - {p.category_name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

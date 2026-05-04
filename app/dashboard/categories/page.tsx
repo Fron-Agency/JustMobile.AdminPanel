@@ -246,7 +246,6 @@ export default function CategoriesPage() {
       .finally(() => setIsLoading(false))
   }, [])
 
-
   return (
     <>
       {feedback ? (

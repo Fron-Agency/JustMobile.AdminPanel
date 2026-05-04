@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import type { Provider, CreateProviderDto, UpdateProviderDto } from "./providers.type"
+import type { Provider, CreateProviderDto, UpdateProviderDto, ProviderWithCategory } from "./providers.type"
 
 async function client() {
   return createClient(await cookies())
@@ -16,6 +16,24 @@ export const ProviderRepository = {
       
     if (error) throw new Error(error.message)
     return data
+  },
+
+  async findProvidersWithCategories() : Promise<ProviderWithCategory[]> {
+    const supabase = await client()
+    const { data, error } = await supabase
+      .from("providers")
+      .select(`id, name, category_id, categories(name)`)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+
+    if (error) throw new Error(error.message)
+
+      return data.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        category_id: p.category_id,
+        category_name: p.categories?.name ?? "",
+      }))
   },
 
   async findById(id: string): Promise<Provider | null> {

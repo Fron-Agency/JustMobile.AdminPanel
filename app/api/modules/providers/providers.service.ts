@@ -1,10 +1,14 @@
 import { ProviderRepository } from "./providers.repository"
 import type { CreateProviderInput, UpdateProviderInput } from "./providers.validation"
-import type { Provider } from "./providers.type"
+import type { Provider, ProviderWithCategory } from "./providers.type"
 
 export const ProviderService = {
   async getAll(): Promise<Provider[]> {
     return ProviderRepository.findAll()
+  },
+
+  async getProvidersAndCategories() : Promise<ProviderWithCategory[]> {
+    return ProviderRepository.findProvidersWithCategories()
   },
 
   async getById(id: string): Promise<Provider> {
