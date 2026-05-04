@@ -22,6 +22,7 @@ import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-
 
 const emptyCategory: Omit<Category, "id"> = {
   name: "",
+  badge: "",
   is_active: true,
 }
 
@@ -59,7 +60,7 @@ export default function CategoriesPage() {
   const handleEdit = (cat: Category) => {
     setFeedback(null)
     setEditing(cat)
-    setFormData({ name: cat.name, is_active: cat.is_active })
+    setFormData({ name: cat.name, badge: cat.badge, is_active: cat.is_active })
     setErrors({})
     setIsEditDialogOpen(true)
   }
@@ -121,6 +122,11 @@ export default function CategoriesPage() {
       render: (value) => <span className="font-medium text-foreground">{value}</span>,
     },
     {
+      key: "badge",
+      label: "Badge",
+      render: (value) => value ? <span className="px-2 py-1 text-xs rounded bg-secondary text-secondary-foreground">{value}</span> : <span className="text-muted-foreground">No badge</span>,
+    },
+    {
       key: "is_active",
       label: "Active",
       render: (value, item) => {
@@ -179,6 +185,7 @@ export default function CategoriesPage() {
 
     const payload: Partial<Category> = {
       name: formData.name,
+      badge: formData.badge,
       is_active: formData.is_active,
     }
 
@@ -292,6 +299,22 @@ export default function CategoriesPage() {
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="badge" className="text-right">
+                Badge
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  id="badge"
+                  value={formData.badge}
+                  onChange={(e) =>
+                    setFormData({ ...formData, badge: e.target.value })
+                  }
+                  className={errors.badge ? "border-red-500" : ""}
+                />
+                {errors.badge && <p className="text-red-500 text-sm mt-1">{errors.badge}</p>}
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button onClick={confirmAdd}>Add Category</Button>
@@ -325,29 +348,28 @@ export default function CategoriesPage() {
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-badge" className="text-right">
+                Badge
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  id="edit-badge"
+                  value={formData.badge}
+                  onChange={(e) =>
+                    setFormData({ ...formData, badge: e.target.value })
+                  }
+                  className={errors.badge ? "border-red-500" : ""}
+                />
+                {errors.badge && <p className="text-red-500 text-sm mt-1">{errors.badge}</p>}
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button onClick={confirmEdit}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Dialog */}
-      {/* <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Category</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {categoryToDelete?.name}? This action
-              cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog> */}
     </>
   ) 
 }
