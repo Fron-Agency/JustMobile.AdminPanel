@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import type { Category, CreateCategoryDto, UpdateCategoryDto } from "./categories.type"
+import type { Category, CategoryProvidersAndPlans, CreateCategoryDto, UpdateCategoryDto } from "./categories.type"
 
 async function client() {
   return createClient(await cookies())
@@ -13,6 +13,27 @@ export const CategoryRepository = {
       .from("categories")
       .select("*")
       
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  async findCategoriesWithProvidersAndPlans() : Promise<CategoryProvidersAndPlans[]> {
+    const supabase = await client()
+    const { data, error } = await supabase
+      .from("categories")
+      .select(`*,
+        providers (
+          id,
+          name,
+          file_url,
+          is_active,
+          plans (
+            *
+          )
+        )
+      `)
+      .eq("is_active", true)
+      .eq("providers.is_active", true)
     if (error) throw new Error(error.message)
     return data
   },
