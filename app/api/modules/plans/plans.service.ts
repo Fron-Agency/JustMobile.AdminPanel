@@ -16,7 +16,9 @@ export const PlanService = {
   async create(input: CreatePlanInput): Promise<Plan> {
     return PlanRepository.create({
       ...input,
-      is_favorite: input.is_favorite ?? false,
+      contract_length: 0, // Default value, adjust as needed
+      discount: 0, // Default value, adjust as needed
+      is_favorite: input.is_favorite ?? false, // Default to false if not provided
     })
   },
 

@@ -5,9 +5,7 @@ export const createPlanSchema = z.object({
   provider_id: z.string().min(1, "Provider is required"),
   price: z.number().min(1, "Price is required"),
   data_gb: z.number().min(1, "Data is required"),
-  speed: z.number().min(1, "Speed is required"),
-  contract_length: z.number().min(1, "Contract length is required"),
-  discount: z.number().min(1, "Discount is required"),
+  network_technology: z.string().min(1, "Network technology is required"),
   is_favorite: z.boolean().optional(),
 })
 
