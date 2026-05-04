@@ -2,6 +2,7 @@ import { UserRepository } from "./users.repository"
 import type { CreateUserInput, UpdateUserInput } from "./users.validation"
 import type { User } from "./users.type"
 import { hashPassword } from "@/lib/password"
+import { adminClient } from "@/utils/supabase/admin"
 
 function generatePassword(fullname: string): string {
   return fullname.trim().split(/\s+/).join("")
@@ -20,9 +21,22 @@ export const UserService = {
 
   async create(input: CreateUserInput): Promise<User> {
     const plainPassword = generatePassword(input.fullname)
+
+    const { data: authData, error: authError } =
+    await adminClient.auth.admin.createUser({
+      email: input.email,
+      password: plainPassword,
+      email_confirm: true,
+    })
+
+    if (authError || !authData.user) {
+      throw new Error(authError?.message || "Failed to create auth user")
+    }
+
     const hashedPassword = await hashPassword(plainPassword)
     return UserRepository.create({
       ...input,
+      id: authData.user.id,
       password: hashedPassword,
       created_at: new Date().toISOString().split("T")[0],
       is_active: true,

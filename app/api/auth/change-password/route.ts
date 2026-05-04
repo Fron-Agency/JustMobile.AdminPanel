@@ -1,21 +1,14 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { createClient } from "@supabase/supabase-js"
-import { verifySession, COOKIE_NAME } from "@/lib/session"
-import { hashPassword } from "@/lib/password"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-)
+import { createClient } from "@/utils/supabase/server"
 
 export async function POST(req: Request) {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get(COOKIE_NAME)?.value
-    const session = token ? await verifySession(token) : null
+    const supabase = createClient(cookieStore)
 
-    if (!session) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
@@ -25,15 +18,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Password must be at least 6 characters" }, { status: 400 })
     }
 
-    const hashed = await hashPassword(newPassword)
+    const { error: updateAuthError } = await supabase.auth.updateUser({ password: newPassword })
+    if (updateAuthError) {
+      return NextResponse.json({ message: updateAuthError.message }, { status: 500 })
+    }
 
-    const { error } = await supabase
+    const { error: profileError } = await supabase
       .from("users")
-      .update({ password: hashed, first_login_executed: true })
-      .eq("id", session.id)
+      .update({ first_login_executed: true })
+      .eq("id", user.id)
 
-    if (error) {
-      return NextResponse.json({ message: error.message }, { status: 500 })
+    if (profileError) {
+      return NextResponse.json({ message: profileError.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })

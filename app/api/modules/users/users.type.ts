@@ -9,6 +9,7 @@ export type User = {
 }
 
 export type CreateUserDto = {
+  id: string
   fullname: string
   email: string
   role: string
