@@ -9,26 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { DataTable, type Column } from "@/components/ui/data-table"
-import { mockCategories as initialCategories } from "@/lib/mock-data"
 import type { Category } from "@/app/api/modules/categories/categories.type"
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { useEffect } from "react"
 import { Spinner } from "@/components/ui/spinner"
+import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 
 const emptyCategory: Omit<Category, "id"> = {
   name: "",
@@ -47,6 +37,11 @@ export default function CategoriesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [toggleLoading, setToggleLoading] = useState<Record<string, boolean>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [feedback, setFeedback] = useState<{
+    tone: FeedbackAlertTone
+    title: string
+    description?: string
+  } | null>(null)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -62,6 +57,7 @@ export default function CategoriesPage() {
   }
 
   const handleEdit = (cat: Category) => {
+    setFeedback(null)
     setEditing(cat)
     setFormData({ name: cat.name, is_active: cat.is_active })
     setErrors({})
@@ -90,7 +86,20 @@ export default function CategoriesPage() {
 
       const updated = await res.json()
       setCategories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
-    } finally {
+      setFeedback({
+        tone: "success",
+        title: "Category updated",
+        description: `${cat.name} is now ${isActive ? "active" : "inactive"}.`,
+      })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Something went wrong"
+      setFeedback({
+        tone: "destructive",
+        title: "Could not update category status",
+        description: message,
+      })
+    }
+    finally {
       setToggleLoading((prev) => ({ ...prev, [cat.id]: false }))
     }
   }
@@ -143,9 +152,24 @@ export default function CategoriesPage() {
       body: JSON.stringify(formData),
     })
 
+    if (!res.ok) {
+      const errorText = await res.text()
+      setFeedback({
+        tone: "destructive",
+        title: "Could not add category",
+        description: errorText || "Request failed",
+      })
+      return
+    }
+
     const created = await res.json()
     setCategories((prev) => [created, ...prev])
     setIsAddDialogOpen(false)
+    setFeedback({
+      tone: "success",
+      title: "Category added",
+      description: `${formData.name} has been created.`,
+    })
   }
 
   const confirmEdit = async () => {
@@ -165,36 +189,42 @@ export default function CategoriesPage() {
     })
 
     if (!res.ok) {
-      const text = await res.text()
-      throw new Error(text || "Request failed")
+      const errorText = await res.text()
+      setFeedback({
+        tone: "destructive",
+        title: "Could not add category",
+        description: errorText || "Request failed",
+      })
+      return
     }
 
-    const contentType = res.headers.get("content-type")
+    const updated = await res.json()
 
-    const data = contentType?.includes("application/json")
-      ? await res.json()
-      : null
-
-    setCategories((prev) => prev.map((c) => (c.id === editing.id ? data : c)))
+    setCategories((prev) => prev.map((c) => (c.id === editing.id ? updated : c)))
 
     setIsEditDialogOpen(false)
     setEditing(null)
+    setFeedback({
+      tone: "success",
+      title: "Category updated",
+      description: `${updated.name} has been updated.`,
+    })
   }
 
-    const confirmDelete = async () => {
-      if (!categoryToDelete) return
+  const confirmDelete = async () => {
+    if (!categoryToDelete) return
 
-      await fetch(`/api/categories/${categoryToDelete.id}`, {
-          method: "DELETE",
-      })
+    await fetch(`/api/categories/${categoryToDelete.id}`, {
+        method: "DELETE",
+    })
 
-      setCategories((prev) =>
-          prev.filter((category) => category.id !== categoryToDelete.id)
-      )
+    setCategories((prev) =>
+        prev.filter((category) => category.id !== categoryToDelete.id)
+    )
 
-      setIsDeleteDialogOpen(false)
-      setCategoryToDelete(null)
-    }
+    setIsDeleteDialogOpen(false)
+    setCategoryToDelete(null)
+  }
 
   const handleView = (category: Category) => {
     // For future expansion - maybe show category details or associated providers?
@@ -212,6 +242,16 @@ export default function CategoriesPage() {
 
   return (
     <>
+      {feedback ? (
+        <div className="mb-4">
+          <FeedbackAlert
+            tone={feedback.tone}
+            title={feedback.title}
+            description={feedback.description}
+            onAutoDismiss={() => setFeedback(null)}
+          />
+        </div>
+      ) : null}
       <DataTable
         data={categories}
         columns={columns}

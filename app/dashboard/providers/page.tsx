@@ -29,6 +29,7 @@ import type { Provider } from "@/app/api/modules/providers/providers.type"
 import type { Category } from "@/app/api/modules/categories/categories.type"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Spinner } from "@/components/ui/spinner"
+import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 
 const emptyProvider: Omit<Provider, "id" | "created_at"> = {
   category_id: "",
@@ -49,6 +50,11 @@ export default function ProvidersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [toggleLoading, setToggleLoading] = useState<Record<string, boolean>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [feedback, setFeedback] = useState<{
+    tone: FeedbackAlertTone
+    title: string
+    description?: string
+  } | null>(null)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -65,6 +71,7 @@ export default function ProvidersPage() {
   }
 
   const handleEdit = (prov: Provider) => {
+    setFeedback(null)
     setEditing(prov)
     setFormData({ category_id: prov.category_id, name: prov.name, is_active: prov.is_active })
     setErrors({})
@@ -93,7 +100,20 @@ export default function ProvidersPage() {
 
       const updated = await res.json()
       setProviders((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
-    } finally {
+      setFeedback({
+        tone: "success",
+        title: isActive ? "Provider activated" : "Provider deactivated",
+        description: `${prov.name} is now ${isActive ? "active" : "inactive"}.`,
+      })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Something went wrong"
+      setFeedback({
+        tone: "destructive",
+        title: "Could not update provider status",
+        description: message,
+      })
+    } 
+    finally {
       setToggleLoading((prev) => ({ ...prev, [prov.id]: false }))
     }
   }
@@ -153,9 +173,24 @@ export default function ProvidersPage() {
       }),
     })
 
+    if (!res.ok) {
+      const errorText = await res.text()
+      setFeedback({
+        tone: "destructive",
+        title: "Could not add provider",
+        description: errorText || "Request failed",
+      })
+      return
+    }
+
     const created = await res.json()
     setProviders((prev) => [created, ...prev])
     setIsAddDialogOpen(false)
+    setFeedback({
+      tone: "success",
+      title: "Provider added",
+      description: `${created.name} has been created.`,
+    })
   }
 
   const confirmEdit = async () => {
@@ -177,31 +212,54 @@ export default function ProvidersPage() {
 
     if (!res.ok) {
       const text = await res.text()
-      throw new Error(text || "Request failed")
+      setFeedback({
+        tone: "destructive",
+        title: "Could not update provider",
+        description: text || "Request failed",
+      })
+      return
     }
 
-    const contentType = res.headers.get("content-type")
-
-    const data = contentType?.includes("application/json")
-      ? await res.json()
-      : null
-
-    setProviders((prev) => prev.map((p) => (p.id === editing.id ? data : p)))
+    const updated = await res.json()
+    setProviders((prev) => 
+      prev.map((p) => (p.id === editing.id ? updated : p))
+    )
 
     setIsEditDialogOpen(false)
     setEditing(null)
+    setFeedback({
+      tone: "success",
+      title: "Provider updated",
+      description: `${updated.name} has been updated.`,
+    })
   }
 
   const confirmDelete = async () => {
-    if(!providerToDelete) return
-
-    await fetch(`/api/providers/${providerToDelete.id}`, {
+    if (!providerToDelete) return
+    
+    const res = await fetch(`/api/providers/${providerToDelete.id}`, {
       method: "DELETE",
     })
 
+    if (!res.ok) {
+      const errorText = await res.text()
+      setFeedback({
+        tone: "destructive",
+        title: "Could not delete provider",
+        description: errorText || "Request failed",
+      })
+      return
+    }
+
+    const name = providerToDelete.name
     setProviders((prev) => prev.filter((p) => p.id !== providerToDelete.id))
     setIsDeleteDialogOpen(false)
     setProviderToDelete(null)
+    setFeedback({
+      tone: "success",
+      title: "Provider deleted",
+      description: `${name} has been deleted.`,
+    })
   }
 
   const handleView = (provider: Provider) => {
@@ -230,6 +288,16 @@ export default function ProvidersPage() {
 
   return (
     <>
+      {feedback ? (
+        <div className="mb-4">
+          <FeedbackAlert
+            tone={feedback.tone}
+            title={feedback.title}
+            description={feedback.description}
+            onAutoDismiss={() => setFeedback(null)}
+          />
+        </div>
+      ) : null}
       <DataTable
         data={providers}
         columns={columns}

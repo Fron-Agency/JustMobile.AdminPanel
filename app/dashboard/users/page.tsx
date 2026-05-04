@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Field, FieldLabel } from "@/components/ui/field"
+import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 
 const roleConfig: Record<User["role"], { label: string; className: string }> = {
   admin: { label: "Admin", className: "bg-green-500/10 text-green-600 border-green-500/20" },
@@ -54,6 +55,11 @@ export default function UsersPage() {
     const [toggleLoading, setToggleLoading] = useState<Record<string, boolean>>({})
     const [isLoading, setIsLoading] = useState(true)
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [feedback, setFeedback] = useState<{
+      tone: FeedbackAlertTone
+      title: string
+      description?: string
+    } | null>(null)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -72,6 +78,7 @@ export default function UsersPage() {
   }
 
   const handleEdit = (user: User) => {
+    setFeedback(null)
     setEditingUser(user)
     setFormData({
       fullname: user.fullname,
@@ -105,6 +112,18 @@ export default function UsersPage() {
 
       const updated = await res.json()
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
+      setFeedback({
+        tone: "success",
+        title: isActive ? "User activated" : "User deactivated",
+        description: `${user.fullname}'s account is now ${isActive ? "active" : "inactive"}.`,
+      })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Something went wrong"
+      setFeedback({
+        tone: "destructive",
+        title: "Could not update status",
+        description: message,
+      })
     } finally {
       setToggleLoading((prev) => ({ ...prev, [user.id]: false }))
     }
@@ -176,7 +195,11 @@ export default function UsersPage() {
 
     if (!res.ok) {
       const errorText = await res.text()
-      alert(`Error: ${errorText}`)
+      setFeedback({
+        tone: "destructive",
+        title: "Could not add user",
+        description: errorText || "Request failed",
+      })
       return
     }
 
@@ -184,6 +207,11 @@ export default function UsersPage() {
 
     setUsers((prev) => [...prev, created])
     setIsAddDialogOpen(false)
+    setFeedback({
+      tone: "success",
+      title: "User added",
+      description: `${created.fullname} has been created.`,
+    })
   }
 
   const confirmEdit = async () => {
@@ -206,7 +234,11 @@ export default function UsersPage() {
 
         if (!res.ok) {
             const errorText = await res.text()
-            alert(`Error: ${errorText}`)
+            setFeedback({
+              tone: "destructive",
+              title: "Could not update user",
+              description: errorText || "Request failed",
+            })
             return
         }
 
@@ -219,22 +251,43 @@ export default function UsersPage() {
 
             setIsEditDialogOpen(false)
             setEditingUser(null)
+            setFeedback({
+              tone: "success",
+              title: "User updated",
+              description: `${updated.fullname}'s details were saved.`,
+            })
     }
 
 
   const confirmDelete = async () => {
     if (!userToDelete) return
 
-    await fetch(`/api/users/${userToDelete.id}`, {
+    const res = await fetch(`/api/users/${userToDelete.id}`, {
         method: "DELETE",
     })
 
+    if (!res.ok) {
+      const errorText = await res.text()
+      setFeedback({
+        tone: "destructive",
+        title: "Could not delete user",
+        description: errorText || "Request failed",
+      })
+      return
+    }
+
+    const name = userToDelete.fullname
     setUsers((prev) =>
         prev.filter((user) => user.id !== userToDelete.id)
     )
 
     setIsDeleteDialogOpen(false)
     setUserToDelete(null)
+    setFeedback({
+      tone: "success",
+      title: "User deleted",
+      description: `${name} has been removed.`,
+    })
     }
 
     useEffect(() => {
@@ -247,6 +300,16 @@ export default function UsersPage() {
 
   return (
     <>
+        {feedback ? (
+          <div className="mb-4">
+            <FeedbackAlert
+              tone={feedback.tone}
+              title={feedback.title}
+              description={feedback.description}
+              onAutoDismiss={() => setFeedback(null)}
+            />
+          </div>
+        ) : null}
         <DataTable
           data={users}
           columns={columns}

@@ -21,9 +21,9 @@ export const ProviderService = {
     })
   },
 
-  async update(id: string, is_active: boolean): Promise<Provider> {
+  async update(id: string, input: UpdateProviderInput): Promise<Provider> {
     await ProviderService.getById(id)
-    return ProviderRepository.update(id, { is_active })
+    return ProviderRepository.update(id, input)
   },
 
   async delete(id: string): Promise<void> {

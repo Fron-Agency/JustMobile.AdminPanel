@@ -13,7 +13,7 @@ export async function PUT(
   try {
     const { id } = await params
     const body = updateActiveSchema.parse(await req.json())
-    const updated = await ProviderService.update(id, body.is_active)
+    const updated = await ProviderService.update(id, { is_active: body.is_active })
     return NextResponse.json(updated)
   } catch (error) {
     return NextResponse.json(
