@@ -43,6 +43,19 @@ const emptyLead: Omit<Lead, "id" | "created_at"> = {
   plan_id: "",
   file_url: null,
   status: "new",
+
+  date_of_birth: null,
+  swiss_number: false,
+  keep_swiss_number: false,
+  roaming_control: false,
+  child_date_of_birth: null,
+
+  address: {
+    zip_code: "",
+    city: "",
+    street: "",
+    number: "",
+  },
 }
 
 export default function LeadsPage() {
@@ -69,6 +82,8 @@ export default function LeadsPage() {
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email address"
     if (!formData.phone.trim()) newErrors.phone = "Phone is required"
     if (!formData.plan_id) newErrors.plan_id = "Plan is required"
+    if (!formData.address?.zip_code?.trim()) newErrors.zip_code = "Zip code is required"
+    if (!formData.address?.city?.trim()) newErrors.city = "City is required"
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -89,6 +104,19 @@ export default function LeadsPage() {
       plan_id: lead.plan_id,
       file_url: lead.file_url,
       status: lead.status,
+    
+      date_of_birth: lead.date_of_birth ?? null,
+      swiss_number: lead.swiss_number ?? false,
+      keep_swiss_number: lead.keep_swiss_number ?? false,
+      roaming_control: lead.roaming_control ?? false,
+      child_date_of_birth: lead.child_date_of_birth ?? null,
+    
+      address: {
+        zip_code: lead.address?.zip_code ?? "",
+        city: lead.address?.city ?? "",
+        street: lead.address?.street ?? "",
+        number: lead.address?.number ?? "",
+      },
     })
     setErrors({})
     setIsEditDialogOpen(true)
@@ -142,88 +170,102 @@ export default function LeadsPage() {
 
   const confirmAdd = async () => {
     if (!validateForm()) return
-
-    const res = await fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not add lead",
-        description: errorText || "Request failed",
+    setIsLoading(true)
+    try{
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       })
-      return
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not add lead",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const created = await res.json()
+      setLeads((prev) => [created, ...prev])
+      setIsAddDialogOpen(false)
+      setFeedback({
+        tone: "success",
+        title: "Lead added",
+        description: `${created.fullname} has been created.`,
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    const created = await res.json()
-    setLeads((prev) => [created, ...prev])
-    setIsAddDialogOpen(false)
-    setFeedback({
-      tone: "success",
-      title: "Lead added",
-      description: `${created.fullname} has been created.`,
-    })
   }
 
   const confirmEdit = async () => {
     if (!editing) return
     if (!validateForm()) return
+    setIsLoading(true)
 
-    const res = await fetch(`/api/leads/${editing.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not update lead",
-        description: errorText || "Request failed",
+    try{
+      const res = await fetch(`/api/leads/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       })
-      return
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not update lead",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const updated = await res.json()
+      setLeads((prev) => prev.map((l) => (l.id === editing.id ? updated : l)))
+      setIsEditDialogOpen(false)
+      setEditing(null)
+      setFeedback({
+        tone: "success",
+        title: "Lead updated",
+        description: `${updated.fullname} has been updated.`,
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    const updated = await res.json()
-    setLeads((prev) => prev.map((l) => (l.id === editing.id ? updated : l)))
-    setIsEditDialogOpen(false)
-    setEditing(null)
-    setFeedback({
-      tone: "success",
-      title: "Lead updated",
-      description: `${updated.fullname} has been updated.`,
-    })
   }
 
   const confirmDelete = async () => {
     if (!leadToDelete) return
+    setIsLoading(true)
 
-    const res = await fetch(`/api/leads/${leadToDelete.id}`, { method: "DELETE" })
+    try {
+      const res = await fetch(`/api/leads/${leadToDelete.id}`, { method: "DELETE" })
 
-    if (!res.ok) {
-      const errorText = await res.text()
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not delete lead",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const name = leadToDelete.fullname
+      setLeads((prev) => prev.filter((l) => l.id !== leadToDelete.id))
+      setIsDeleteDialogOpen(false)
+      setLeadToDelete(null)
       setFeedback({
-        tone: "destructive",
-        title: "Could not delete lead",
-        description: errorText || "Request failed",
+        tone: "success",
+        title: "Lead deleted",
+        description: `${name} has been removed.`,
       })
-      return
+    } finally {
+      setIsLoading(false)
     }
-
-    const name = leadToDelete.fullname
-    setLeads((prev) => prev.filter((l) => l.id !== leadToDelete.id))
-    setIsDeleteDialogOpen(false)
-    setLeadToDelete(null)
-    setFeedback({
-      tone: "success",
-      title: "Lead deleted",
-      description: `${name} has been removed.`,
-    })
   }
 
   useEffect(() => {
@@ -290,6 +332,95 @@ export default function LeadsPage() {
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Date of Birth</Label>
+        <div className="col-span-3">
+          <Input
+            type="date"
+            value={formData.date_of_birth ?? ""}
+            onChange={(e) =>
+              setFormData({ ...formData, date_of_birth: e.target.value || null })
+            }
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Child Date of Birth</Label>
+        <div className="col-span-3">
+          <Input
+            type="date"
+            value={formData.child_date_of_birth ?? ""}
+            onChange={(e) =>
+              setFormData({ ...formData, child_date_of_birth: e.target.value || null })
+            }
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Zip Code</Label>
+        <div className="col-span-3">
+          <Input
+            value={formData.address?.zip_code ?? ""}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                address: { ...formData.address, zip_code: e.target.value },
+              })
+            }
+            className={errors.zip_code ? "border-red-500" : ""}
+          />
+          {errors.zip_code && <p className="text-red-500 text-sm mt-1">{errors.zip_code}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">City</Label>
+        <div className="col-span-3">
+          <Input
+            value={formData.address?.city ?? ""}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                address: { ...formData.address, city: e.target.value },
+              })
+            }
+            className={errors.city ? "border-red-500" : ""}
+          />
+          {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Street</Label>
+        <div className="col-span-3">
+          <Input
+            value={formData.address?.street ?? ""}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                address: { ...formData.address, street: e.target.value },
+              })
+            }
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Number</Label>
+        <div className="col-span-3">
+          <Input
+            value={formData.address?.number ?? ""}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                address: { ...formData.address, number: e.target.value },
+              })
+            }
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
         <Label className="text-right">Status</Label>
         <div className="col-span-3">
           <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Lead["status"] })}>
@@ -326,11 +457,9 @@ export default function LeadsPage() {
         title="Leads"
         searchPlaceholder="Search leads..."
         searchFields={["fullname", "email", "phone"]}
-        onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
         isLoading={isLoading}
-        addButtonText="Add Lead"
       />
 
       {/* Add Dialog */}
@@ -342,7 +471,9 @@ export default function LeadsPage() {
           </DialogHeader>
           {formFields}
           <DialogFooter>
-            <Button onClick={confirmAdd}>Add Lead</Button>
+            <Button onClick={confirmAdd} disabled={isLoading}>
+              { isLoading ? "Adding..." : "Add Lead" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -356,7 +487,9 @@ export default function LeadsPage() {
           </DialogHeader>
           {formFields}
           <DialogFooter>
-            <Button onClick={confirmEdit}>Save Changes</Button>
+            <Button onClick={confirmEdit} disabled={isLoading}>
+              { isLoading ? "Saving Changes..." : "Save Changes" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -372,7 +505,9 @@ export default function LeadsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
+              { isLoading ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

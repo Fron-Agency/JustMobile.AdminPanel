@@ -1,6 +1,6 @@
 import { LeadRepository } from "./leads.repository"
-import type { CreateLeadInput, UpdateLeadInput } from "./leads.validation"
-import type { Lead } from "./leads.type"
+import type { UpdateLeadInput } from "./leads.validation"
+import type { CreateLeadDto, Lead } from "./leads.type"
 
 export const LeadService = {
   async getAll(): Promise<Lead[]> {
@@ -13,7 +13,7 @@ export const LeadService = {
     return lead
   },
 
-  async create(input: CreateLeadInput): Promise<Lead> {
+  async create(input: CreateLeadDto): Promise<Lead> {
     return LeadRepository.create(input)
   },
 

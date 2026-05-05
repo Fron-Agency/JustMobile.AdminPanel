@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import type { Lead, CreateLeadDto, UpdateLeadDto } from "./leads.type"
+import type { Lead, CreateLeadDto, UpdateLeadDto, AddressDto } from "./leads.type"
 
 async function client() {
   return createClient(await cookies())
@@ -9,10 +9,20 @@ async function client() {
 export const LeadRepository = {
   async findAll(): Promise<Lead[]> {
     const supabase = await client()
+  
     const { data, error } = await supabase
       .from("leads")
-      .select("*")
+      .select(`
+        *,
+        address(
+          zip_code,
+          city,
+          street,
+          number
+        )
+      `)
       .order("created_at", { ascending: false })
+  
     if (error) throw new Error(error.message)
     return data
   },
@@ -30,12 +40,19 @@ export const LeadRepository = {
 
   async create(payload: CreateLeadDto): Promise<Lead> {
     const supabase = await client()
+  
+    const { address, ...leadPayload } = payload
+  
     const { data, error } = await supabase
       .from("leads")
-      .insert([{ ...payload, created_at: new Date().toISOString() }])
+      .insert([{ ...leadPayload, created_at: new Date().toISOString() }])
       .select()
       .single()
+  
     if (error) throw new Error(error.message)
+  
+    await LeadRepository.insertAddress(data.id, address)
+  
     return data
   },
 
@@ -56,4 +73,20 @@ export const LeadRepository = {
     const { error } = await supabase.from("leads").delete().eq("id", id)
     if (error) throw new Error(error.message)
   },
+
+  async insertAddress(leadId: string, address: AddressDto): Promise<void> {
+    const supabase = await client()
+  
+    const { error } = await supabase.from("address").insert([
+      {
+        lead_id: leadId,
+        zip_code: address.zip_code,
+        city: address.city,
+        street: address.street ?? null,
+        number: address.number ?? null,
+      },
+    ])
+  
+    if (error) throw new Error(error.message)
+  }
 }
