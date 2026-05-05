@@ -26,7 +26,7 @@ export const PlanRepository = {
     const { data, error } = await supabase
     .from("plans")
     .select(`
-      id
+      id,
       name,
       price,
       data_gb,
