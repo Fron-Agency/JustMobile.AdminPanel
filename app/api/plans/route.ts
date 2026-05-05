@@ -5,8 +5,8 @@ import { createPlanSchema } from "../modules/plans/plans.validation"
 import { requireAuth } from "@/utils/supabase/require-auth"
 
 export async function GET() {
-  // const auth = await requireAuth()
-  // if (auth instanceof NextResponse) return auth
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
 
   const plans = await PlanService.getAll()
   return Response.json(plans)

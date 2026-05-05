@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import type { Plan, CreatePlanDto, UpdatePlanInput } from "./plans.type"
+import type { Plan, CreatePlanDto, UpdatePlanInput, ExternalPlanDto } from "./plans.type"
 
 async function client() {
   return createClient(await cookies())
@@ -18,6 +18,43 @@ export const PlanRepository = {
       ...rest,
       provider_name: providerObj?.name ?? "",
       countries: countriesArr.map((c: any) => c.name),
+    }))
+  },
+
+  async findAllExternal(): Promise<ExternalPlanDto[]> {
+    const supabase = await client()
+    const { data, error } = await supabase
+    .from("plans")
+    .select(`
+      name,
+      price,
+      data_gb,
+      network_technology,
+      contract_length,
+      discount,
+      is_favorite,
+      countries(name),
+      providers(name, file_url),
+      categories(name)
+    `)
+
+    if (error) throw new Error(error.message)
+
+    return (data ?? []).map((row: any) => ({
+      name: row.name,
+      price: row.price,
+      data_gb: row.data_gb,
+      network_technology: row.network_technology,
+      contract_length: row.contract_length,
+      discount: row.discount,
+      is_favorite: row.is_favorite,
+  
+      provider_name: row.providers?.name ?? "",
+      provider_file_url: row.providers?.file_url ?? "",
+  
+      category_name: row.categories?.name ?? "",
+  
+      countries: row.countries?.map((c: any) => c.name) ?? [],
     }))
   },
 

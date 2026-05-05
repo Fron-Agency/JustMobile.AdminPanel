@@ -1,7 +1,7 @@
 
 import type { CreatePlanInput, UpdatePlanInput } from "./plans.validation"
 import { PlanRepository } from "./plans.repository"
-import type { Plan } from "./plans.type"
+import type { ExternalPlanDto, Plan } from "./plans.type"
 
 export const PlanService = {
   async getAll(): Promise<Plan[]> {
@@ -12,6 +12,10 @@ export const PlanService = {
     const plan = await PlanRepository.findById(id)
     if (!plan) throw new Error("Plan not found")
     return plan
+  },
+
+  async getAllExternal(): Promise<ExternalPlanDto[]> {
+    return PlanRepository.findAllExternal()
   },
 
   async create(input: CreatePlanInput): Promise<Plan> {
