@@ -85,6 +85,7 @@ export default function UsersPage() {
       email: user.email,
       role: user.role,
       is_active: user.is_active,
+      // first_login_executed: user.first_login_executed
     })
     setErrors({})
     setIsEditDialogOpen(true)
@@ -184,8 +185,10 @@ export default function UsersPage() {
 
   const confirmAdd = async () => {
     if (!validateForm()) return
+    setIsLoading(true)
 
-    const res = await fetch("/api/users", {
+    try {
+      const res = await fetch("/api/users", {
         method: "POST",
         headers: {
         "Content-Type": "application/json",
@@ -212,83 +215,95 @@ export default function UsersPage() {
       title: "User added",
       description: `${created.fullname} has been created.`,
     })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const confirmEdit = async () => {
     if (!editingUser) return
-
     if (!validateForm()) return
+    setIsLoading(true)
 
-        const payload: Partial<typeof formData> = {
+    try{
+      const payload: Partial<typeof formData> = {
         fullname: formData.fullname,
         email: formData.email,
         role: formData.role,
         // is_active: formData.is_active,
-        }
-
-        const res = await fetch(`/api/users/${editingUser.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+      }
+  
+      const res = await fetch(`/api/users/${editingUser.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+      })
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not update user",
+          description: errorText || "Request failed",
         })
-
-        if (!res.ok) {
-            const errorText = await res.text()
-            setFeedback({
-              tone: "destructive",
-              title: "Could not update user",
-              description: errorText || "Request failed",
-            })
-            return
-        }
-
-
-        const updated = await res.json()
-
-        setUsers((prev) =>
-            prev.map((u) => (u.id === updated.id ? updated : u))
-        )
-
-            setIsEditDialogOpen(false)
-            setEditingUser(null)
-            setFeedback({
-              tone: "success",
-              title: "User updated",
-              description: `${updated.fullname}'s details were saved.`,
-            })
+        return
+      }
+  
+  
+      const updated = await res.json()
+  
+      setUsers((prev) =>
+          prev.map((u) => (u.id === updated.id ? updated : u))
+      )
+  
+      setIsEditDialogOpen(false)
+      setEditingUser(null)
+      setFeedback({
+        tone: "success",
+        title: "User updated",
+        description: `${updated.fullname}'s details were saved.`,
+      })
+    } finally {
+      setIsLoading(false);
     }
+  }
 
 
   const confirmDelete = async () => {
     if (!userToDelete) return
+    setIsLoading(true);
 
-    const res = await fetch(`/api/users/${userToDelete.id}`, {
+    try{
+      const res = await fetch(`/api/users/${userToDelete.id}`, {
         method: "DELETE",
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not delete user",
-        description: errorText || "Request failed",
       })
-      return
-    }
 
-    const name = userToDelete.fullname
-    setUsers((prev) =>
-        prev.filter((user) => user.id !== userToDelete.id)
-    )
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not delete user",
+          description: errorText || "Request failed",
+        })
+        return
+      }
 
-    setIsDeleteDialogOpen(false)
-    setUserToDelete(null)
-    setFeedback({
-      tone: "success",
-      title: "User deleted",
-      description: `${name} has been removed.`,
-    })
+      const name = userToDelete.fullname
+      setUsers((prev) =>
+          prev.filter((user) => user.id !== userToDelete.id)
+      )
+
+      setIsDeleteDialogOpen(false)
+      setUserToDelete(null)
+      setFeedback({
+        tone: "success",
+        title: "User deleted",
+        description: `${name} has been removed.`,
+      })
+    } finally {
+      setIsLoading(false);
     }
+  }
 
     useEffect(() => {
         setIsLoading(true)
@@ -392,7 +407,9 @@ export default function UsersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmAdd}>Add User</Button>
+            <Button onClick={confirmAdd} disabled={isLoading}>
+              { isLoading ? "Adding..." : "Add User" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -465,7 +482,9 @@ export default function UsersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmEdit}>Save Changes</Button>
+            <Button onClick={confirmEdit} disabled={isLoading}>
+              { isLoading ? "Saving Changes..." : "Save Changes" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -482,7 +501,9 @@ export default function UsersPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
+              { isLoading ? "Deleting..." : "Delete" }
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

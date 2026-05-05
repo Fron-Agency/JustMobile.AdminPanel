@@ -122,115 +122,130 @@ export default function PartnersPage() {
 
   const confirmAdd = async () => {
     if (!validateForm()) return
+    setIsLoading(true)
 
-    let file_url: string | null = null
-    if (logoFile) {
-      try {
-        file_url = await uploadLogo(logoFile)
-      } catch {
-        setFeedback({ tone: "destructive", title: "Logo upload failed" })
+    try{
+      let file_url: string | null = null
+      if (logoFile) {
+        try {
+          file_url = await uploadLogo(logoFile)
+        } catch {
+          setFeedback({ tone: "destructive", title: "Logo upload failed" })
+          return
+        }
+      }
+  
+      const res = await fetch("/api/partners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: formData.name, file_url }),
+      })
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not add partner",
+          description: errorText || "Request failed",
+        })
         return
       }
-    }
-
-    const res = await fetch("/api/partners", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: formData.name, file_url }),
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
+  
+      const created = await res.json()
+      setPartners((prev) => [created, ...prev])
+      setIsAddDialogOpen(false)
       setFeedback({
-        tone: "destructive",
-        title: "Could not add partner",
-        description: errorText || "Request failed",
+        tone: "success",
+        title: "Partner added",
+        description: `${created.name} has been created.`,
       })
-      return
+    } finally {
+      setIsLoading(false);
     }
-
-    const created = await res.json()
-    setPartners((prev) => [created, ...prev])
-    setIsAddDialogOpen(false)
-    setFeedback({
-      tone: "success",
-      title: "Partner added",
-      description: `${created.name} has been created.`,
-    })
   }
 
   const confirmEdit = async () => {
     if (!editing) return
     if (!validateForm()) return
+    setIsLoading(true);
 
-    let newFileUrl: string | undefined
-    if (logoFile) {
-      try {
-        newFileUrl = await uploadLogo(logoFile)
-      } catch {
-        setFeedback({ tone: "destructive", title: "Logo upload failed" })
+    try{
+      let newFileUrl: string | undefined
+      if (logoFile) {
+        try {
+          newFileUrl = await uploadLogo(logoFile)
+        } catch {
+          setFeedback({ tone: "destructive", title: "Logo upload failed" })
+          return
+        }
+      }
+  
+      const payload = {
+        name: formData.name,
+        ...(newFileUrl !== undefined && { file_url: newFileUrl }),
+      }
+  
+      const res = await fetch(`/api/partners/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+  
+      if (!res.ok) {
+        const text = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not update partner",
+          description: text || "Request failed",
+        })
         return
       }
-    }
-
-    const payload = {
-      name: formData.name,
-      ...(newFileUrl !== undefined && { file_url: newFileUrl }),
-    }
-
-    const res = await fetch(`/api/partners/${editing.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const text = await res.text()
+  
+      const updated = await res.json()
+      setPartners((prev) => prev.map((p) => (p.id === editing.id ? updated : p)))
+      setIsEditDialogOpen(false)
+      setEditing(null)
       setFeedback({
-        tone: "destructive",
-        title: "Could not update partner",
-        description: text || "Request failed",
+        tone: "success",
+        title: "Partner updated",
+        description: `${updated.name} has been updated.`,
       })
-      return
+    } finally{
+      setIsLoading(false);
     }
-
-    const updated = await res.json()
-    setPartners((prev) => prev.map((p) => (p.id === editing.id ? updated : p)))
-    setIsEditDialogOpen(false)
-    setEditing(null)
-    setFeedback({
-      tone: "success",
-      title: "Partner updated",
-      description: `${updated.name} has been updated.`,
-    })
   }
 
   const confirmDelete = async () => {
     if (!partnerToDelete) return
-
-    const res = await fetch(`/api/partners/${partnerToDelete.id}`, {
-      method: "DELETE",
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not delete partner",
-        description: errorText || "Request failed",
+    setIsLoading(true);
+    
+    try{
+      const res = await fetch(`/api/partners/${partnerToDelete.id}`, {
+        method: "DELETE",
       })
-      return
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not delete partner",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const name = partnerToDelete.name
+      setPartners((prev) => prev.filter((p) => p.id !== partnerToDelete.id))
+      setIsDeleteDialogOpen(false)
+      setPartnerToDelete(null)
+      setFeedback({
+        tone: "success",
+        title: "Partner deleted",
+        description: `${name} has been deleted.`,
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    const name = partnerToDelete.name
-    setPartners((prev) => prev.filter((p) => p.id !== partnerToDelete.id))
-    setIsDeleteDialogOpen(false)
-    setPartnerToDelete(null)
-    setFeedback({
-      tone: "success",
-      title: "Partner deleted",
-      description: `${name} has been deleted.`,
-    })
   }
 
   useEffect(() => {
@@ -305,7 +320,9 @@ export default function PartnersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmAdd}>Add Partner</Button>
+            <Button onClick={confirmAdd} disabled={isLoading}>
+              { isLoading ? "Adding..." : "Add User"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -349,7 +366,9 @@ export default function PartnersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmEdit}>Save Changes</Button>
+            <Button onClick={confirmEdit} disabled={isLoading}>
+              { isLoading ? "Saving Changes..." : "Save Changes" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -365,7 +384,9 @@ export default function PartnersPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
+              { isLoading ? "Deleting..." : "Delete" }
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

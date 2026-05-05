@@ -61,13 +61,14 @@ export default function PlansPage() {
   } | null>(null)
   const [selectedCountries, setSelectedCountries] = useState<string[]>([])
   const { countries, loading } = useCountries()
+  const [isUnlimited, setIsUnlimited] = useState(false)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
     if (!formData.name.trim()) newErrors.name = "Name is required"
     if (!formData.provider_id) newErrors.provider_id = "Provider is required"
     if (formData.price <= 0) newErrors.price = "Price must be greater than 0"
-    if (formData.data_gb <= 0) newErrors.data_gb = "Data must be greater than 0"
+    // if (!isUnlimited && formData.data_gb !== null && formData.data_gb <= 0) newErrors.data_gb = "Data must be greater than 0"
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -165,7 +166,11 @@ export default function PlansPage() {
   {
     key: "data_gb",
     label: "Data",
-    render: (value) => <span className="text-muted-foreground text-sm">{value}GB</span>,
+    render: (value) => (
+      <span className="text-muted-foreground text-sm">
+        {value === null ? "Unlimited" : `${value}GB`}
+      </span>
+    ),
   },
   {
     key: "network_technology",
@@ -199,118 +204,131 @@ export default function PlansPage() {
 
   const confirmAdd = async () => {
     if (!validateForm()) return
-
-    const res = await fetch("/api/plans", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(
-        {
-          ...formData,
-          countries: selectedCountries,
-        }
-      ),
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not add plan",
-        description: errorText || "Request failed",
+    setIsLoading(true)
+    try {
+      const res = await fetch("/api/plans", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          {
+            ...formData,
+            data_gb: isUnlimited ? null : formData.data_gb,
+            countries: selectedCountries,
+          }
+        ),
       })
-      return
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not add plan",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const created = await res.json()
+  
+      setPlans((prev) => [...prev, created])
+      setIsAddDialogOpen(false)
+      setFeedback({
+        tone: "success",
+        title: "Plan added",
+        description: `${created.name} has been created.`,
+      })
+
+    } finally{
+      setIsLoading(false);
     }
-
-    const created = await res.json()
-
-    setPlans((prev) => [...prev, created])
-    setIsAddDialogOpen(false)
-    setFeedback({
-      tone: "success",
-      title: "Plan added",
-      description: `${created.name} has been created.`,
-    })
   }
 
   const confirmEdit = async () => {
     if (!editingPlan) return
-
     if (!validateForm()) return
-
-    const payload = {
-      name: formData.name,
-      provider_id: formData.provider_id,
-      price: formData.price,
-      data_gb: formData.data_gb,
-      network_technology: formData.network_technology,
-      contract_length: formData.contract_length,
-      discount: formData.discount,
-      is_favorite: formData.is_favorite,
-      countries: selectedCountries,
-    }
-
-    const res = await fetch(`/api/plans/${editingPlan.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not update plan",
-        description: errorText || "Request failed",
+    setIsLoading(true)
+    try {
+      const payload = {
+        name: formData.name,
+        provider_id: formData.provider_id,
+        price: formData.price,
+        data_gb: isUnlimited ? null : formData.data_gb,
+        network_technology: formData.network_technology,
+        contract_length: formData.contract_length,
+        discount: formData.discount,
+        is_favorite: formData.is_favorite,
+        countries: selectedCountries,
+      }
+  
+      const res = await fetch(`/api/plans/${editingPlan.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       })
-      return
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not update plan",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const updated = await res.json()
+  
+      setPlans((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p))
+      )
+  
+      setIsEditDialogOpen(false)
+      setEditingPlan(null)
+      setFeedback({
+        tone: "success",
+        title: "Plan updated",
+        description: `${updated.name}'s details were saved.`,
+      })
+    } finally {
+      setIsLoading(false);
     }
-
-    const updated = await res.json()
-
-    setPlans((prev) =>
-      prev.map((p) => (p.id === updated.id ? updated : p))
-    )
-
-    setIsEditDialogOpen(false)
-    setEditingPlan(null)
-    setFeedback({
-      tone: "success",
-      title: "Plan updated",
-      description: `${updated.name}'s details were saved.`,
-    })
   }
 
   const confirmDelete = async () => {
     if (!planToDelete) return
-
-    const res = await fetch(`/api/plans/${planToDelete.id}`, {
-      method: "DELETE",
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not delete plan",
-        description: errorText || "Request failed",
+    setIsLoading(true);
+    try{
+      const res = await fetch(`/api/plans/${planToDelete.id}`, {
+        method: "DELETE",
       })
-      return
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not delete plan",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const name = planToDelete.name
+      setPlans((prev) =>
+        prev.filter((plan) => plan.id !== planToDelete.id)
+      )
+  
+      setIsDeleteDialogOpen(false)
+      setPlanToDelete(null)
+      setFeedback({
+        tone: "success",
+        title: "Plan deleted",
+        description: `${name} has been removed.`,
+      })
+    } finally{
+      setIsLoading(false);
     }
-
-    const name = planToDelete.name
-    setPlans((prev) =>
-      prev.filter((plan) => plan.id !== planToDelete.id)
-    )
-
-    setIsDeleteDialogOpen(false)
-    setPlanToDelete(null)
-    setFeedback({
-      tone: "success",
-      title: "Plan deleted",
-      description: `${name} has been removed.`,
-    })
   }
 
   useEffect(() => {
@@ -443,13 +461,28 @@ export default function PlansPage() {
                 <Input
                   id="data_gb"
                   type="number"
-                  value={formData.data_gb}
+                  disabled={isUnlimited}
+                  value={isUnlimited ? "" : formData.data_gb}
                   onChange={(e) =>
                     setFormData({ ...formData, data_gb: Number(e.target.value) })
                   }
                   className={errors.data_gb ? "border-red-500" : ""}
                 />
                 {errors.data_gb && <p className="text-red-500 text-sm mt-1">{errors.data_gb}</p>}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Unlimited</Label>
+              <div className="col-span-3">
+                <Switch
+                  checked={isUnlimited}
+                  onCheckedChange={(checked) => {
+                    setIsUnlimited(checked)
+                    if (checked) {
+                      setFormData({ ...formData, data_gb: 0 }) // UI value
+                    }
+                  }}
+                />
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -519,7 +552,9 @@ export default function PlansPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmAdd}>Add Plan</Button>
+            <Button onClick={confirmAdd} disabled={isLoading}>
+              {isLoading ? "Adding..." : "Add Plan"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -608,13 +643,28 @@ export default function PlansPage() {
                 <Input
                   id="edit-data_gb"
                   type="number"
-                  value={formData.data_gb}
+                  disabled={isUnlimited}
+                  value={isUnlimited ? "" : formData.data_gb}
                   onChange={(e) =>
                     setFormData({ ...formData, data_gb: Number(e.target.value) })
                   }
                   className={errors.data_gb ? "border-red-500" : ""}
                 />
                 {errors.data_gb && <p className="text-red-500 text-sm mt-1">{errors.data_gb}</p>}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Unlimited</Label>
+              <div className="col-span-3">
+                <Switch
+                  checked={isUnlimited}
+                  onCheckedChange={(checked) => {
+                    setIsUnlimited(checked)
+                    if (checked) {
+                      setFormData({ ...formData, data_gb: 0 }) // UI value
+                    }
+                  }}
+                />
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -681,7 +731,9 @@ export default function PlansPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmEdit}>Save Changes</Button>
+            <Button onClick={confirmEdit} disabled={isLoading}>
+              { isLoading ? "Editing..." : "Edit Plan" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -698,7 +750,9 @@ export default function PlansPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
+              { isLoading ? "Deleting..." : "Delete" }
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

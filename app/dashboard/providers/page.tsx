@@ -197,125 +197,139 @@ export default function ProvidersPage() {
 
   const confirmAdd = async () => {
     if (!validateForm()) return
+    setIsLoading(true)
 
-    let file_url: string | null = null
-    if (logoFile) {
-      try {
-        file_url = await uploadLogo(logoFile)
-      } catch {
-        setFeedback({ tone: "destructive", title: "Logo upload failed" })
+    try{
+      let file_url: string | null = null
+      if (logoFile) {
+        try {
+          file_url = await uploadLogo(logoFile)
+        } catch {
+          setFeedback({ tone: "destructive", title: "Logo upload failed" })
+          return
+        }
+      }
+  
+      const res = await fetch("/api/providers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          category_id: formData.category_id,
+          file_url,
+        }),
+      })
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not add provider",
+          description: errorText || "Request failed",
+        })
         return
       }
-    }
-
-    const res = await fetch("/api/providers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: formData.name,
-        category_id: formData.category_id,
-        file_url,
-      }),
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
+  
+      const created = await res.json()
+      setProviders((prev) => [created, ...prev])
+      setIsAddDialogOpen(false)
       setFeedback({
-        tone: "destructive",
-        title: "Could not add provider",
-        description: errorText || "Request failed",
+        tone: "success",
+        title: "Provider added",
+        description: `${created.name} has been created.`,
       })
-      return
+    } finally {
+      setIsLoading(false)
     }
-
-    const created = await res.json()
-    setProviders((prev) => [created, ...prev])
-    setIsAddDialogOpen(false)
-    setFeedback({
-      tone: "success",
-      title: "Provider added",
-      description: `${created.name} has been created.`,
-    })
   }
 
   const confirmEdit = async () => {
     if (!editing) return
-
     if (!validateForm()) return
+    setIsLoading(true)
 
-    let newFileUrl: string | undefined
-    if (logoFile) {
-      try {
-        newFileUrl = await uploadLogo(logoFile)
-      } catch {
-        setFeedback({ tone: "destructive", title: "Logo upload failed" })
+    try{
+      let newFileUrl: string | undefined
+      if (logoFile) {
+        try {
+          newFileUrl = await uploadLogo(logoFile)
+        } catch {
+          setFeedback({ tone: "destructive", title: "Logo upload failed" })
+          return
+        }
+      }
+  
+      const payload: Partial<Provider> = {
+        name: formData.name,
+        category_id: formData.category_id,
+        is_active: formData.is_active,
+        ...(newFileUrl !== undefined && { file_url: newFileUrl }),
+      }
+  
+      const res = await fetch(`/api/providers/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+  
+      if (!res.ok) {
+        const text = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not update provider",
+          description: text || "Request failed",
+        })
         return
       }
-    }
-
-    const payload: Partial<Provider> = {
-      name: formData.name,
-      category_id: formData.category_id,
-      is_active: formData.is_active,
-      ...(newFileUrl !== undefined && { file_url: newFileUrl }),
-    }
-
-    const res = await fetch(`/api/providers/${editing.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const text = await res.text()
+  
+      const updated = await res.json()
+      setProviders((prev) => 
+        prev.map((p) => (p.id === editing.id ? updated : p))
+      )
+  
+      setIsEditDialogOpen(false)
+      setEditing(null)
       setFeedback({
-        tone: "destructive",
-        title: "Could not update provider",
-        description: text || "Request failed",
+        tone: "success",
+        title: "Provider updated",
+        description: `${updated.name} has been updated.`,
       })
-      return
+    } finally {
+      setIsLoading(false);
     }
-
-    const updated = await res.json()
-    setProviders((prev) => 
-      prev.map((p) => (p.id === editing.id ? updated : p))
-    )
-
-    setIsEditDialogOpen(false)
-    setEditing(null)
-    setFeedback({
-      tone: "success",
-      title: "Provider updated",
-      description: `${updated.name} has been updated.`,
-    })
   }
 
   const confirmDelete = async () => {
     if (!providerToDelete) return
-    
-    const res = await fetch(`/api/providers/${providerToDelete.id}`, {
-      method: "DELETE",
-    })
+    setIsLoading(true);
 
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not delete provider",
-        description: errorText || "Request failed",
+    try{
+      const res = await fetch(`/api/providers/${providerToDelete.id}`, {
+        method: "DELETE",
       })
-      return
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not delete provider",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const name = providerToDelete.name
+      setProviders((prev) => prev.filter((p) => p.id !== providerToDelete.id))
+      setIsDeleteDialogOpen(false)
+      setProviderToDelete(null)
+      setFeedback({
+        tone: "success",
+        title: "Provider deleted",
+        description: `${name} has been deleted.`,
+      })
+    } finally {
+      setIsLoading(false);
     }
-
-    const name = providerToDelete.name
-    setProviders((prev) => prev.filter((p) => p.id !== providerToDelete.id))
-    setIsDeleteDialogOpen(false)
-    setProviderToDelete(null)
-    setFeedback({
-      tone: "success",
-      title: "Provider deleted",
-      description: `${name} has been deleted.`,
-    })
   }
 
   const handleView = (provider: Provider) => {
@@ -431,7 +445,9 @@ export default function ProvidersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmAdd}>Add Provider</Button>
+            <Button onClick={confirmAdd} disabled={isLoading}>
+              { isLoading ? "Adding..." : "Add Provider" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -499,7 +515,9 @@ export default function ProvidersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmEdit}>Save Changes</Button>
+            <Button onClick={confirmEdit} disabled={isLoading}>
+              { isLoading ? "Saving Changes..." : "Save Changes" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -516,7 +534,9 @@ export default function ProvidersPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
+              { isLoading ? "Deleting..." : "Delete" }
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

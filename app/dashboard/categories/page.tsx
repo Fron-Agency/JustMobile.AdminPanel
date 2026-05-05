@@ -151,87 +151,96 @@ export default function CategoriesPage() {
 
   const confirmAdd = async () => {
     if (!validateForm()) return
+    setIsLoading(true)
 
-    const res = await fetch("/api/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not add category",
-        description: errorText || "Request failed",
+    try{
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       })
-      return
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not add category",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const created = await res.json()
+      setCategories((prev) => [created, ...prev])
+      setIsAddDialogOpen(false)
+      setFeedback({
+        tone: "success",
+        title: "Category added",
+        description: `${formData.name} has been created.`,
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    const created = await res.json()
-    setCategories((prev) => [created, ...prev])
-    setIsAddDialogOpen(false)
-    setFeedback({
-      tone: "success",
-      title: "Category added",
-      description: `${formData.name} has been created.`,
-    })
   }
 
   const confirmEdit = async () => {
     if (!editing) return
-
     if (!validateForm()) return
+    setIsLoading(true)
 
-    const payload: Partial<Category> = {
-      name: formData.name,
-      badge: formData.badge,
-      is_active: formData.is_active,
-    }
-
-    const res = await fetch(`/api/categories/${editing.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      setFeedback({
-        tone: "destructive",
-        title: "Could not add category",
-        description: errorText || "Request failed",
+    try {
+      const payload: Partial<Category> = {
+        name: formData.name,
+        badge: formData.badge,
+        is_active: formData.is_active,
+      }
+  
+      const res = await fetch(`/api/categories/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       })
-      return
+  
+      if (!res.ok) {
+        const errorText = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not add category",
+          description: errorText || "Request failed",
+        })
+        return
+      }
+  
+      const updated = await res.json()
+  
+      setCategories((prev) => prev.map((c) => (c.id === editing.id ? updated : c)))
+  
+      setIsEditDialogOpen(false)
+      setEditing(null)
+      setFeedback({
+        tone: "success",
+        title: "Category updated",
+        description: `${updated.name} has been updated.`,
+      })
+    } finally {
+      setIsLoading(false);
     }
-
-    const updated = await res.json()
-
-    setCategories((prev) => prev.map((c) => (c.id === editing.id ? updated : c)))
-
-    setIsEditDialogOpen(false)
-    setEditing(null)
-    setFeedback({
-      tone: "success",
-      title: "Category updated",
-      description: `${updated.name} has been updated.`,
-    })
   }
 
-  const confirmDelete = async () => {
-    if (!categoryToDelete) return
+  // const confirmDelete = async () => {
+  //   if (!categoryToDelete) return
 
-    await fetch(`/api/categories/${categoryToDelete.id}`, {
-        method: "DELETE",
-    })
+  //   await fetch(`/api/categories/${categoryToDelete.id}`, {
+  //       method: "DELETE",
+  //   })
 
-    setCategories((prev) =>
-        prev.filter((category) => category.id !== categoryToDelete.id)
-    )
+  //   setCategories((prev) =>
+  //       prev.filter((category) => category.id !== categoryToDelete.id)
+  //   )
 
-    setIsDeleteDialogOpen(false)
-    setCategoryToDelete(null)
-  }
+  //   setIsDeleteDialogOpen(false)
+  //   setCategoryToDelete(null)
+  // }
 
   const handleView = (category: Category) => {
     // For future expansion - maybe show category details or associated providers?
@@ -316,7 +325,9 @@ export default function CategoriesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmAdd}>Add Category</Button>
+            <Button onClick={confirmAdd} disabled={isLoading}>
+              { isLoading ? "Adding..." : "Add Category" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -365,7 +376,9 @@ export default function CategoriesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={confirmEdit}>Save Changes</Button>
+            <Button onClick={confirmEdit} disabled={isLoading}>
+              { isLoading ? "Saving Changes..." : "Save Changes" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
