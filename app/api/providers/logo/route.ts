@@ -1,10 +1,14 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { requireAuth } from "@/utils/supabase/require-auth"
 
 const BUCKET = "provider-logo"
 
 export async function POST(req: Request) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const supabase = await createClient(await cookies())
     const formData = await req.formData()

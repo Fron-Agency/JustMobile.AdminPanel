@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { PlanService } from "@/app/api/modules/plans/plans.service"
+import { requireAuth } from "@/utils/supabase/require-auth"
 import { z } from "zod"
 
 const updateFavoriteSchema = z.object({
@@ -10,6 +11,9 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { id } = await params
     const body = updateFavoriteSchema.parse(await req.json())

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { CategoryService } from "@/app/api/modules/categories/categories.service"
+import { requireAuth } from "@/utils/supabase/require-auth"
 import { z } from "zod"
 
 const updateActiveSchema = z.object({
@@ -10,6 +11,9 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { id } = await params
     const body = updateActiveSchema.parse(await req.json())

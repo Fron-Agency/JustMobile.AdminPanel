@@ -2,19 +2,24 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { PlanService } from "../modules/plans/plans.service"
 import { createPlanSchema } from "../modules/plans/plans.validation"
+import { requireAuth } from "@/utils/supabase/require-auth"
 
 export async function GET() {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   const plans = await PlanService.getAll()
   return Response.json(plans)
 }
 
 export async function POST(req: Request) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const body = await req.json()
     const parsed = createPlanSchema.parse(body)
-
     const plan = await PlanService.create(parsed)
-
     return NextResponse.json(plan, { status: 201 })
   } catch (error) {
     return NextResponse.json(
@@ -32,6 +37,9 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { id } = await params
     const body = updateFavoriteSchema.parse(await req.json())

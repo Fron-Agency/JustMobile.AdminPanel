@@ -1,6 +1,7 @@
 import { PartnerService } from "@/app/api/modules/partners/partners.service"
 import { NextResponse } from "next/server"
 import { createPartnerSchema } from "../modules/partners/partners.validation"
+import { requireAuth } from "@/utils/supabase/require-auth"
 
 export async function GET() {
   const partners = await PartnerService.getAll()
@@ -8,6 +9,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const body = await req.json()
     const parsed = createPartnerSchema.parse(body)

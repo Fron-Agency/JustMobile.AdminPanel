@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server"
 import { LeadService } from "@/app/api/modules/leads/leads.service"
 import { updateLeadSchema } from "@/app/api/modules/leads/leads.validation"
+import { requireAuth } from "@/utils/supabase/require-auth"
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { id } = await params
     const lead = await LeadService.getById(id)
@@ -22,6 +26,9 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { id } = await params
     const body = await req.json()
@@ -37,9 +44,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
   const { id } = await params
   await LeadService.delete(id)
   return Response.json({ success: true })
