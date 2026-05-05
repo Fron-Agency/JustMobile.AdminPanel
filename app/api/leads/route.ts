@@ -12,8 +12,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireAuth()
-  if (auth instanceof NextResponse) return auth
+  // const auth = await requireAuth()
+  // if (auth instanceof NextResponse) return auth
 
   try {
     const body = await req.json()
