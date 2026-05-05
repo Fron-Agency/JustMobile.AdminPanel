@@ -94,13 +94,17 @@ export default function LeadsPage() {
     setIsAddDialogOpen(true)
   }
 
+  
   const handleEdit = (lead: Lead) => {
     setFeedback(null)
     setEditing(lead)
+    
+    const address = Array.isArray(lead.address) ? lead.address[0] : lead.address
+
     setFormData({
       fullname: lead.fullname,
       email: lead.email,
-      phone: lead.phone,
+      phone: lead.phone ?? "",
       plan_id: lead.plan_id,
       file_url: lead.file_url,
       status: lead.status,
@@ -112,10 +116,10 @@ export default function LeadsPage() {
       child_date_of_birth: lead.child_date_of_birth ?? null,
     
       address: {
-        zip_code: lead.address?.zip_code ?? "",
-        city: lead.address?.city ?? "",
-        street: lead.address?.street ?? "",
-        number: lead.address?.number ?? "",
+        zip_code: address?.zip_code ?? "",
+        city: address?.city ?? "",
+        street: address?.street ?? "",
+        number: address?.number ?? "",
       },
     })
     setErrors({})
@@ -141,7 +145,9 @@ export default function LeadsPage() {
     {
       key: "phone",
       label: "Phone",
-      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+      render: (value) => (
+        <span className="text-muted-foreground text-sm">{value ?? "No Swiss number"}</span>
+      ),
     },
     {
       key: "plan_id",
@@ -150,6 +156,46 @@ export default function LeadsPage() {
         const plan = plans.find((p) => p.id === value)
         return <span className="text-muted-foreground text-sm">{plan?.name ?? "—"}</span>
       },
+    },
+    {
+      key: "address",
+      label: "Address",
+      render: (_value, item) => {
+        const address = Array.isArray(item.address) ? item.address[0] : item.address
+  
+        if (!address) {
+          return <span className="text-muted-foreground text-sm">—</span>
+        }
+  
+        return (
+          <span className="text-muted-foreground text-sm">
+            {[address.street, address.number, address.zip_code, address.city]
+              .filter(Boolean)
+              .join(" ")}
+          </span>
+        )
+      },
+    },
+    {
+      key: "date_of_birth",
+      label: "Date of Birth",
+      render: (value) => (
+        <span className="text-muted-foreground text-sm">{value ?? "—"}</span>
+      ),
+    },
+    {
+      key: "swiss_number",
+      label: "Swiss Number",
+      render: (value) => (
+        <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>
+      ),
+    },
+    {
+      key: "roaming_control",
+      label: "Roaming",
+      render: (value) => (
+        <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>
+      ),
     },
     {
       key: "status",
@@ -161,45 +207,13 @@ export default function LeadsPage() {
       ),
     },
     {
-      key: "created_at",
-      label: "Created",
-      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
-      hidden: true,
-    },
-  ]
-
-  const confirmAdd = async () => {
-    if (!validateForm()) return
-    setIsLoading(true)
-    try{
-      const res = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
-  
-      if (!res.ok) {
-        const errorText = await res.text()
-        setFeedback({
-          tone: "destructive",
-          title: "Could not add lead",
-          description: errorText || "Request failed",
-        })
-        return
-      }
-  
-      const created = await res.json()
-      setLeads((prev) => [created, ...prev])
-      setIsAddDialogOpen(false)
-      setFeedback({
-        tone: "success",
-        title: "Lead added",
-        description: `${created.fullname} has been created.`,
-      })
-    } finally {
-      setIsLoading(false)
+      key: "description",
+      label: "Description",
+      render: (value) => (
+        <span className="text-muted-foreground text-sm">{value}</span>
+      ),
     }
-  }
+  ]
 
   const confirmEdit = async () => {
     if (!editing) return
@@ -462,24 +476,8 @@ export default function LeadsPage() {
         isLoading={isLoading}
       />
 
-      {/* Add Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Lead</DialogTitle>
-            <DialogDescription>Add a new lead to the system.</DialogDescription>
-          </DialogHeader>
-          {formFields}
-          <DialogFooter>
-            <Button onClick={confirmAdd} disabled={isLoading}>
-              { isLoading ? "Adding..." : "Add Lead" }
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      {/* <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Lead</DialogTitle>
@@ -492,7 +490,7 @@ export default function LeadsPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       {/* Delete Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
