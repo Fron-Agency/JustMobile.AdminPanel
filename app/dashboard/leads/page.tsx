@@ -58,6 +58,8 @@ const emptyLead: Omit<Lead, "id" | "created_at"> = {
   },
 }
 
+const BUCKET = "leads-file"
+
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [plans, setPlans] = useState<Plan[]>([])
@@ -74,13 +76,16 @@ export default function LeadsPage() {
     title: string
     description?: string
   } | null>(null)
+  const [viewingLead, setViewingLead] = useState<Lead | null>(null)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
     if (!formData.fullname.trim()) newErrors.fullname = "Full name is required"
     if (!formData.email.trim()) newErrors.email = "Email is required"
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email address"
-    if (!formData.phone.trim()) newErrors.phone = "Phone is required"
+    // if (!formData.phone.trim()) newErrors.phone = "Phone is required"
     if (!formData.plan_id) newErrors.plan_id = "Plan is required"
     if (!formData.address?.zip_code?.trim()) newErrors.zip_code = "Zip code is required"
     if (!formData.address?.city?.trim()) newErrors.city = "City is required"
@@ -185,7 +190,7 @@ export default function LeadsPage() {
     },
     {
       key: "swiss_number",
-      label: "Swiss Number",
+      label: "Swiss No.",
       render: (value) => (
         <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>
       ),
@@ -212,6 +217,23 @@ export default function LeadsPage() {
       render: (value) => (
         <span className="text-muted-foreground text-sm">{value}</span>
       ),
+    },
+    {
+      key: "file_url",
+      label: "File",
+      render: (value, item) => {
+        if (!value) return <span className="text-muted-foreground text-sm">—</span>
+    
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleView(item)}
+          >
+            View
+          </Button>
+        )
+      },
     }
   ]
 
@@ -282,6 +304,23 @@ export default function LeadsPage() {
     }
   }
 
+  const handleView = async (lead: Lead) => {
+    setViewingLead(lead)
+    setIsViewDialogOpen(true)
+    setFilePreviewUrl(null)
+  
+    if (!lead.file_url) return
+  
+    const res = await fetch("/api/leads/file-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file_url: lead.file_url }),
+    })
+  
+    const data = await res.json()
+    setFilePreviewUrl(data.signedUrl)
+  }
+
   useEffect(() => {
     setIsLoading(true)
     Promise.all([fetch("/api/leads"), fetch("/api/plans")])
@@ -292,166 +331,6 @@ export default function LeadsPage() {
       })
       .finally(() => setIsLoading(false))
   }, [])
-
-  const formFields = (
-    <div className="grid gap-4 py-4">
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Full Name</Label>
-        <div className="col-span-3">
-          <Input
-            value={formData.fullname}
-            onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
-            className={errors.fullname ? "border-red-500" : ""}
-          />
-          {errors.fullname && <p className="text-red-500 text-sm mt-1">{errors.fullname}</p>}
-        </div>
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Email</Label>
-        <div className="col-span-3">
-          <Input
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className={errors.email ? "border-red-500" : ""}
-          />
-          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-        </div>
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Phone</Label>
-        <div className="col-span-3">
-          <Input
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className={errors.phone ? "border-red-500" : ""}
-          />
-          {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-        </div>
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Plan</Label>
-        <div className="col-span-3">
-          <Select value={formData.plan_id} onValueChange={(v) => setFormData({ ...formData, plan_id: v })}>
-            <SelectTrigger className={errors.plan_id ? "border-red-500" : ""}>
-              <SelectValue placeholder="Select plan" />
-            </SelectTrigger>
-            <SelectContent>
-              {plans.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.plan_id && <p className="text-red-500 text-sm mt-1">{errors.plan_id}</p>}
-        </div>
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Date of Birth</Label>
-        <div className="col-span-3">
-          <Input
-            type="date"
-            value={formData.date_of_birth ?? ""}
-            onChange={(e) =>
-              setFormData({ ...formData, date_of_birth: e.target.value || null })
-            }
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Child Date of Birth</Label>
-        <div className="col-span-3">
-          <Input
-            type="date"
-            value={formData.child_date_of_birth ?? ""}
-            onChange={(e) =>
-              setFormData({ ...formData, child_date_of_birth: e.target.value || null })
-            }
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Zip Code</Label>
-        <div className="col-span-3">
-          <Input
-            value={formData.address?.zip_code ?? ""}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                address: { ...formData.address, zip_code: e.target.value },
-              })
-            }
-            className={errors.zip_code ? "border-red-500" : ""}
-          />
-          {errors.zip_code && <p className="text-red-500 text-sm mt-1">{errors.zip_code}</p>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">City</Label>
-        <div className="col-span-3">
-          <Input
-            value={formData.address?.city ?? ""}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                address: { ...formData.address, city: e.target.value },
-              })
-            }
-            className={errors.city ? "border-red-500" : ""}
-          />
-          {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Street</Label>
-        <div className="col-span-3">
-          <Input
-            value={formData.address?.street ?? ""}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                address: { ...formData.address, street: e.target.value },
-              })
-            }
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Number</Label>
-        <div className="col-span-3">
-          <Input
-            value={formData.address?.number ?? ""}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                address: { ...formData.address, number: e.target.value },
-              })
-            }
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Status</Label>
-        <div className="col-span-3">
-          <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Lead["status"] })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="contacted">Contacted</SelectItem>
-              <SelectItem value="converted">Converted</SelectItem>
-              <SelectItem value="lost">Lost</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    </div>
-  )
 
   return (
     <>
@@ -475,6 +354,32 @@ export default function LeadsPage() {
         onDelete={handleDelete}
         isLoading={isLoading}
       />
+
+      {/* View File */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>View File</DialogTitle>
+            <DialogDescription>
+              {viewingLead?.fullname}'s uploaded file
+            </DialogDescription>
+          </DialogHeader>
+
+          {filePreviewUrl ? (
+            viewingLead?.file_url?.toLowerCase().endsWith(".pdf") ? (
+              <iframe src={filePreviewUrl} className="w-full h-[500px] rounded-lg border" />
+            ) : (
+              <img src={filePreviewUrl} className="max-h-[500px] rounded-lg border" alt="Lead file" />
+            )
+          ) : (
+            <p className="text-muted-foreground text-sm">No file preview available</p>
+          )}
+
+          <DialogFooter>
+            <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Dialog */}
       {/* <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
