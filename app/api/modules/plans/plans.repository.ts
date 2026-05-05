@@ -26,6 +26,7 @@ export const PlanRepository = {
     const { data, error } = await supabase
     .from("plans")
     .select(`
+      id
       name,
       price,
       data_gb,
@@ -50,6 +51,7 @@ export const PlanRepository = {
         : provider?.categories
     
       return {
+        id: row.id,
         name: row.name,
         price: row.price,
         data_gb: row.data_gb,

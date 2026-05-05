@@ -13,6 +13,7 @@ export type Plan = {
   }
 
   export type ExternalPlanDto = {
+    id: string
     name: string
     provider_name: string
     provider_file_url: string
