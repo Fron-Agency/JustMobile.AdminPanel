@@ -9,7 +9,7 @@ export type Lead = {
   id: string
   fullname: string
   email: string
-  phone: string
+  phone: string | null
   plan_id: string
   file_url: string | null
   status: "new" | "contacted" | "converted" | "lost"
@@ -19,6 +19,7 @@ export type Lead = {
   keep_swiss_number?: boolean | null
   roaming_control?: boolean | null
   child_date_of_birth?: string | null
+  description?: string | null
   address?: AddressDto
 }
 
