@@ -60,7 +60,6 @@ export default function LoginPage() {
     }
 
     router.push("/dashboard")
-    router.refresh()
   }
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -92,7 +91,6 @@ export default function LoginPage() {
     }
 
     router.push("/dashboard")
-    router.refresh()
   }
 
   return (
