@@ -28,9 +28,11 @@ import { Button } from "@/components/ui/button"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 import type { Lead } from "@/app/api/modules/leads/leads.type"
 import type { Plan } from "@/app/api/modules/plans/plans.type"
+import { Mail } from "lucide-react"
 
 const statusConfig: Record<Lead["status"], { label: string; className: string }> = {
   new: { label: "New", className: "bg-primary/10 text-primary border-primary/20" },
+  sent: { label: "Sent", className: "bg-primary/80 text-white border-primary/90" },
   contacted: { label: "Contacted", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
   converted: { label: "Converted", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
   lost: { label: "Lost", className: "bg-destructive/10 text-destructive border-destructive/20" },
@@ -234,6 +236,22 @@ export default function LeadsPage() {
           </Button>
         )
       },
+    },
+    {
+      key: "email_action",
+      label: "Email",
+      render: (_value, item) => (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => handleEmail(item)}
+          disabled={!item.email}
+          className="gap-1"
+        >
+          <Mail className="w-4 h-4" />
+          Email
+        </Button>
+      ),
     }
   ]
 
@@ -319,6 +337,10 @@ export default function LeadsPage() {
   
     const data = await res.json()
     setFilePreviewUrl(data.signedUrl)
+  }
+
+  const handleEmail = (lead: Lead) => {
+    // this will open a popup....
   }
 
   useEffect(() => {

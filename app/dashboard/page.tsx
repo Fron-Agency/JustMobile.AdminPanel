@@ -1,4 +1,4 @@
-import { PhoneCall, Package, Building2, TrendingUp, AlertCircle, CheckCircle2, Clock } from "lucide-react"
+import { PhoneCall, Package, Building2, TrendingUp, AlertCircle, CheckCircle2, Clock, Send } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { LeadService } from "@/app/api/modules/leads/leads.service"
@@ -7,6 +7,7 @@ import { ProviderService } from "@/app/api/modules/providers/providers.service"
 
 const leadStatusConfig = {
   new: { label: "New", color: "bg-primary/10 text-primary border-primary/20" },
+  sent: { label: "Sent", className: "bg-primary/80 text-white border-primary/90"},
   contacted: { label: "Contacted", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
   converted: { label: "Converted", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
   lost: { label: "Lost", color: "bg-destructive/10 text-destructive border-destructive/20" },
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
 
   const leadsByStatus = {
     new: leads.filter((l) => l.status === "new").length,
+    sent: leads.filter((l) => l.status === "sent").length,
     contacted: leads.filter((l) => l.status === "contacted").length,
     converted: leads.filter((l) => l.status === "converted").length,
     lost: leads.filter((l) => l.status === "lost").length,
@@ -142,6 +144,7 @@ export default async function DashboardPage() {
               ) : (
                 [
                   { label: "New", count: leadsByStatus.new, icon: Clock, color: "text-primary" },
+                  { label: "Sent", count: leadsByStatus.sent, icon: Send, color: "text-primary" },
                   { label: "Contacted", count: leadsByStatus.contacted, icon: AlertCircle, color: "text-amber-500" },
                   { label: "Converted", count: leadsByStatus.converted, icon: CheckCircle2, color: "text-emerald-500" },
                   { label: "Lost", count: leadsByStatus.lost, icon: AlertCircle, color: "text-destructive" },

@@ -12,7 +12,7 @@ export type Lead = {
   phone: string | null
   plan_id: string
   file_url: string | null
-  status: "new" | "contacted" | "converted" | "lost"
+  status: "new" | "sent" | "contacted" | "converted" | "lost"
   created_at: string
   date_of_birth?: string | null
   swiss_number?: boolean | null
