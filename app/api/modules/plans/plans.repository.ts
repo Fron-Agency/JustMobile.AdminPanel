@@ -34,28 +34,38 @@ export const PlanRepository = {
       discount,
       is_favorite,
       countries(name),
-      providers(name, file_url),
-      categories(name)
+      providers(
+        name,
+        file_url,
+        categories(name)
+      )
     `)
 
     if (error) throw new Error(error.message)
 
-    return (data ?? []).map((row: any) => ({
-      name: row.name,
-      price: row.price,
-      data_gb: row.data_gb,
-      network_technology: row.network_technology,
-      contract_length: row.contract_length,
-      discount: row.discount,
-      is_favorite: row.is_favorite,
-  
-      provider_name: row.providers?.name ?? "",
-      provider_file_url: row.providers?.file_url ?? "",
-  
-      category_name: row.categories?.name ?? "",
-  
-      countries: row.countries?.map((c: any) => c.name) ?? [],
-    }))
+    return (data ?? []).map((row: any) => {
+      const provider = Array.isArray(row.providers) ? row.providers[0] : row.providers
+      const category = Array.isArray(provider?.categories)
+        ? provider.categories[0]
+        : provider?.categories
+    
+      return {
+        name: row.name,
+        price: row.price,
+        data_gb: row.data_gb,
+        network_technology: row.network_technology,
+        contract_length: row.contract_length,
+        discount: row.discount,
+        is_favorite: row.is_favorite,
+    
+        provider_name: provider?.name ?? "",
+        provider_file_url: provider?.file_url ?? "",
+    
+        category_name: category?.name ?? "",
+    
+        countries: row.countries?.map((c: any) => c.name) ?? [],
+      }
+    })
   },
 
   async findById(id: string): Promise<Plan | null> {
