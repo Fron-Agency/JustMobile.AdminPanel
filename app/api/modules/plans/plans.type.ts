@@ -1,16 +1,18 @@
 export type Plan = {
-    id: string
-    name: string
-    provider_id: string
-    provider_name: string
-    price: number
-    data_gb: number | null
-    network_technology: string
-    contract_length: number
-    discount: number
-    is_favorite: boolean
-    countries: string[]
-  }
+  id: string
+  name: string
+  provider_id: string
+  provider_name: string
+  provider_file_url?: string
+  category_name: string
+  price: number
+  data_gb: number | null
+  network_technology: string
+  contract_length: number
+  discount: number
+  is_favorite: boolean
+  countries: string[]
+}
 
   export type ExternalPlanDto = {
     id: string

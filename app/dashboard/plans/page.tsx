@@ -159,6 +159,11 @@ export default function PlansPage() {
     render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
   },
   {
+    key: "category_name",
+    label: "Category",
+    render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+  },
+  {
     key: "price",
     label: "Price",
     render: (value) => <span className="text-muted-foreground text-sm">CHF {value}/mo</span>,

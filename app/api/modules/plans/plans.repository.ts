@@ -7,17 +7,30 @@ async function client() {
 }
 
 export const PlanRepository = {
-  async findAll(): Promise<Plan[]> {
+  async findAll(): Promise<ExternalPlanDto[]> {
     const supabase = await client()
+
     const { data, error } = await supabase
       .from("plans")
-      .select(`*, countries(name), providers(name)`)
+      .select(`
+        *,
+        countries(name),
+        providers(
+          id,
+          name,
+          file_url,
+          categories(name)
+        )
+      `)
 
     if (error) throw new Error(error.message)
-    return data.map(({ providers: providerObj, countries: countriesArr, ...rest }: any) => ({
+
+    return data.map(({ providers, countries, ...rest }: any) => ({
       ...rest,
-      provider_name: providerObj?.name ?? "",
-      countries: countriesArr.map((c: any) => c.name),
+      provider_name: providers?.name ?? "",
+      provider_file_url: providers?.file_url ?? "",
+      category_name: providers?.categories?.name ?? "",
+      countries: countries?.map((c: any) => c.name) ?? [],
     }))
   },
 

@@ -4,7 +4,7 @@ import { PlanRepository } from "./plans.repository"
 import type { ExternalPlanDto, Plan } from "./plans.type"
 
 export const PlanService = {
-  async getAll(): Promise<Plan[]> {
+  async getAll(): Promise<ExternalPlanDto[]> {
     return PlanRepository.findAll()
   },
 
