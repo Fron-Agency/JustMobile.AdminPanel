@@ -6,23 +6,19 @@ async function client() {
   return createClient(await cookies())
 }
 
+const LEAD_SELECT = `
+  *,
+  address(zip_code, city, street, number),
+  documents(id, file_url)
+`
+
 export const LeadRepository = {
   async findAll(): Promise<Lead[]> {
     const supabase = await client()
-  
     const { data, error } = await supabase
       .from("leads")
-      .select(`
-        *,
-        address(
-          zip_code,
-          city,
-          street,
-          number
-        )
-      `)
+      .select(LEAD_SELECT)
       .order("created_at", { ascending: false })
-  
     if (error) throw new Error(error.message)
     return data
   },
@@ -31,7 +27,7 @@ export const LeadRepository = {
     const supabase = await client()
     const { data, error } = await supabase
       .from("leads")
-      .select("*")
+      .select(LEAD_SELECT)
       .eq("id", id)
       .maybeSingle()
     if (error) throw new Error(error.message)
@@ -40,19 +36,23 @@ export const LeadRepository = {
 
   async create(payload: CreateLeadDto): Promise<Lead> {
     const supabase = await client()
-  
-    const { address, ...leadPayload } = payload
-  
+    const { address, documents, ...leadPayload } = payload
+
     const { data, error } = await supabase
       .from("leads")
       .insert([{ ...leadPayload, created_at: new Date().toISOString() }])
       .select()
       .single()
-  
     if (error) throw new Error(error.message)
-  
+
     await LeadRepository.insertAddress(data.id, address)
-  
+
+    if (documents && documents.length > 0) {
+      await Promise.all(
+        documents.map((fileUrl: string) => LeadRepository.insertDocument(data.id, fileUrl))
+      )
+    }
+
     return data
   },
 
@@ -62,7 +62,7 @@ export const LeadRepository = {
       .from("leads")
       .update(payload)
       .eq("id", id)
-      .select()
+      .select(LEAD_SELECT)
       .single()
     if (error) throw new Error(error.message)
     return data
@@ -76,17 +76,25 @@ export const LeadRepository = {
 
   async insertAddress(leadId: string, address: AddressDto): Promise<void> {
     const supabase = await client()
-  
-    const { error } = await supabase.from("address").insert([
-      {
-        lead_id: leadId,
-        zip_code: address.zip_code,
-        city: address.city,
-        street: address.street ?? null,
-        number: address.number ?? null,
-      },
-    ])
-  
+    const { error } = await supabase.from("address").insert([{
+      lead_id: leadId,
+      zip_code: address.zip_code,
+      city: address.city,
+      street: address.street ?? null,
+      number: address.number ?? null,
+    }])
     if (error) throw new Error(error.message)
-  }
+  },
+
+  async insertDocument(leadId: string, fileUrl: string): Promise<void> {
+    const supabase = await client()
+    const { error } = await supabase.from("documents").insert([{ lead_id: leadId, file_url: fileUrl }])
+    if (error) throw new Error(error.message)
+  },
+
+  async deleteDocument(documentId: string): Promise<void> {
+    const supabase = await client()
+    const { error } = await supabase.from("documents").delete().eq("id", documentId)
+    if (error) throw new Error(error.message)
+  },
 }

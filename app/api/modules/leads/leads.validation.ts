@@ -12,13 +12,7 @@ export const createLeadSchema = z.object({
 
   plan_id: z.string().min(1, "Plan is required"),
 
-  file_url: z
-    .string()
-    .nullable()
-    .optional()
-    .default(null),
-
-  status: z.enum(["new", "contacted", "converted", "lost"]).default("new"),
+  status: z.enum(["new", "sent", "contacted", "converted", "lost"]).default("new"),
 
   date_of_birth: z
     .string()

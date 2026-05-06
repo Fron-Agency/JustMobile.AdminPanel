@@ -5,13 +5,18 @@ export type AddressDto = {
   number?: string | null
 }
 
+export type Document = {
+  id: string
+  file_url: string
+  lead_id: string
+}
+
 export type Lead = {
   id: string
   fullname: string
   email: string
   phone: string | null
   plan_id: string
-  file_url: string | null
   status: "new" | "sent" | "contacted" | "converted" | "lost"
   created_at: string
   date_of_birth?: string | null
@@ -21,10 +26,12 @@ export type Lead = {
   child_date_of_birth?: string | null
   description?: string | null
   address?: AddressDto
+  documents?: Document[]
 }
 
-export type CreateLeadDto = Omit<Lead, "id" | "created_at" | "address"> & {
+export type CreateLeadDto = Omit<Lead, "id" | "created_at" | "address" | "documents"> & {
   address: AddressDto
+  documents?: string[]
 }
 
 export type UpdateLeadDto = Partial<CreateLeadDto>

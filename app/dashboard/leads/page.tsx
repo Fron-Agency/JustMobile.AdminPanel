@@ -10,25 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
-import type { Lead } from "@/app/api/modules/leads/leads.type"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import type { Lead, Document } from "@/app/api/modules/leads/leads.type"
 import type { Plan } from "@/app/api/modules/plans/plans.type"
-import { Mail } from "lucide-react"
+import type { User } from "@/app/api/modules/users/users.type"
+import { Mail, Loader2, FileText } from "lucide-react"
 
 const statusConfig: Record<Lead["status"], { label: string; className: string }> = {
   new: { label: "New", className: "bg-primary/10 text-primary border-primary/20" },
@@ -38,105 +29,27 @@ const statusConfig: Record<Lead["status"], { label: string; className: string }>
   lost: { label: "Lost", className: "bg-destructive/10 text-destructive border-destructive/20" },
 }
 
-const emptyLead: Omit<Lead, "id" | "created_at"> = {
-  fullname: "",
-  email: "",
-  phone: "",
-  plan_id: "",
-  file_url: null,
-  status: "new",
-
-  date_of_birth: null,
-  swiss_number: false,
-  keep_swiss_number: false,
-  roaming_control: false,
-  child_date_of_birth: null,
-
-  address: {
-    zip_code: "",
-    city: "",
-    street: "",
-    number: "",
-  },
-}
-
-const BUCKET = "leads-file"
-
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [plans, setPlans] = useState<Plan[]>([])
-  const [editing, setEditing] = useState<Lead | null>(null)
-  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [formData, setFormData] = useState(emptyLead)
+  const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [errors, setErrors] = useState<Record<string, string>>({})
   const [feedback, setFeedback] = useState<{
     tone: FeedbackAlertTone
     title: string
     description?: string
   } | null>(null)
-  const [viewingLead, setViewingLead] = useState<Lead | null>(null)
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
-  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null)
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-    if (!formData.fullname.trim()) newErrors.fullname = "Full name is required"
-    if (!formData.email.trim()) newErrors.email = "Email is required"
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email address"
-    // if (!formData.phone.trim()) newErrors.phone = "Phone is required"
-    if (!formData.plan_id) newErrors.plan_id = "Plan is required"
-    if (!formData.address?.zip_code?.trim()) newErrors.zip_code = "Zip code is required"
-    if (!formData.address?.city?.trim()) newErrors.city = "City is required"
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  const [docsLead, setDocsLead] = useState<Lead | null>(null)
+  const [isDocsDialogOpen, setIsDocsDialogOpen] = useState(false)
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false)
 
-  const handleAdd = () => {
-    setFormData(emptyLead)
-    setErrors({})
-    setIsAddDialogOpen(true)
-  }
-
-  
-  const handleEdit = (lead: Lead) => {
-    setFeedback(null)
-    setEditing(lead)
-    
-    const address = Array.isArray(lead.address) ? lead.address[0] : lead.address
-
-    setFormData({
-      fullname: lead.fullname,
-      email: lead.email,
-      phone: lead.phone ?? "",
-      plan_id: lead.plan_id,
-      file_url: lead.file_url,
-      status: lead.status,
-    
-      date_of_birth: lead.date_of_birth ?? null,
-      swiss_number: lead.swiss_number ?? false,
-      keep_swiss_number: lead.keep_swiss_number ?? false,
-      roaming_control: lead.roaming_control ?? false,
-      child_date_of_birth: lead.child_date_of_birth ?? null,
-    
-      address: {
-        zip_code: address?.zip_code ?? "",
-        city: address?.city ?? "",
-        street: address?.street ?? "",
-        number: address?.number ?? "",
-      },
-    })
-    setErrors({})
-    setIsEditDialogOpen(true)
-  }
-
-  const handleDelete = (lead: Lead) => {
-    setLeadToDelete(lead)
-    setIsDeleteDialogOpen(true)
-  }
+  const [emailLead, setEmailLead] = useState<Lead | null>(null)
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false)
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  const [emailMessage, setEmailMessage] = useState("")
+  const [isSending, setIsSending] = useState(false)
 
   const columns: Column<Lead>[] = [
     {
@@ -153,7 +66,7 @@ export default function LeadsPage() {
       key: "phone",
       label: "Phone",
       render: (value) => (
-        <span className="text-muted-foreground text-sm">{value ?? "No Swiss number"}</span>
+        <span className="text-muted-foreground text-sm">{value ?? "—"}</span>
       ),
     },
     {
@@ -169,16 +82,10 @@ export default function LeadsPage() {
       label: "Address",
       render: (_value, item) => {
         const address = Array.isArray(item.address) ? item.address[0] : item.address
-  
-        if (!address) {
-          return <span className="text-muted-foreground text-sm">—</span>
-        }
-  
+        if (!address) return <span className="text-muted-foreground text-sm">—</span>
         return (
           <span className="text-muted-foreground text-sm">
-            {[address.street, address.number, address.zip_code, address.city]
-              .filter(Boolean)
-              .join(" ")}
+            {[address.street, address.number, address.zip_code, address.city].filter(Boolean).join(" ")}
           </span>
         )
       },
@@ -186,23 +93,17 @@ export default function LeadsPage() {
     {
       key: "date_of_birth",
       label: "Date of Birth",
-      render: (value) => (
-        <span className="text-muted-foreground text-sm">{value ?? "—"}</span>
-      ),
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "swiss_number",
       label: "Swiss No.",
-      render: (value) => (
-        <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>
-      ),
+      render: (value) => <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>,
     },
     {
       key: "roaming_control",
       label: "Roaming",
-      render: (value) => (
-        <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>
-      ),
+      render: (value) => <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>,
     },
     {
       key: "status",
@@ -216,23 +117,18 @@ export default function LeadsPage() {
     {
       key: "description",
       label: "Description",
-      render: (value) => (
-        <span className="text-muted-foreground text-sm">{value}</span>
-      ),
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
-      key: "file_url",
-      label: "File",
-      render: (value, item) => {
-        if (!value) return <span className="text-muted-foreground text-sm">—</span>
-    
+      key: "documents",
+      label: "Documents",
+      render: (_value, item) => {
+        const count = item.documents?.length ?? 0
+        if (count === 0) return <span className="text-muted-foreground text-sm">—</span>
         return (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleView(item)}
-          >
-            View
+          <Button size="sm" variant="outline" onClick={() => handleViewDocs(item)} className="gap-1">
+            <FileText className="w-4 h-4" />
+            {count} {count === 1 ? "file" : "files"}
           </Button>
         )
       },
@@ -240,116 +136,129 @@ export default function LeadsPage() {
     {
       key: "email_action",
       label: "Email",
-      render: (_value, item) => (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => handleEmail(item)}
-          disabled={!item.email}
-          className="gap-1"
-        >
-          <Mail className="w-4 h-4" />
-          Email
-        </Button>
-      ),
-    }
+      render: (_value, item) => {
+        if (item.status === "sent") return null
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleEmail(item)}
+            disabled={!item.email}
+            className="gap-1"
+          >
+            <Mail className="w-4 h-4" />
+            Email
+          </Button>
+        )
+      },
+    },
   ]
 
-  const confirmEdit = async () => {
-    if (!editing) return
-    if (!validateForm()) return
-    setIsLoading(true)
+  const handleViewDocs = async (lead: Lead) => {
+    setDocsLead(lead)
+    setSignedUrls({})
+    setIsDocsDialogOpen(true)
 
-    try{
-      const res = await fetch(`/api/leads/${editing.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
-  
-      if (!res.ok) {
-        const errorText = await res.text()
-        setFeedback({
-          tone: "destructive",
-          title: "Could not update lead",
-          description: errorText || "Request failed",
-        })
-        return
-      }
-  
-      const updated = await res.json()
-      setLeads((prev) => prev.map((l) => (l.id === editing.id ? updated : l)))
-      setIsEditDialogOpen(false)
-      setEditing(null)
-      setFeedback({
-        tone: "success",
-        title: "Lead updated",
-        description: `${updated.fullname} has been updated.`,
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    const docs = lead.documents ?? []
+    if (docs.length === 0) return
 
-  const confirmDelete = async () => {
-    if (!leadToDelete) return
-    setIsLoading(true)
-
+    setIsLoadingDocs(true)
     try {
-      const res = await fetch(`/api/leads/${leadToDelete.id}`, { method: "DELETE" })
-
-      if (!res.ok) {
-        const errorText = await res.text()
-        setFeedback({
-          tone: "destructive",
-          title: "Could not delete lead",
-          description: errorText || "Request failed",
-        })
-        return
-      }
-  
-      const name = leadToDelete.fullname
-      setLeads((prev) => prev.filter((l) => l.id !== leadToDelete.id))
-      setIsDeleteDialogOpen(false)
-      setLeadToDelete(null)
-      setFeedback({
-        tone: "success",
-        title: "Lead deleted",
-        description: `${name} has been removed.`,
-      })
+      const results = await Promise.all(
+        docs.map((doc) =>
+          fetch("/api/leads/file-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ file_url: doc.file_url }),
+          }).then((r) => r.json().then((d) => ({ id: doc.id, signedUrl: d.signedUrl })))
+        )
+      )
+      const map: Record<string, string> = {}
+      results.forEach(({ id, signedUrl }) => { map[id] = signedUrl })
+      setSignedUrls(map)
     } finally {
-      setIsLoading(false)
+      setIsLoadingDocs(false)
     }
-  }
-
-  const handleView = async (lead: Lead) => {
-    setViewingLead(lead)
-    setIsViewDialogOpen(true)
-    setFilePreviewUrl(null)
-  
-    if (!lead.file_url) return
-  
-    const res = await fetch("/api/leads/file-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ file_url: lead.file_url }),
-    })
-  
-    const data = await res.json()
-    setFilePreviewUrl(data.signedUrl)
   }
 
   const handleEmail = (lead: Lead) => {
-    // this will open a popup....
+    setEmailLead(lead)
+    setSelectedUserIds([])
+    setEmailMessage("")
+    setIsEmailDialogOpen(true)
+  }
+
+  const toggleUser = (userId: string) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    )
+  }
+
+  const handleSendEmail = async () => {
+    if (!emailLead || selectedUserIds.length === 0) return
+
+    const recipients = users
+      .filter((u) => selectedUserIds.includes(u.id))
+      .map((u) => u.email)
+
+    const plan = plans.find((p) => p.id === emailLead.plan_id)
+
+    setIsSending(true)
+    try {
+      const res = await fetch("/api/leads/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipients,
+          leadId: emailLead.id,
+          leadName: emailLead.fullname,
+          leadEmail: emailLead.email,
+          leadPhone: emailLead.phone,
+          leadPlan: plan?.name,
+          leadAddress: Array.isArray(emailLead.address) ? emailLead.address[0] : emailLead.address,
+          leadDateOfBirth: emailLead.date_of_birth,
+          leadSwissNumber: emailLead.swiss_number,
+          leadRoaming: emailLead.roaming_control,
+          leadDescription: emailLead.description,
+          message: emailMessage.trim() || undefined,
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.message || "Failed to send email")
+      }
+
+      const { lead: updatedLead } = await res.json()
+      setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)))
+
+      setIsEmailDialogOpen(false)
+      setFeedback({
+        tone: "success",
+        title: "Email sent",
+        description: `Lead info for ${emailLead.fullname} sent to ${recipients.length} recipient${recipients.length > 1 ? "s" : ""}.`,
+      })
+    } catch (error) {
+      setFeedback({
+        tone: "destructive",
+        title: "Failed to send email",
+        description: error instanceof Error ? error.message : "Something went wrong",
+      })
+    } finally {
+      setIsSending(false)
+    }
   }
 
   useEffect(() => {
     setIsLoading(true)
-    Promise.all([fetch("/api/leads"), fetch("/api/plans")])
-      .then(([leadsRes, plansRes]) => Promise.all([leadsRes.json(), plansRes.json()]))
-      .then(([leadsData, plansData]) => {
+    Promise.all([fetch("/api/leads"), fetch("/api/plans"), fetch("/api/users")])
+      .then(([leadsRes, plansRes, usersRes]) =>
+        Promise.all([leadsRes.json(), plansRes.json(), usersRes.json()])
+      )
+      .then(([leadsData, plansData, usersData]) => {
         setLeads(leadsData)
         setPlans(plansData)
+        setUsers(usersData)
       })
       .finally(() => setIsLoading(false))
   }, [])
@@ -366,76 +275,151 @@ export default function LeadsPage() {
           />
         </div>
       ) : null}
+
       <DataTable
         data={leads}
         columns={columns}
         title="Leads"
         searchPlaceholder="Search leads..."
         searchFields={["fullname", "email", "phone"]}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
         isLoading={isLoading}
       />
 
-      {/* View File */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent>
+      {/* Documents Dialog */}
+      <Dialog open={isDocsDialogOpen} onOpenChange={setIsDocsDialogOpen}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>View File</DialogTitle>
+            <DialogTitle>Documents</DialogTitle>
             <DialogDescription>
-              {viewingLead?.fullname}'s uploaded file
+              {docsLead?.fullname}'s uploaded documents
             </DialogDescription>
           </DialogHeader>
 
-          {filePreviewUrl ? (
-            viewingLead?.file_url?.toLowerCase().endsWith(".pdf") ? (
-              <iframe src={filePreviewUrl} className="w-full h-[500px] rounded-lg border" />
-            ) : (
-              <img src={filePreviewUrl} className="max-h-[500px] rounded-lg border" alt="Lead file" />
-            )
+          {isLoadingDocs ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
           ) : (
-            <p className="text-muted-foreground text-sm">No file preview available</p>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+              {(docsLead?.documents ?? []).map((doc: Document, index: number) => {
+                const url = signedUrls[doc.id]
+                const isPdf = doc.file_url.toLowerCase().endsWith(".pdf")
+                return (
+                  <div key={doc.id} className="border rounded-lg overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-2 bg-muted/40 border-b">
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Document {index + 1}
+                      </span>
+                      {url && (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Open in new tab
+                        </a>
+                      )}
+                    </div>
+                    {url ? (
+                      isPdf ? (
+                        <iframe src={url} className="w-full h-64" />
+                      ) : (
+                        <img src={url} alt={`Document ${index + 1}`} className="w-full object-contain max-h-64" />
+                      )
+                    ) : (
+                      <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
+                        Preview unavailable
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           )}
 
           <DialogFooter>
-            <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
+            <Button onClick={() => setIsDocsDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
-      {/* <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+      {/* Email Dialog */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Lead</DialogTitle>
-            <DialogDescription>Update lead information.</DialogDescription>
+            <DialogTitle>Send Lead by Email</DialogTitle>
+            <DialogDescription>
+              Send <span className="font-medium text-foreground">{emailLead?.fullname}</span>'s lead info to selected users.
+            </DialogDescription>
           </DialogHeader>
-          {formFields}
+
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Recipients</Label>
+              {users.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No users found.</p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {users.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-3 rounded-md border px-3 py-2 cursor-pointer hover:bg-muted/50"
+                      onClick={() => toggleUser(user.id)}
+                    >
+                      <Checkbox
+                        checked={selectedUserIds.includes(user.id)}
+                        onCheckedChange={() => toggleUser(user.id)}
+                      />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-medium truncate">{user.fullname}</span>
+                        <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="email-message" className="text-sm font-medium mb-2 block">
+                Message <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Textarea
+                id="email-message"
+                placeholder="Add a note to include with the lead info..."
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
           <DialogFooter>
-            <Button onClick={confirmEdit} disabled={isLoading}>
-              { isLoading ? "Saving Changes..." : "Save Changes" }
+            <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendEmail}
+              disabled={selectedUserIds.length === 0 || isSending}
+              className="gap-2"
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4" />
+                  Send to {selectedUserIds.length > 0 ? `${selectedUserIds.length} ` : ""}
+                  {selectedUserIds.length === 1 ? "recipient" : "recipients"}
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog> */}
-
-      {/* Delete Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Lead</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {leadToDelete?.fullname}? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
-              { isLoading ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      </Dialog>
     </>
   )
 }
