@@ -44,6 +44,8 @@ export const createLeadSchema = z.object({
     .optional()
     .default(null),
 
+  is_child_order: z.boolean().default(false),
+
   description: z
     .string()
     .nullable()

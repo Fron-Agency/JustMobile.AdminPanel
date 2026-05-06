@@ -24,6 +24,7 @@ export type Lead = {
   keep_swiss_number?: boolean | null
   roaming_control?: boolean | null
   child_date_of_birth?: string | null
+  is_child_order: boolean
   description?: string | null
   address?: AddressDto
   documents?: Document[]

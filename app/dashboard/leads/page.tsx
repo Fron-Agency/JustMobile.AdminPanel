@@ -115,6 +115,11 @@ export default function LeadsPage() {
       ),
     },
     {
+      key: "is_child_order",
+      label: "Child Order",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>,
+    },
+    {
       key: "description",
       label: "Description",
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
