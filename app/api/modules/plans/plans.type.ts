@@ -1,3 +1,5 @@
+import { MenuProduct } from "../categories/categories.type"
+
 export type Plan = {
   id: string
   name: string
@@ -27,6 +29,7 @@ export type Plan = {
     is_favorite: boolean
     countries: string[]
     category_name: string
+    products: MenuProduct[] | null
   }
   
   export type CreatePlanDto = {

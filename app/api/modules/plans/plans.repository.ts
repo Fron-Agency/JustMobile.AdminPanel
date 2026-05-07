@@ -52,6 +52,27 @@ export const PlanRepository = {
         name,
         file_url,
         categories(name)
+      ),
+      products(
+        id,
+        name,
+        brand,
+        model,
+        description,
+        base_price,
+        is_active,
+        products_colors(
+          id,
+          name,
+          hex_code,
+          is_active,
+          products_photos(
+            id,
+            file_url,
+            is_primary,
+            sort_order
+          )
+        )
       )
     `)
 
@@ -62,7 +83,7 @@ export const PlanRepository = {
       const category = Array.isArray(provider?.categories)
         ? provider.categories[0]
         : provider?.categories
-    
+
       return {
         id: row.id,
         name: row.name,
@@ -72,13 +93,37 @@ export const PlanRepository = {
         contract_length: row.contract_length,
         discount: row.discount,
         is_favorite: row.is_favorite,
-    
+
         provider_name: provider?.name ?? "",
         provider_file_url: provider?.file_url ?? "",
-    
+
         category_name: category?.name ?? "",
-    
+
         countries: row.countries?.map((c: any) => c.name) ?? [],
+
+        products: (row.products ?? []).map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          brand: p.brand,
+          model: p.model,
+          description: p.description ?? null,
+          base_price: p.base_price,
+          is_active: p.is_active,
+          products_colors: (p.products_colors ?? []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            hex_code: c.hex_code,
+            is_active: c.is_active,
+            products_photos: (c.products_photos ?? [])
+              .sort((a: any, b: any) => a.sort_order - b.sort_order)
+              .map((ph: any) => ({
+                id: ph.id,
+                file_url: ph.file_url,
+                is_primary: ph.is_primary,
+                sort_order: ph.sort_order,
+              })),
+          })),
+        })),
       }
     })
   },
