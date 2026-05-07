@@ -21,14 +21,44 @@ export const CategoryRepository = {
     const supabase = await client()
     const { data, error } = await supabase
       .from("categories")
-      .select(`*,
+      .select(`
+        *,
         providers (
           id,
           name,
           file_url,
           is_active,
           plans (
-            *
+            id,
+            provider_id,
+            name,
+            price,
+            data_gb,
+            network_technology,
+            contract_length,
+            discount,
+            is_favorite,
+            products (
+              id,
+              name,
+              brand,
+              model,
+              description,
+              base_price,
+              is_active,
+              products_colors (
+                id,
+                name,
+                hex_code,
+                is_active,
+                products_photos (
+                  id,
+                  file_url,
+                  is_primary,
+                  sort_order
+                )
+              )
+            )
           )
         )
       `)
