@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import type { Lead, CreateLeadDto, UpdateLeadDto, AddressDto } from "./leads.type"
+import type { Lead, CreateLeadDto, UpdateLeadDto, AddressDto, LeadWithRelations } from "./leads.type"
 
 async function client() {
   return createClient(await cookies())
@@ -21,6 +21,74 @@ export const LeadRepository = {
       .order("created_at", { ascending: false })
     if (error) throw new Error(error.message)
     return data
+  },
+
+  async findAllLeadsWithRelations(): Promise<LeadWithRelations[]> {
+    const supabase = await client()
+
+    const { data, error } = await supabase
+      .from("leads")
+      .select(`
+        *,
+        address (
+          *
+        ),
+        plans (
+          id,
+          name,
+          price,
+          data_gb,
+          network_technology,
+          contract_length,
+          discount,
+          is_favorite,
+
+          providers (
+            name,
+            file_url,
+            categories (
+              name
+            )
+          ),
+
+          countries (
+            name
+          ),
+
+          products (
+            id,
+            name,
+            brand,
+            model,
+            description,
+            base_price,
+            is_active,
+
+            products_colors (
+              id,
+              name,
+              hex_code,
+              is_active,
+
+              products_photos (
+                id,
+                file_url,
+                is_primary,
+                sort_order
+              )
+            )
+          )
+        )
+      `)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return data.map((item: any) => ({
+      ...item
+    }))
   },
 
   async findById(id: string): Promise<Lead | null> {

@@ -6,6 +6,10 @@ export const LeadService = {
   async getAll(): Promise<Lead[]> {
     return LeadRepository.findAll()
   },
+  
+  async getAllLeadsWithRelations() {
+    return LeadRepository.findAllLeadsWithRelations()
+  },
 
   async getById(id: string): Promise<Lead> {
     const lead = await LeadRepository.findById(id)

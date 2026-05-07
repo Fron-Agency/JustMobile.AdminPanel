@@ -7,7 +7,7 @@ export async function GET() {
   const auth = await requireAuth()
   if (auth instanceof NextResponse) return auth
 
-  const leads = await LeadService.getAll()
+  const leads = await LeadService.getAllLeadsWithRelations()
   return Response.json(leads)
 }
 

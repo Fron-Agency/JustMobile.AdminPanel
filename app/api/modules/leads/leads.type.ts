@@ -1,3 +1,5 @@
+import { ExternalPlanDto } from "../plans/plans.type"
+
 export type AddressDto = {
   zip_code: string
   city: string
@@ -29,6 +31,10 @@ export type Lead = {
   address?: AddressDto
   documents?: Document[]
   product_color_id?: string | null
+}
+
+export type LeadWithRelations =  Lead & {
+  plan : ExternalPlanDto
 }
 
 export type CreateLeadDto = Omit<Lead, "id" | "created_at" | "address" | "documents"> & {

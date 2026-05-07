@@ -16,12 +16,21 @@ import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import type { Lead, Document } from "@/app/api/modules/leads/leads.type"
-import type { Plan } from "@/app/api/modules/plans/plans.type"
+import type { LeadWithRelations, Document } from "@/app/api/modules/leads/leads.type"
 import type { User } from "@/app/api/modules/users/users.type"
 import { Mail, Loader2, FileText } from "lucide-react"
 
-const statusConfig: Record<Lead["status"], { label: string; className: string }> = {
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+
+function providerLogoUrl(fileUrl: string) {
+  return `${SUPABASE_URL}/storage/v1/object/public/provider-logo/${fileUrl}`
+}
+
+function photoUrl(fileUrl: string) {
+  return `${SUPABASE_URL}/storage/v1/object/public/product-photos/${fileUrl}`
+}
+
+const statusConfig: Record<LeadWithRelations["status"], { label: string; className: string }> = {
   new: { label: "New", className: "bg-primary/10 text-primary border-primary/20" },
   sent: { label: "Sent", className: "bg-primary/80 text-white border-primary/90" },
   contacted: { label: "Contacted", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
@@ -30,8 +39,7 @@ const statusConfig: Record<Lead["status"], { label: string; className: string }>
 }
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([])
-  const [plans, setPlans] = useState<Plan[]>([])
+  const [leads, setLeads] = useState<LeadWithRelations[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [feedback, setFeedback] = useState<{
@@ -40,18 +48,18 @@ export default function LeadsPage() {
     description?: string
   } | null>(null)
 
-  const [docsLead, setDocsLead] = useState<Lead | null>(null)
+  const [docsLead, setDocsLead] = useState<LeadWithRelations | null>(null)
   const [isDocsDialogOpen, setIsDocsDialogOpen] = useState(false)
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const [isLoadingDocs, setIsLoadingDocs] = useState(false)
 
-  const [emailLead, setEmailLead] = useState<Lead | null>(null)
+  const [emailLead, setEmailLead] = useState<LeadWithRelations | null>(null)
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false)
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [emailMessage, setEmailMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
 
-  const columns: Column<Lead>[] = [
+  const columns: Column<LeadWithRelations>[] = [
     {
       key: "fullname",
       label: "Name",
@@ -65,16 +73,120 @@ export default function LeadsPage() {
     {
       key: "phone",
       label: "Phone",
-      render: (value) => (
-        <span className="text-muted-foreground text-sm">{value ?? "—"}</span>
-      ),
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
-      key: "plan_id",
-      label: "Plan",
+      key: "status",
+      label: "Status",
       render: (value) => {
-        const plan = plans.find((p) => p.id === value)
-        return <span className="text-muted-foreground text-sm">{plan?.name ?? "—"}</span>
+        const status = String(value ?? "").toLowerCase() as LeadWithRelations["status"]
+        const config = statusConfig[status] ?? statusConfig.new
+        return <Badge className={config.className}>{config.label}</Badge>
+      },
+    },
+    {
+      key: "plan_info",
+      label: "Plan",
+      render: (_value, item) => {
+        const plan = (item as any).plans
+        if (!plan) return <span className="text-muted-foreground text-sm">—</span>
+        const provider = plan.providers
+        return (
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-foreground">{plan.name}</span>
+              <span className="text-xs text-muted-foreground">
+                {provider?.name} · {provider?.categories?.name}
+              </span>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      key: "plan_price",
+      label: "Price",
+      render: (_value, item) => {
+        const plan = (item as any).plans
+        if (!plan) return <span className="text-muted-foreground text-sm">—</span>
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm text-foreground">
+              CHF {plan.discount > 0
+                ? (plan.price * (1 - plan.discount / 100)).toFixed(2)
+                : plan.price}
+              /mo
+            </span>
+            {plan.discount > 0 && (
+              <span className="text-[0.6rem] text-green-600">{plan.discount}% off</span>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      key: "plan_network",
+      label: "Network",
+      render: (_value, item) => {
+        const plan = (item as any).plans
+        if (!plan) return <span className="text-muted-foreground text-sm">—</span>
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm text-muted-foreground">{plan.network_technology}</span>
+            <span className="text-xs text-muted-foreground">
+              {plan.data_gb === null ? "Unlimited" : `${plan.data_gb}GB`}
+            </span>
+          </div>
+        )
+      },
+    },
+    {
+      key: "product_color_id",
+      label: "Product",
+      render: (_value, item) => {
+        const plan = (item as any).plans
+        const colorId = item.product_color_id
+        if (!plan?.products?.length || !colorId) return <span className="text-muted-foreground text-sm">—</span>
+
+        let matchedProduct: any = null
+        let matchedColor: any = null
+
+        for (const product of plan.products) {
+          const color = product.products_colors?.find((c: any) => c.id === colorId)
+          if (color) {
+            matchedProduct = product
+            matchedColor = color
+            break
+          }
+        }
+
+        if (!matchedProduct) return <span className="text-muted-foreground text-sm">—</span>
+
+        const primaryPhoto = matchedColor?.products_photos?.find((p: any) => p.is_primary)
+          ?? matchedColor?.products_photos?.[0]
+
+        return (
+          <div className="flex items-center gap-2">
+            {primaryPhoto?.file_url && (
+              <img
+                src={photoUrl(primaryPhoto.file_url)}
+                alt={matchedColor.name}
+                className="w-7 h-9 object-cover rounded border"
+              />
+            )}
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-foreground">{matchedProduct.name}</span>
+              <div className="flex items-center gap-1">
+                <span
+                  className="w-2 h-2 rounded-full border border-border inline-block"
+                  style={{ backgroundColor: matchedColor.hex_code }}
+                />
+                <span className="text-xs text-muted-foreground">{matchedColor.name}</span>
+              </div>
+              <span className="text-xs text-muted-foreground">CHF {matchedProduct.base_price}</span>
+            </div>
+          </div>
+        )
       },
     },
     {
@@ -104,15 +216,6 @@ export default function LeadsPage() {
       key: "roaming_control",
       label: "Roaming",
       render: (value) => <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>,
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (value) => (
-        <Badge className={statusConfig[value as Lead["status"]].className}>
-          {statusConfig[value as Lead["status"]].label}
-        </Badge>
-      ),
     },
     {
       key: "is_child_order",
@@ -159,7 +262,7 @@ export default function LeadsPage() {
     },
   ]
 
-  const handleViewDocs = async (lead: Lead) => {
+  const handleViewDocs = async (lead: LeadWithRelations) => {
     setDocsLead(lead)
     setSignedUrls({})
     setIsDocsDialogOpen(true)
@@ -186,7 +289,7 @@ export default function LeadsPage() {
     }
   }
 
-  const handleEmail = (lead: Lead) => {
+  const handleEmail = (lead: LeadWithRelations) => {
     setEmailLead(lead)
     setSelectedUserIds([])
     setEmailMessage("")
@@ -206,7 +309,7 @@ export default function LeadsPage() {
       .filter((u) => selectedUserIds.includes(u.id))
       .map((u) => u.email)
 
-    const plan = plans.find((p) => p.id === emailLead.plan_id)
+    const plan = (emailLead as any).plans
 
     setIsSending(true)
     try {
@@ -235,7 +338,7 @@ export default function LeadsPage() {
       }
 
       const { lead: updatedLead } = await res.json()
-      setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)))
+      setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? { ...l, ...updatedLead } : l)))
 
       setIsEmailDialogOpen(false)
       setFeedback({
@@ -256,13 +359,10 @@ export default function LeadsPage() {
 
   useEffect(() => {
     setIsLoading(true)
-    Promise.all([fetch("/api/leads"), fetch("/api/plans"), fetch("/api/users")])
-      .then(([leadsRes, plansRes, usersRes]) =>
-        Promise.all([leadsRes.json(), plansRes.json(), usersRes.json()])
-      )
-      .then(([leadsData, plansData, usersData]) => {
+    Promise.all([fetch("/api/leads"), fetch("/api/users")])
+      .then(([leadsRes, usersRes]) => Promise.all([leadsRes.json(), usersRes.json()]))
+      .then(([leadsData, usersData]) => {
         setLeads(leadsData)
-        setPlans(plansData)
         setUsers(usersData)
       })
       .finally(() => setIsLoading(false))
@@ -295,9 +395,7 @@ export default function LeadsPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Documents</DialogTitle>
-            <DialogDescription>
-              {docsLead?.fullname}'s uploaded documents
-            </DialogDescription>
+            <DialogDescription>{docsLead?.fullname}'s uploaded documents</DialogDescription>
           </DialogHeader>
 
           {isLoadingDocs ? (
@@ -316,12 +414,7 @@ export default function LeadsPage() {
                         Document {index + 1}
                       </span>
                       {url && (
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline"
-                        >
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
                           Open in new tab
                         </a>
                       )}
