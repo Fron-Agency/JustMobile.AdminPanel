@@ -28,6 +28,7 @@ export type Lead = {
   description?: string | null
   address?: AddressDto
   documents?: Document[]
+  product_color_id?: string | null
 }
 
 export type CreateLeadDto = Omit<Lead, "id" | "created_at" | "address" | "documents"> & {

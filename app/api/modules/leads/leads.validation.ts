@@ -70,6 +70,8 @@ export const createLeadSchema = z.object({
   }),
 
   documents: z.array(z.string()).optional().default([]),
+
+  product_color_id: z.string().nullable().optional().default(null)
 })
 
 export const updateLeadSchema = createLeadSchema.partial()
