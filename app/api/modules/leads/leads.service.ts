@@ -23,7 +23,14 @@ export const LeadService = {
 
   async create(input: CreateLeadDto): Promise<Lead> {
     const referral_code = generateReferralCode()
-    return LeadRepository.create({ ...input, referral_code })
+
+    let referred_by_lead_id: string | null = null
+    if (input.applied_referral_code) {
+      const referrer = await LeadRepository.findByReferralCode(input.applied_referral_code)
+      referred_by_lead_id = referrer?.id ?? null
+    }
+
+    return LeadRepository.create({ ...input, referral_code, referred_by_lead_id })
   },
 
   async update(id: string, input: UpdateLeadInput): Promise<Lead> {

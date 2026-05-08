@@ -91,6 +91,17 @@ export const LeadRepository = {
     }))
   },
 
+  async findByReferralCode(code: string): Promise<{ id: string } | null> {
+    const supabase = await client()
+    const { data, error } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("referral_code", code)
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
   async findById(id: string): Promise<Lead | null> {
     const supabase = await client()
     const { data, error } = await supabase

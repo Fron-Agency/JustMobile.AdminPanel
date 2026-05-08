@@ -46,6 +46,7 @@ export type CreateLeadDto = Omit<Lead, "id" | "created_at" | "address" | "docume
 
 export type CreateLeadRepositoryDto = CreateLeadDto & {
   referral_code: string
+  referred_by_lead_id: string | null
 }
 
 export type UpdateLeadDto = Partial<CreateLeadDto>
