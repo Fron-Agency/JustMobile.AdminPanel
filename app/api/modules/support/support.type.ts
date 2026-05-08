@@ -11,8 +11,8 @@ export interface SupportConversation {
 export interface SupportMessage {
   id: string
   conversation_id: string
-  sender: "visitor" | "admin"
-  content: string
+  sender_type: "visitor" | "admin"
+  message: string
   created_at: string
 }
 
@@ -24,6 +24,6 @@ export interface SupportConversationWithLastMessage extends SupportConversation 
 
 export interface CreateMessageDto {
   conversation_id: string
-  sender: "visitor" | "admin"
-  content: string
+  sender_type: "visitor" | "admin"
+  message: string
 }

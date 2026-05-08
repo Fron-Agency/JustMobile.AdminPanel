@@ -102,15 +102,15 @@ export default function SupportPage() {
   async function handleSend() {
     if (!draft.trim() || !selectedId || isSending) return
     setIsSending(true)
-    const content = draft.trim()
+    const message = draft.trim()
     setDraft("")
 
     // Optimistic message
     const optimistic: SupportMessage = {
       id: `optimistic-${Date.now()}`,
       conversation_id: selectedId,
-      sender: "admin",
-      content,
+      sender_type: "admin",
+      message,
       created_at: new Date().toISOString(),
     }
     setMessages((prev) => [...prev, optimistic])
@@ -118,7 +118,7 @@ export default function SupportPage() {
     await fetch(`/api/support/${selectedId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ message }),
     })
 
     setIsSending(false)
@@ -222,21 +222,21 @@ export default function SupportPage() {
                     key={msg.id}
                     className={cn(
                       "flex",
-                      msg.sender === "admin" ? "justify-end" : "justify-start"
+                      msg.sender_type === "admin" ? "justify-end" : "justify-start"
                     )}
                   >
                     <div
                       className={cn(
                         "max-w-xs lg:max-w-md px-3.5 py-2 rounded-2xl text-sm",
-                        msg.sender === "admin"
+                        msg.sender_type === "admin"
                           ? "bg-primary text-primary-foreground rounded-br-sm"
                           : "bg-muted text-foreground rounded-bl-sm"
                       )}
                     >
-                      <p>{msg.content}</p>
+                      <p>{msg.message}</p>
                       <p className={cn(
                         "text-[10px] mt-0.5",
-                        msg.sender === "admin" ? "text-primary-foreground/60 text-right" : "text-muted-foreground"
+                        msg.sender_type === "admin" ? "text-primary-foreground/60 text-right" : "text-muted-foreground"
                       )}>
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </p>

@@ -26,8 +26,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const parsed = sendMessageSchema.parse(body)
     const message = await SupportService.sendMessage({
       conversation_id: id,
-      sender: "admin",
-      content: parsed.content,
+      sender_type: "admin",
+      message: parsed.message,
     })
     return NextResponse.json(message, { status: 201 })
   } catch (error) {
