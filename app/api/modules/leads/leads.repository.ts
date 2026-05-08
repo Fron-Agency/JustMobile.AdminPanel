@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import type { Lead, CreateLeadDto, UpdateLeadDto, AddressDto, LeadWithRelations } from "./leads.type"
+import type { Lead, CreateLeadRepositoryDto, UpdateLeadDto, AddressDto, LeadWithRelations } from "./leads.type"
 
 async function client() {
   return createClient(await cookies())
@@ -102,27 +102,30 @@ export const LeadRepository = {
     return data
   },
 
-  async create(payload: CreateLeadDto): Promise<Lead> {
-    const supabase = await client()
-    const { address, documents, ...leadPayload } = payload
+    async create(payload: CreateLeadRepositoryDto): Promise<Lead> {
+      const supabase = await client()
+      const { address, documents, ...leadPayload } = payload
 
-    const { data, error } = await supabase
-      .from("leads")
-      .insert([{ ...leadPayload, created_at: new Date().toISOString() }])
-      .select()
-      .single()
-    if (error) throw new Error(error.message)
+      const { data, error } = await supabase
+        .from("leads")
+        .insert([{ ...leadPayload, created_at: new Date().toISOString() }])
+        .select()
+        .single()
 
-    await LeadRepository.insertAddress(data.id, address)
+      if (error) throw new Error(error.message)
 
-    if (documents && documents.length > 0) {
-      await Promise.all(
-        documents.map((fileUrl: string) => LeadRepository.insertDocument(data.id, fileUrl))
-      )
-    }
+      await LeadRepository.insertAddress(data.id, address)
 
-    return data
-  },
+      if (documents && documents.length > 0) {
+        await Promise.all(
+          documents.map((fileUrl: string) =>
+            LeadRepository.insertDocument(data.id, fileUrl)
+          )
+        )
+      }
+
+      return data
+    },
 
   async update(id: string, payload: UpdateLeadDto): Promise<Lead> {
     const supabase = await client()

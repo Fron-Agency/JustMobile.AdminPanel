@@ -2,6 +2,10 @@ import { LeadRepository } from "./leads.repository"
 import type { UpdateLeadInput } from "./leads.validation"
 import type { CreateLeadDto, Lead } from "./leads.type"
 
+function generateReferralCode(length = 8) {
+  return Math.random().toString(36).substring(2, 2 + length).toUpperCase()
+}
+
 export const LeadService = {
   async getAll(): Promise<Lead[]> {
     return LeadRepository.findAll()
@@ -18,7 +22,8 @@ export const LeadService = {
   },
 
   async create(input: CreateLeadDto): Promise<Lead> {
-    return LeadRepository.create(input)
+    const referral_code = generateReferralCode()
+    return LeadRepository.create({ ...input, referral_code })
   },
 
   async update(id: string, input: UpdateLeadInput): Promise<Lead> {

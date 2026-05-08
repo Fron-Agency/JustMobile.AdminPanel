@@ -31,15 +31,21 @@ export type Lead = {
   address?: AddressDto
   documents?: Document[]
   product_color_id?: string | null
+  referred_by_lead_id?: string | null
+  applied_referral_code?: string | null
 }
 
 export type LeadWithRelations =  Lead & {
   plan : ExternalPlanDto
 }
 
-export type CreateLeadDto = Omit<Lead, "id" | "created_at" | "address" | "documents"> & {
+export type CreateLeadDto = Omit<Lead, "id" | "created_at" | "address" | "documents" | "referral_code"> & {
   address: AddressDto
   documents?: string[]
+}
+
+export type CreateLeadRepositoryDto = CreateLeadDto & {
+  referral_code: string
 }
 
 export type UpdateLeadDto = Partial<CreateLeadDto>
