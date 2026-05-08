@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label"
 import type { LeadWithRelations, Document } from "@/app/api/modules/leads/leads.type"
 import type { User } from "@/app/api/modules/users/users.type"
 import { Mail, Loader2, FileText } from "lucide-react"
+import { createClient } from "@/utils/supabase/client"
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 
@@ -346,6 +347,8 @@ export default function LeadsPage() {
   }
 
   useEffect(() => {
+    const supabase = createClient()
+
     setIsLoading(true)
     Promise.all([fetch("/api/leads"), fetch("/api/users")])
       .then(([leadsRes, usersRes]) => Promise.all([leadsRes.json(), usersRes.json()]))
@@ -354,6 +357,19 @@ export default function LeadsPage() {
         setUsers(usersData)
       })
       .finally(() => setIsLoading(false))
+
+    const channel = supabase
+      .channel("admin-leads")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        (payload) => {
+          setLeads((prev) => [payload.new as LeadWithRelations, ...prev])
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   return (
