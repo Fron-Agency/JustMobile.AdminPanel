@@ -53,11 +53,22 @@ export default function LeadsPage() {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const [isLoadingDocs, setIsLoadingDocs] = useState(false)
 
-  const [emailLead, setEmailLead] = useState<LeadWithRelations | null>(null)
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([])
+
+  const [emailLeads, setEmailLeads] = useState<LeadWithRelations[]>([])
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false)
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [emailMessage, setEmailMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
+
+  const handleOpenEmailForSelected = () => {
+    if (selectedLeadIds.length === 0) return
+    const selected = leads.filter((l) => selectedLeadIds.includes(l.id))
+    setEmailLeads(selected)
+    setSelectedUserIds([])
+    setEmailMessage("")
+    setIsEmailDialogOpen(true)
+  }
 
   const columns: Column<LeadWithRelations>[] = [
     {
@@ -241,25 +252,6 @@ export default function LeadsPage() {
         )
       },
     },
-    {
-      key: "email_action",
-      label: "Email",
-      render: (_value, item) => {
-        if (item.status === "sent") return null
-        return (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleEmail(item)}
-            disabled={!item.email}
-            className="gap-1"
-          >
-            <Mail className="w-4 h-4" />
-            Email
-          </Button>
-        )
-      },
-    },
   ]
 
   const handleViewDocs = async (lead: LeadWithRelations) => {
@@ -289,13 +281,6 @@ export default function LeadsPage() {
     }
   }
 
-  const handleEmail = (lead: LeadWithRelations) => {
-    setEmailLead(lead)
-    setSelectedUserIds([])
-    setEmailMessage("")
-    setIsEmailDialogOpen(true)
-  }
-
   const toggleUser = (userId: string) => {
     setSelectedUserIds((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
@@ -303,48 +288,51 @@ export default function LeadsPage() {
   }
 
   const handleSendEmail = async () => {
-    if (!emailLead || selectedUserIds.length === 0) return
+    if (emailLeads.length === 0 || selectedUserIds.length === 0) return
 
     const recipients = users
       .filter((u) => selectedUserIds.includes(u.id))
       .map((u) => u.email)
 
-    const plan = (emailLead as any).plans
-
     setIsSending(true)
     try {
-      const res = await fetch("/api/leads/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recipients,
-          leadId: emailLead.id,
-          leadName: emailLead.fullname,
-          leadEmail: emailLead.email,
-          leadPhone: emailLead.phone,
-          leadPlan: plan?.name,
-          leadAddress: Array.isArray(emailLead.address) ? emailLead.address[0] : emailLead.address,
-          leadDateOfBirth: emailLead.date_of_birth,
-          leadSwissNumber: emailLead.swiss_number,
-          leadRoaming: emailLead.roaming_control,
-          leadDescription: emailLead.description,
-          message: emailMessage.trim() || undefined,
-        }),
-      })
-
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.message || "Failed to send email")
-      }
-
-      const { lead: updatedLead } = await res.json()
-      setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? { ...l, ...updatedLead } : l)))
+      await Promise.all(
+        emailLeads.map((lead) => {
+          const plan = (lead as any).plans
+          return fetch("/api/leads/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              recipients,
+              leadId: lead.id,
+              leadName: lead.fullname,
+              leadEmail: lead.email,
+              leadPhone: lead.phone,
+              leadPlan: plan?.name,
+              leadAddress: Array.isArray(lead.address) ? lead.address[0] : lead.address,
+              leadDateOfBirth: lead.date_of_birth,
+              leadSwissNumber: lead.swiss_number,
+              leadRoaming: lead.roaming_control,
+              leadDescription: lead.description,
+              message: emailMessage.trim() || undefined,
+            }),
+          }).then(async (res) => {
+            if (!res.ok) {
+              const err = await res.json()
+              throw new Error(err.message || `Failed to send email for ${lead.fullname}`)
+            }
+            const { lead: updatedLead } = await res.json()
+            setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? { ...l, ...updatedLead } : l)))
+          })
+        })
+      )
 
       setIsEmailDialogOpen(false)
+      setSelectedLeadIds([])
       setFeedback({
         tone: "success",
-        title: "Email sent",
-        description: `Lead info for ${emailLead.fullname} sent to ${recipients.length} recipient${recipients.length > 1 ? "s" : ""}.`,
+        title: "Emails sent",
+        description: `${emailLeads.length} lead${emailLeads.length > 1 ? "s" : ""} sent to ${recipients.length} recipient${recipients.length > 1 ? "s" : ""}.`,
       })
     } catch (error) {
       setFeedback({
@@ -381,6 +369,22 @@ export default function LeadsPage() {
         </div>
       ) : null}
 
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-muted-foreground">
+          {selectedLeadIds.length > 0 ? `${selectedLeadIds.length} selected` : ""}
+        </span>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={selectedLeadIds.length === 0}
+          onClick={handleOpenEmailForSelected}
+          className="gap-2"
+        >
+          <Mail className="w-4 h-4" />
+          Send Email
+        </Button>
+      </div>
+
       <DataTable
         data={leads}
         columns={columns}
@@ -388,6 +392,9 @@ export default function LeadsPage() {
         searchPlaceholder="Search leads..."
         searchFields={["fullname", "email", "phone"]}
         isLoading={isLoading}
+        selectable
+        selectedIds={selectedLeadIds}
+        onSelectionChange={setSelectedLeadIds}
       />
 
       {/* Documents Dialog */}
@@ -448,7 +455,10 @@ export default function LeadsPage() {
           <DialogHeader>
             <DialogTitle>Send Lead by Email</DialogTitle>
             <DialogDescription>
-              Send <span className="font-medium text-foreground">{emailLead?.fullname}</span>'s lead info to selected users.
+              {emailLeads.length === 1
+                ? <>Send <span className="font-medium text-foreground">{emailLeads[0].fullname}</span>'s lead info to selected users.</>
+                : <>Send <span className="font-medium text-foreground">{emailLeads.length} leads</span> info to selected users.</>
+              }
             </DialogDescription>
           </DialogHeader>
 

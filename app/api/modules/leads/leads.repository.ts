@@ -91,6 +91,35 @@ export const LeadRepository = {
     }))
   },
 
+  async findReferrals(): Promise<any[]> {
+    const supabase = await client()
+
+    const { data, error } = await supabase
+      .from("leads")
+      .select("id, fullname, email, phone, referred_by_lead_id")
+      .not("referred_by_lead_id", "is", null)
+      .order("created_at", { ascending: false })
+
+    if (error) throw new Error(error.message)
+    if (!data?.length) return []
+
+    const referrerIds = [...new Set(data.map((r: any) => r.referred_by_lead_id))]
+
+    const { data: referrers, error: refError } = await supabase
+      .from("leads")
+      .select("id, fullname, email, phone")
+      .in("id", referrerIds)
+
+    if (refError) throw new Error(refError.message)
+
+    const referrerMap = Object.fromEntries((referrers ?? []).map((r: any) => [r.id, r]))
+
+    return data.map((row: any) => ({
+      ...row,
+      referrer: referrerMap[row.referred_by_lead_id] ?? null,
+    }))
+  },
+
   async findByReferralCode(code: string): Promise<{ id: string } | null> {
     const supabase = await client()
     const { data, error } = await supabase

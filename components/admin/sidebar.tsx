@@ -11,18 +11,34 @@ import {
   Building2,
   Tag,
   Wifi,
-  LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Settings,
+  GitBranch,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 
-const navItems = [
+type NavChild = { href: string; label: string; icon: React.ElementType }
+type NavItem = {
+  href: string
+  label: string
+  icon: React.ElementType
+  children?: NavChild[]
+}
+
+const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/leads", label: "Leads", icon: PhoneCall },
+  {
+    href: "/dashboard/leads",
+    label: "Leads",
+    icon: PhoneCall,
+    children: [
+      { href: "/dashboard/leads/referrals", label: "Referrals", icon: GitBranch },
+    ],
+  },
   { href: "/dashboard/plans", label: "Plans", icon: Package },
   { href: "/dashboard/products", label: "Products", icon: Smartphone },
   { href: "/dashboard/providers", label: "Providers", icon: Building2 },
@@ -34,6 +50,13 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [openGroups, setOpenGroups] = useState<string[]>(["/dashboard/leads"])
+
+  const toggleGroup = (href: string) => {
+    setOpenGroups((prev) =>
+      prev.includes(href) ? prev.filter((h) => h !== href) : [...prev, href]
+    )
+  }
 
   return (
     <aside
@@ -68,24 +91,65 @@ export default function Sidebar() {
             Navigation
           </p>
         )}
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, label, icon: Icon, children }) => {
           const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
+          const isOpen = openGroups.includes(href)
+
           return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                collapsed && "justify-center px-2",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            <div key={href}>
+              <div className="flex items-center">
+                <Link
+                  href={href}
+                  className={cn(
+                    "flex flex-1 items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                    collapsed && "justify-center px-2",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  )}
+                  title={collapsed ? label : undefined}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  {!collapsed && <span>{label}</span>}
+                </Link>
+                {children && !collapsed && (
+                  <button
+                    onClick={() => toggleGroup(href)}
+                    className={cn(
+                      "p-1.5 rounded-md transition-colors",
+                      isActive
+                        ? "text-primary-foreground/70 hover:text-primary-foreground"
+                        : "text-sidebar-foreground/40 hover:text-sidebar-foreground"
+                    )}
+                  >
+                    <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isOpen && "rotate-180")} />
+                  </button>
+                )}
+              </div>
+
+              {children && !collapsed && isOpen && (
+                <div className="ml-3 mt-0.5 flex flex-col gap-0.5 border-l border-sidebar-border pl-3">
+                  {children.map(({ href: childHref, label: childLabel, icon: ChildIcon }) => {
+                    const childActive = pathname === childHref || pathname.startsWith(childHref)
+                    return (
+                      <Link
+                        key={childHref}
+                        href={childHref}
+                        className={cn(
+                          "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
+                          childActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        )}
+                      >
+                        <ChildIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                        {childLabel}
+                      </Link>
+                    )
+                  })}
+                </div>
               )}
-              title={collapsed ? label : undefined}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {!collapsed && <span>{label}</span>}
-            </Link>
+            </div>
           )
         })}
       </nav>
