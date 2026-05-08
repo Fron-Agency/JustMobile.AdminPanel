@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Settings,
   GitBranch,
+  Headphones,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -45,6 +46,7 @@ const navItems: NavItem[] = [
   { href: "/dashboard/categories", label: "Categories", icon: Tag },
   { href: "/dashboard/users", label: "Users", icon: Users },
   { href: "/dashboard/partners", label: "Partners", icon: Users },
+  { href: "/dashboard/support", label: "Support", icon: Headphones },
 ]
 
 export default function Sidebar() {
