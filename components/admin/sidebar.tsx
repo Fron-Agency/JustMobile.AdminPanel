@@ -155,7 +155,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom */}
-      <div className="flex flex-col gap-1 px-2 py-4 border-t border-sidebar-border">
+      {/* <div className="flex flex-col gap-1 px-2 py-4 border-t border-sidebar-border">
         <Link
           href="/dashboard/settings"
           className={cn(
@@ -167,7 +167,7 @@ export default function Sidebar() {
           <Settings className="w-4 h-4 flex-shrink-0" />
           {!collapsed && <span>Settings</span>}
         </Link>
-      </div>
+      </div> */}
     </aside>
   )
 }

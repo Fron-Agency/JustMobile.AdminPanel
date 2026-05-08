@@ -473,19 +473,12 @@ export default function ProductsPage() {
     </div>
   )
 
-  const ColorPhotoEditor = ({
-    colorList,
-    setColorList,
-    errs,
-    setErrs,
-    productId,
-  }: {
-    colorList: ColorForm[]
-    setColorList: (c: ColorForm[]) => void
-    errs: Record<number, Record<string, string>>
-    setErrs: (e: Record<number, Record<string, string>>) => void
-    productId?: string
-  }) => (
+  const renderColorEditor = (
+    colorList: ColorForm[],
+    setColorList: (c: ColorForm[]) => void,
+    errs: Record<number, Record<string, string>>,
+    refPrefix: string,
+  ) => (
     <div className="space-y-3">
       {colorList.map((color, ci) => (
         <div key={ci} className="border rounded-md p-3 space-y-2 bg-muted/30">
@@ -500,7 +493,6 @@ export default function ProductsPage() {
             </button>
           </div>
 
-          {/* Color name + hex */}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label className="text-xs">Color Name</Label>
@@ -554,7 +546,6 @@ export default function ProductsPage() {
             <Label className="text-xs">Active</Label>
           </div>
 
-          {/* Photos */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Photos</Label>
             <div className="flex flex-wrap gap-2">
@@ -603,13 +594,9 @@ export default function ProductsPage() {
                 </div>
               ))}
 
-              {/* Add photo button */}
               <button
                 type="button"
-                onClick={() => {
-                  const key = `${ci}`
-                  fileInputRefs.current[key]?.click()
-                }}
+                onClick={() => fileInputRefs.current[`${refPrefix}-${ci}`]?.click()}
                 className="w-16 h-16 border-2 border-dashed rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
               >
                 <ImagePlus className="w-5 h-5" />
@@ -618,7 +605,7 @@ export default function ProductsPage() {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                ref={(el) => { fileInputRefs.current[`${ci}`] = el }}
+                ref={(el) => { fileInputRefs.current[`${refPrefix}-${ci}`] = el }}
                 onChange={(e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
@@ -645,9 +632,7 @@ export default function ProductsPage() {
         variant="outline"
         size="sm"
         type="button"
-        onClick={() =>
-          setColorList([...colorList, { name: "", hex_code: "#000000", is_active: true, photos: [] }])
-        }
+        onClick={() => setColorList([...colorList, { name: "", hex_code: "#000000", is_active: true, photos: [] }])}
         className="w-full"
       >
         <Plus className="w-4 h-4 mr-1" /> Add Color
@@ -694,12 +679,7 @@ export default function ProductsPage() {
 
           <div className="border-t pt-4">
             <p className="text-sm font-medium mb-3">Colors & Photos</p>
-            <ColorPhotoEditor
-              colorList={addColors}
-              setColorList={setAddColors}
-              errs={addColorErrors}
-              setErrs={setAddColorErrors}
-            />
+            {renderColorEditor(addColors, setAddColors, addColorErrors, "add")}
           </div>
 
           <DialogFooter className="pt-2">
@@ -734,13 +714,7 @@ export default function ProductsPage() {
             <DialogDescription>Add, edit, or remove colors and photos for this product.</DialogDescription>
           </DialogHeader>
           <div className="py-2">
-            <ColorPhotoEditor
-              colorList={colors}
-              setColorList={setColors}
-              errs={colorErrors}
-              setErrs={setColorErrors}
-              productId={managingColorsFor?.id}
-            />
+            {renderColorEditor(colors, setColors, colorErrors, "manage")}
           </div>
           <DialogFooter>
             <Button onClick={saveColors} disabled={isLoading}>

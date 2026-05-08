@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     `
 
     const { error } = await resend.emails.send({
-      from: "JustMobile <noreply@colos.ch>",
+      from: "JustMobile <info@colos.ch>",
       to: body.recipients,
       subject: `Lead: ${body.leadName}`,
       html,
