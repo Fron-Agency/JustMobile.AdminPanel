@@ -71,7 +71,10 @@ export const createLeadSchema = z.object({
 
   documents: z.array(z.string()).optional().default([]),
 
-  product_color_id: z.string().nullable().optional().default(null)
+  product_color_id: z.string().nullable().optional().default(null),
+  referred_by_lead_id: z.string().nullable().optional().default(null),
+  applied_referral_code: z.string().nullable().optional().default(null),
+
 })
 
 export const updateLeadSchema = createLeadSchema.partial()
