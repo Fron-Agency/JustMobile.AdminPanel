@@ -16,10 +16,16 @@ import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import type { LeadWithRelations, Document } from "@/app/api/modules/leads/leads.type"
+import type { Lead, LeadWithRelations, Document } from "@/app/api/modules/leads/leads.type"
 import type { User } from "@/app/api/modules/users/users.type"
-import { Mail, Loader2, FileText } from "lucide-react"
+import { Mail, Loader2, FileText, ChevronDown } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 
@@ -61,6 +67,29 @@ export default function LeadsPage() {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [emailMessage, setEmailMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
+  const handleBulkStatus = async (status: Lead["status"]) => {
+    if (selectedLeadIds.length === 0) return
+    setIsUpdatingStatus(true)
+    try {
+      const updated: LeadWithRelations[] = await fetch("/api/leads/bulk-status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedLeadIds, status }),
+      }).then((r) => r.json())
+      setLeads((prev) => prev.map((l) => {
+        const u = updated.find((u) => u.id === l.id)
+        return u ? { ...l, status: u.status } : l
+      }))
+      setSelectedLeadIds([])
+      setFeedback({ tone: "success", title: `${selectedLeadIds.length} lead${selectedLeadIds.length > 1 ? "s" : ""} marked as ${status}` })
+    } catch {
+      setFeedback({ tone: "destructive", title: "Failed to update status" })
+    } finally {
+      setIsUpdatingStatus(false)
+    }
+  }
 
   const handleOpenEmailForSelected = () => {
     if (selectedLeadIds.length === 0) return
@@ -389,16 +418,38 @@ export default function LeadsPage() {
         <span className="text-sm text-muted-foreground">
           {selectedLeadIds.length > 0 ? `${selectedLeadIds.length} selected` : ""}
         </span>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={selectedLeadIds.length === 0}
-          onClick={handleOpenEmailForSelected}
-          className="gap-2"
-        >
-          <Mail className="w-4 h-4" />
-          Send Email
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={selectedLeadIds.length === 0 || isUpdatingStatus}
+                className="gap-2"
+              >
+                {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
+                Change Status
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleBulkStatus("contacted")}>Contacted</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkStatus("converted")}>Converted</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkStatus("lost")}>Lost</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkStatus("sent")}>Sent</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkStatus("new")}>New</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={selectedLeadIds.length === 0}
+            onClick={handleOpenEmailForSelected}
+            className="gap-2"
+          >
+            <Mail className="w-4 h-4" />
+            Send Email
+          </Button>
+        </div>
       </div>
 
       <DataTable
