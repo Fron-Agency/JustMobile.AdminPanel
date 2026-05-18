@@ -59,6 +59,18 @@ export const CategoryRepository = {
                 )
               )
             )
+          ),
+          plans_home (
+            id,
+            name,
+            price,
+            discount_price,
+            without_mobile_price,
+            provider_id,
+            contract_duration,
+            internet_content,
+            tv,
+            telephony
           )
         )
       `)

@@ -1,3 +1,5 @@
+import { PlanHome } from "../plans_home/plans_home.type"
+
 export type Category = {
   id: string
   name: string
@@ -54,7 +56,8 @@ export type CategoryProvidersAndMobilePlans = {
     name: string
     file_url: string
     is_active: boolean
-    plans: MenuPlan[]
+    plans_mobile: MenuPlan[]
+    plans_home: PlanHome[]
   }[]
 }
 
