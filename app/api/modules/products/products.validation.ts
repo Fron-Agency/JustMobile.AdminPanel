@@ -1,7 +1,8 @@
 import { z } from "zod"
 
 export const createProductSchema = z.object({
-  plan_id: z.string().uuid("Invalid plan ID"),
+  plan_mobile_id: z.string().uuid().nullable().optional(),
+  plan_home_id: z.string().uuid().nullable().optional(),
   name: z.string().min(1, "Name is required"),
   brand: z.string().min(1, "Brand is required"),
   model: z.string().min(1, "Model is required"),

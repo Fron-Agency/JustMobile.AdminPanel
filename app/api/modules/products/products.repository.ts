@@ -23,7 +23,8 @@ export const ProductRepository = {
       .from("products")
       .select(`
         *,
-        plans(name),
+        plans_mobile(name),
+        plans_home(name),
         products_colors(
           *,
           products_photos(*)
@@ -35,7 +36,8 @@ export const ProductRepository = {
 
     return (data ?? []).map((row: any) => ({
       ...row,
-      plan_name: row.plans?.name ?? "",
+      plan_mobile_name: row.plans_mobile?.name ?? null,
+      plan_home_name: row.plans_home?.name ?? null,
       colors: (row.products_colors ?? []).map((c: any) => ({
         ...c,
         photos: c.products_photos ?? [],
@@ -49,7 +51,8 @@ export const ProductRepository = {
       .from("products")
       .select(`
         *,
-        plans(name),
+        plans_mobile(name),
+        plans_home(name),
         products_colors(
           *,
           products_photos(*)
@@ -62,8 +65,9 @@ export const ProductRepository = {
     if (!data) return null
 
     return {
-      ...data,
-      plan_name: (data as any).plans?.name ?? "",
+      ...(data as any),
+      plan_mobile_name: (data as any).plans_mobile?.name ?? null,
+      plan_home_name: (data as any).plans_home?.name ?? null,
       colors: ((data as any).products_colors ?? []).map((c: any) => ({
         ...c,
         photos: c.products_photos ?? [],
@@ -79,7 +83,7 @@ export const ProductRepository = {
       .select()
       .single()
     if (error) throw new Error(error.message)
-    return { ...data, plan_name: "", colors: [] }
+    return { ...data, plan_mobile_name: null, plan_home_name: null, colors: [] }
   },
 
   async update(id: string, payload: UpdateProductDto): Promise<Product> {
@@ -91,7 +95,7 @@ export const ProductRepository = {
       .select()
       .single()
     if (error) throw new Error(error.message)
-    return { ...data, plan_name: "", colors: [] }
+    return { ...data, plan_mobile_name: null, plan_home_name: null, colors: [] }
   },
 
   async delete(id: string): Promise<void> {

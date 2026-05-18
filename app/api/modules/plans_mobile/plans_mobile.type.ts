@@ -1,6 +1,13 @@
 import { MenuProduct } from "../categories/categories.type"
 
-export type Plan = {
+export type CountryZoneEntry = {
+  id?: string
+  country_id: string
+  country_name?: string
+  data: Record<string, unknown> | null
+}
+
+export type PlanMobile = {
   id: string
   name: string
   provider_id: string
@@ -13,10 +20,11 @@ export type Plan = {
   contract_length: number
   discount: number
   is_favorite: boolean
-  countries: string[]
+  data_gb_europe: number | null
+  country_zones: CountryZoneEntry[]
 }
 
-export type ExternalPlanDto = {
+export type ExternalPlanMobileDto = {
   id: string
   name: string
   provider_name: string
@@ -27,12 +35,13 @@ export type ExternalPlanDto = {
   contract_length: number
   discount: number
   is_favorite: boolean
-  countries: string[]
   category_name: string
   products: MenuProduct[] | null
+  data_gb_europe: number | null
+  country_zones: CountryZoneEntry[]
 }
 
-export type CreatePlanDto = {
+export type CreatePlanMobileDto = {
   name: string
   provider_id: string
   price: number
@@ -41,6 +50,7 @@ export type CreatePlanDto = {
   contract_length: number
   discount: number
   is_favorite: boolean
+  data_gb_europe: number | null
 }
 
-export type UpdatePlanInput = Partial<CreatePlanDto>
+export type UpdatePlanMobileInput = Partial<CreatePlanMobileDto>

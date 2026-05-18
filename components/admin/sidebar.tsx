@@ -17,6 +17,8 @@ import {
   Settings,
   GitBranch,
   Headphones,
+  Home,
+  Globe,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -40,10 +42,19 @@ const navItems: NavItem[] = [
       { href: "/dashboard/leads/referrals", label: "Referrals", icon: GitBranch },
     ],
   },
-  { href: "/dashboard/plans", label: "Plans", icon: Package },
+  {
+    href: "/dashboard/plans_mobile",
+    label: "Plans",
+    icon: Package,
+    children: [
+      { href: "/dashboard/plans_mobile", label: "Mobile Plans", icon: Smartphone },
+      { href: "/dashboard/plans_home", label: "Home Plans", icon: Home },
+    ],
+  },
   { href: "/dashboard/products", label: "Products", icon: Smartphone },
   { href: "/dashboard/providers", label: "Providers", icon: Building2 },
   { href: "/dashboard/categories", label: "Categories", icon: Tag },
+  { href: "/dashboard/countries", label: "Country Zones", icon: Globe },
   { href: "/dashboard/users", label: "Users", icon: Users },
   { href: "/dashboard/partners", label: "Partners", icon: Users },
   { href: "/dashboard/support", label: "Support", icon: Headphones },

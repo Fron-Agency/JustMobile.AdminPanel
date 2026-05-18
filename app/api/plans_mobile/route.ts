@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { PlanService } from "../modules/plans/plans.service"
-import { createPlanSchema } from "../modules/plans/plans.validation"
+import { PlanService } from "../modules/plans_mobile/plans_mobile.service"
+import { createPlanMobileSchema } from "../modules/plans_mobile/plans_mobile.validation"
 import { requireAuth } from "@/utils/supabase/require-auth"
 
 export async function GET() {
@@ -18,8 +18,10 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const parsed = createPlanSchema.parse(body)
-    const plan = await PlanService.create(parsed)
+    const { country_zones, ...rest } = body
+    const parsed = createPlanMobileSchema.parse(rest)
+    const zones = Array.isArray(country_zones) ? country_zones : []
+    const plan = await PlanService.create(parsed, zones)
     return NextResponse.json(plan, { status: 201 })
   } catch (error) {
     return NextResponse.json(

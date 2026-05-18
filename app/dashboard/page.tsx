@@ -2,7 +2,7 @@ import { PhoneCall, Package, Building2, TrendingUp, AlertCircle, CheckCircle2, C
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { LeadService } from "@/app/api/modules/leads/leads.service"
-import { PlanService } from "@/app/api/modules/plans/plans.service"
+import { PlanService } from "@/app/api/modules/plans_mobile/plans_mobile.service"
 import { ProviderService } from "@/app/api/modules/providers/providers.service"
 
 const leadStatusConfig = {

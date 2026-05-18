@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { PlanService } from "@/app/api/modules/plans/plans.service"
+import { PlanService } from "@/app/api/modules/plans_mobile/plans_mobile.service"
 import { requireAuth } from "@/utils/supabase/require-auth"
 
 export async function DELETE(
@@ -24,7 +24,9 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await req.json()
-    const updated = await PlanService.update(id, body)
+    const { country_zones, ...rest } = body
+    const zones = Array.isArray(country_zones) ? country_zones : undefined
+    const updated = await PlanService.update(id, rest, zones)
     return NextResponse.json(updated)
   } catch (error) {
     return NextResponse.json(

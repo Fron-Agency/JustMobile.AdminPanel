@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { PlanService } from "@/app/api/modules/plans/plans.service"
+import { PlanService } from "@/app/api/modules/plans_mobile/plans_mobile.service"
 import { requireAuth } from "@/utils/supabase/require-auth"
 import { z } from "zod"
 

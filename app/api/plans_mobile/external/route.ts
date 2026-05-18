@@ -1,4 +1,4 @@
-import { PlanService } from "@/app/api/modules/plans/plans.service"
+import { PlanService } from "@/app/api/modules/plans_mobile/plans_mobile.service"
 
 export async function GET() {
     try {

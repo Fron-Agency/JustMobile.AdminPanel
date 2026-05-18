@@ -18,8 +18,10 @@ export type ProductPhoto = {
 
 export type Product = {
   id: string
-  plan_id: string
-  plan_name: string
+  plan_mobile_id: string | null
+  plan_home_id: string | null
+  plan_mobile_name: string | null
+  plan_home_name: string | null
   name: string
   brand: string
   model: string
@@ -30,7 +32,8 @@ export type Product = {
 }
 
 export type CreateProductDto = {
-  plan_id: string
+  plan_mobile_id?: string | null
+  plan_home_id?: string | null
   name: string
   brand: string
   model: string

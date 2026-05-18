@@ -1,4 +1,4 @@
-import { ExternalPlanDto } from "../plans/plans.type"
+import { ExternalPlanDto } from "../plans_mobile/plans_mobile.type"
 
 export type AddressDto = {
   zip_code: string

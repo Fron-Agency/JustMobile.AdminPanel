@@ -36,7 +36,8 @@ function photoUrl(fileName: string) {
   return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${fileName}`
 }
 
-type Plan = { id: string; name: string ; provider_name: string ; category_name: string }
+type MobilePlan = { id: string; name: string; provider_name: string; category_name: string }
+type HomePlan = { id: string; name: string }
 
 type PhotoForm = {
   id?: string
@@ -56,7 +57,8 @@ type ColorForm = {
 }
 
 const emptyProduct = {
-  plan_id: "",
+  plan_mobile_id: null as string | null,
+  plan_home_id: null as string | null,
   name: "",
   brand: "",
   model: "",
@@ -67,7 +69,8 @@ const emptyProduct = {
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
-  const [plans, setPlans] = useState<Plan[]>([])
+  const [mobilePlans, setMobilePlans] = useState<MobilePlan[]>([])
+  const [homePlans, setHomePlans] = useState<HomePlan[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [feedback, setFeedback] = useState<{
     tone: FeedbackAlertTone
@@ -99,7 +102,6 @@ export default function ProductsPage() {
 
   const validateProductForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.plan_id) newErrors.plan_id = "Plan is required"
     if (!formData.name.trim()) newErrors.name = "Name is required"
     if (!formData.brand.trim()) newErrors.brand = "Brand is required"
     if (!formData.model.trim()) newErrors.model = "Model is required"
@@ -137,8 +139,13 @@ export default function ProductsPage() {
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
-      key: "plan_name",
-      label: "Plan",
+      key: "plan_mobile_name",
+      label: "Mobile Plan",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+    },
+    {
+      key: "plan_home_name",
+      label: "Home Plan",
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
@@ -165,10 +172,15 @@ export default function ProductsPage() {
   ]
 
   const loadPlans = async () => {
-    if (plans.length > 0) return
-    const res = await fetch("/api/plans")
-    const data = await res.json()
-    setPlans(data.map((p: any) => ({ id: p.id, name: p.name, provider_name: p.provider_name, category_name: p.category_name })))
+    if (mobilePlans.length > 0 && homePlans.length > 0) return
+    const [mobileRes, homeRes] = await Promise.all([
+      fetch("/api/plans_mobile"),
+      fetch("/api/plans_home"),
+    ])
+    const mobileData = await mobileRes.json()
+    const homeData = await homeRes.json()
+    setMobilePlans(mobileData.map((p: any) => ({ id: p.id, name: p.name, provider_name: p.provider_name, category_name: p.category_name })))
+    setHomePlans(homeData.map((p: any) => ({ id: p.id, name: p.name })))
   }
 
   const handleAdd = async () => {
@@ -184,7 +196,8 @@ export default function ProductsPage() {
     setFeedback(null)
     setEditingProduct(product)
     setFormData({
-      plan_id: product.plan_id,
+      plan_mobile_id: product.plan_mobile_id,
+      plan_home_id: product.plan_home_id,
       name: product.name,
       brand: product.brand,
       model: product.model,
@@ -279,24 +292,44 @@ export default function ProductsPage() {
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, description: formData.description || null }),
+        body: JSON.stringify({
+          ...formData,
+          plan_mobile_id: formData.plan_mobile_id || null,
+          plan_home_id: formData.plan_home_id || null,
+          description: formData.description || null,
+        }),
       })
+      const created = await res.json()
       if (!res.ok) {
-        const err = await res.text()
-        setFeedback({ tone: "destructive", title: "Could not add product", description: err || "Request failed" })
+        setFeedback({ tone: "destructive", title: "Could not add product", description: created.message || "Request failed" })
         return
       }
-      const created = await res.json()
 
       if (addColors.length > 0) {
         await saveColorsToServer(created.id, addColors)
       }
 
-      const refreshed = await fetch(`/api/products/${created.id}`)
-      const full = await refreshed.json()
+      // Build full product client-side — avoids an authenticated re-fetch
+      const full: Product = {
+        ...created,
+        colors: addColors.map((c, ci) => ({
+          id: c.id ?? `temp-${ci}`,
+          name: c.name,
+          hex_code: c.hex_code,
+          is_active: c.is_active,
+          photos: c.photos.map((ph, pi) => ({
+            id: ph.id ?? `temp-photo-${pi}`,
+            file_url: ph.file_url,
+            is_primary: ph.is_primary,
+            sort_order: ph.sort_order,
+          })),
+        })),
+      }
       setProducts((prev) => [...prev, full])
       setIsAddDialogOpen(false)
       setFeedback({ tone: "success", title: "Product added", description: `${full.name} has been created.` })
+    } catch (e) {
+      setFeedback({ tone: "destructive", title: "Could not add product", description: e instanceof Error ? e.message : "Request failed" })
     } finally {
       setIsLoading(false)
     }
@@ -310,18 +343,24 @@ export default function ProductsPage() {
       const res = await fetch(`/api/products/${editingProduct.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, description: formData.description || null }),
+        body: JSON.stringify({
+          ...formData,
+          plan_mobile_id: formData.plan_mobile_id || null,
+          plan_home_id: formData.plan_home_id || null,
+          description: formData.description || null,
+        }),
       })
+      const updated = await res.json()
       if (!res.ok) {
-        const err = await res.text()
-        setFeedback({ tone: "destructive", title: "Could not update product", description: err || "Request failed" })
+        setFeedback({ tone: "destructive", title: "Could not update product", description: updated.message || "Request failed" })
         return
       }
-      const updated = await res.json()
-      setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+      setProducts((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)))
       setIsEditDialogOpen(false)
       setEditingProduct(null)
       setFeedback({ tone: "success", title: "Product updated", description: `${updated.name}'s details were saved.` })
+    } catch (e) {
+      setFeedback({ tone: "destructive", title: "Could not update product", description: e instanceof Error ? e.message : "Request failed" })
     } finally {
       setIsLoading(false)
     }
@@ -333,8 +372,8 @@ export default function ProductsPage() {
     try {
       const res = await fetch(`/api/products/${productToDelete.id}`, { method: "DELETE" })
       if (!res.ok) {
-        const err = await res.text()
-        setFeedback({ tone: "destructive", title: "Could not delete product", description: err || "Request failed" })
+        const err = await res.json().catch(() => ({}))
+        setFeedback({ tone: "destructive", title: "Could not delete product", description: err.message || "Request failed" })
         return
       }
       const name = productToDelete.name
@@ -342,6 +381,8 @@ export default function ProductsPage() {
       setIsDeleteDialogOpen(false)
       setProductToDelete(null)
       setFeedback({ tone: "success", title: "Product deleted", description: `${name} has been removed.` })
+    } catch (e) {
+      setFeedback({ tone: "destructive", title: "Could not delete product", description: e instanceof Error ? e.message : "Request failed" })
     } finally {
       setIsLoading(false)
     }
@@ -392,19 +433,41 @@ export default function ProductsPage() {
   const productFormFields = (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Plan</Label>
+        <Label className="text-right">Mobile Plan</Label>
         <div className="col-span-3">
-          <Select value={formData.plan_id} onValueChange={(v) => setFormData({ ...formData, plan_id: v })}>
-            <SelectTrigger className={errors.plan_id ? "border-red-500" : ""}>
-              <SelectValue placeholder="Select plan" />
+          <Select
+            value={formData.plan_mobile_id ?? "none"}
+            onValueChange={(v) => setFormData({ ...formData, plan_mobile_id: v === "none" ? null : v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="None" />
             </SelectTrigger>
             <SelectContent>
-              {plans.map((p) => (
+              <SelectItem value="none">None</SelectItem>
+              {mobilePlans.map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.name} - {p.provider_name} - {p.category_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.plan_id && <p className="text-red-500 text-sm mt-1">{errors.plan_id}</p>}
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Home Plan</Label>
+        <div className="col-span-3">
+          <Select
+            value={formData.plan_home_id ?? "none"}
+            onValueChange={(v) => setFormData({ ...formData, plan_home_id: v === "none" ? null : v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="None" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {homePlans.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
