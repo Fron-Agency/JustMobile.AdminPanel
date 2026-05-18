@@ -1,14 +1,14 @@
 import { CategoryRepository } from "./categories.repository"
 import type { CreateCategoryInput, UpdateCategoryInput } from "./categories.validation"
-import type { Category, CategoryProvidersAndPlans } from "./categories.type"
+import type { Category, CategoryProvidersAndMobilePlans } from "./categories.type"
 
 export const CategoryService = {
   async getAll(): Promise<Category[]> {
     return CategoryRepository.findAll()
   },
 
-  async getCategoriesProvidersAndPlans(): Promise<CategoryProvidersAndPlans[]>{
-    return CategoryRepository.findCategoriesWithProvidersAndPlans();
+  async getCategoriesProvidersAndPlans(): Promise<CategoryProvidersAndMobilePlans[]>{
+    return CategoryRepository.findCategoriesWithProvidersAndMobilePlans();
   },
 
   async getById(id: string): Promise<Category> {

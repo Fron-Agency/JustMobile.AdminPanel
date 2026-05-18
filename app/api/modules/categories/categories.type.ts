@@ -44,7 +44,7 @@ export type MenuPlan = {
   products: MenuProduct[]
 }
 
-export type CategoryProvidersAndPlans = {
+export type CategoryProvidersAndMobilePlans = {
   id: string
   name: string
   badge?: string
