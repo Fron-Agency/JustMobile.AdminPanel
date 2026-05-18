@@ -1,3 +1,5 @@
+import { Product } from "../products/products.type"
+
 export interface PlanHomeFeature {
   label: string
   value: string
@@ -24,6 +26,7 @@ export interface PlanHome {
 export interface PlanHomeWithProvider extends PlanHome {
   provider_name: string
   provider_file_url: string
+  product: Product | null
 }
 
 export interface CreatePlanHomeDto {
