@@ -46,10 +46,10 @@ type FormState = typeof emptyForm
 
 type ZoneEntry = {
   country_id: string
-  data: Record<string, unknown> | null
+  rawData: string
 }
 
-const emptyZone = (): ZoneEntry => ({ country_id: "", data: null })
+const emptyZone = (): ZoneEntry => ({ country_id: "", rawData: "" })
 
 export default function PlansPage() {
   const [plans, setPlans] = useState<PlanMobile[]>([])
@@ -106,7 +106,9 @@ export default function PlansPage() {
     discount: formData.discount,
     is_favorite: formData.is_favorite,
     data_gb_europe: isUnlimitedEurope ? null : formData.data_gb_europe,
-    country_zones: zones.filter((z) => z.country_id !== ""),
+    country_zones: zones
+      .filter((z) => z.country_id !== "")
+      .map((z) => ({ country_id: z.country_id, data: z.rawData.trim() || null })),
   })
 
   const handleAdd = async () => {
@@ -157,7 +159,10 @@ export default function PlansPage() {
       data_gb_europe: plan.data_gb_europe
     })
     setZones(
-      (plan.country_zones ?? []).map((z) => ({ country_id: z.country_id, data: z.data }))
+      (plan.country_zones ?? []).map((z) => ({
+        country_id: z.country_id,
+        rawData: z.data ?? "",
+      }))
     )
     setErrors({})
     await fetchProviders()
@@ -231,14 +236,8 @@ export default function PlansPage() {
   const removeZone = (i: number) => setZones((prev) => prev.filter((_, idx) => idx !== i))
   const updateZoneCountry = (i: number, country_id: string) =>
     setZones((prev) => prev.map((z, idx) => (idx === i ? { ...z, country_id } : z)))
-  const updateZoneData = (i: number, raw: string) => {
-    try {
-      const parsed = raw.trim() === "" ? null : JSON.parse(raw)
-      setZones((prev) => prev.map((z, idx) => (idx === i ? { ...z, data: parsed } : z)))
-    } catch {
-      // keep previous value while user is still typing
-    }
-  }
+  const updateZoneData = (i: number, rawData: string) =>
+    setZones((prev) => prev.map((z, idx) => (idx === i ? { ...z, rawData } : z)))
 
   const columns: Column<PlanMobile>[] = [
     {
@@ -472,11 +471,11 @@ export default function PlansPage() {
               </Select>
             </div>
             <div className="flex flex-col gap-1">
-              <Label className="text-xs">Data (JSON)</Label>
+              <Label className="text-xs">Description</Label>
               <textarea
                 className="w-full rounded-md border bg-background px-3 py-2 text-xs font-mono min-h-[72px] resize-y focus:outline-none focus:ring-1 focus:ring-ring"
-                placeholder={'e.g. {"description": "Unlimited internet incl. 40GB at highspeed"}'}
-                defaultValue={zone.data ? JSON.stringify(zone.data, null, 2) : ""}
+                placeholder="e.g. Unlimited internet incl. 40GB at highspeed in/to 30 countries."
+                value={zone.rawData}
                 onChange={(e) => updateZoneData(i, e.target.value)}
               />
             </div>

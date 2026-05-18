@@ -3,7 +3,7 @@ import type { CreatePlanMobileInput, UpdatePlanMobileInput } from "./plans_mobil
 import { PlanRepository } from "./plans_mobile.repository"
 import type { ExternalPlanMobileDto, PlanMobile } from "./plans_mobile.type"
 
-type ZoneInput = { country_id: string; data: Record<string, unknown> | null }
+type ZoneInput = { country_id: string; data: string | null }
 
 export const PlanService = {
   async getAll(): Promise<ExternalPlanMobileDto[]> {

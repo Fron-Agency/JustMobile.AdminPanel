@@ -4,7 +4,7 @@ export type CountryZoneEntry = {
   id?: string
   country_id: string
   country_name?: string
-  data: Record<string, unknown> | null
+  data: string | null
 }
 
 export type PlanMobile = {

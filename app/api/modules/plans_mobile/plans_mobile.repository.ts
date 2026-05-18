@@ -35,7 +35,7 @@ async function fetchCountryZones(supabase: any, planId: string): Promise<Country
 async function syncCountryZones(
   supabase: any,
   planId: string,
-  zones: Array<{ country_id: string; data: Record<string, unknown> | null }>
+  zones: Array<{ country_id: string; data: string | null }>
 ): Promise<void> {
   await supabase.from("countries_mobile_plans").delete().eq("plan_mobile_id", planId)
   if (zones.length === 0) return
@@ -160,7 +160,7 @@ export const PlanRepository = {
 
   async create(
     payload: CreatePlanMobileDto,
-    zones: Array<{ country_id: string; data: Record<string, unknown> | null }> = []
+    zones: Array<{ country_id: string; data: string | null }> = []
   ): Promise<PlanMobile> {
     const supabase = await client()
     const { data, error } = await supabase
@@ -176,7 +176,7 @@ export const PlanRepository = {
   async update(
     id: string,
     payload: UpdatePlanMobileInput,
-    zones?: Array<{ country_id: string; data: Record<string, unknown> | null }>
+    zones?: Array<{ country_id: string; data: string | null }>
   ): Promise<PlanMobile> {
     const supabase = await client()
     const { error } = await supabase
