@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import type { Lead, LeadWithRelations, Document } from "@/app/api/modules/leads/leads.type"
+import type { LeadHome } from "@/app/api/modules/leads_home/leads_home.type"
 import type { User } from "@/app/api/modules/users/users.type"
 import { Mail, Loader2, FileText, ChevronDown } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
@@ -47,6 +48,8 @@ const statusConfig: Record<LeadWithRelations["status"], { label: string; classNa
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<LeadWithRelations[]>([])
+  const [leadsHome, setLeadsHome] = useState<LeadHome[]>([])
+  const [isLoadingHome, setIsLoadingHome] = useState(true)
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [feedback, setFeedback] = useState<{
@@ -61,6 +64,8 @@ export default function LeadsPage() {
   const [isLoadingDocs, setIsLoadingDocs] = useState(false)
 
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([])
+  const [selectedLeadHomeIds, setSelectedLeadHomeIds] = useState<string[]>([])
+  const [isUpdatingHomeStatus, setIsUpdatingHomeStatus] = useState(false)
 
   const [emailLeads, setEmailLeads] = useState<LeadWithRelations[]>([])
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false)
@@ -317,17 +322,121 @@ export default function LeadsPage() {
     }
   }
 
+  const handleBulkHomeStatus = async (status: LeadHome["status"]) => {
+    if (selectedLeadHomeIds.length === 0) return
+    setIsUpdatingHomeStatus(true)
+    try {
+      const updated: LeadHome[] = await fetch("/api/leads_home/bulk-status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedLeadHomeIds, status }),
+      }).then((r) => r.json())
+      setLeadsHome((prev) => prev.map((l) => {
+        const u = updated.find((u) => u.id === l.id)
+        return u ? { ...l, status: u.status } : l
+      }))
+      setSelectedLeadHomeIds([])
+      setFeedback({ tone: "success", title: `${selectedLeadHomeIds.length} home lead${selectedLeadHomeIds.length > 1 ? "s" : ""} marked as ${status}` })
+    } catch {
+      setFeedback({ tone: "destructive", title: "Failed to update status" })
+    } finally {
+      setIsUpdatingHomeStatus(false)
+    }
+  }
+
+  const leadsHomeColumns: Column<LeadHome>[] = [
+    {
+      key: "name",
+      label: "Name",
+      render: (_value, item) => (
+        <span className="font-medium text-foreground">{item.name} {item.lastname}</span>
+      ),
+    },
+    {
+      key: "email",
+      label: "Email",
+      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+    },
+    {
+      key: "mobile_number",
+      label: "Mobile",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => {
+        const status = String(value ?? "").toLowerCase() as LeadHome["status"]
+        const config = statusConfig[status] ?? statusConfig.new
+        return <Badge className={config.className}>{config.label}</Badge>
+      },
+    },
+    {
+      key: "nationality",
+      label: "Nationality",
+      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+    },
+    {
+      key: "document_type",
+      label: "Doc Type",
+      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+    },
+    {
+      key: "document_number",
+      label: "Doc No.",
+      render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
+    },
+    {
+      key: "swiss_number",
+      label: "Swiss No.",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>,
+    },
+    {
+      key: "arriving_date",
+      label: "Arriving",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+    },
+    {
+      key: "provider_name",
+      label: "Provider",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+    },
+    {
+      key: "address",
+      label: "Address",
+      render: (_value, item) => {
+        const address = Array.isArray(item.address) ? item.address[0] : item.address
+        if (!address) return <span className="text-muted-foreground text-sm">—</span>
+        return (
+          <span className="text-muted-foreground text-sm">
+            {[address.street, address.number, address.zip_code, address.city].filter(Boolean).join(" ")}
+          </span>
+        )
+      },
+    },
+    {
+      key: "comment",
+      label: "Comment",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+    },
+  ]
+
   useEffect(() => {
     const supabase = createClient()
 
     setIsLoading(true)
-    Promise.all([fetch("/api/leads"), fetch("/api/users")])
-      .then(([leadsRes, usersRes]) => Promise.all([leadsRes.json(), usersRes.json()]))
-      .then(([leadsData, usersData]) => {
+    setIsLoadingHome(true)
+    Promise.all([fetch("/api/leads"), fetch("/api/users"), fetch("/api/leads_home")])
+      .then(([leadsRes, usersRes, leadsHomeRes]) => Promise.all([leadsRes.json(), usersRes.json(), leadsHomeRes.json()]))
+      .then(([leadsData, usersData, leadsHomeData]) => {
         setLeads(leadsData)
         setUsers(usersData)
+        setLeadsHome(leadsHomeData)
       })
-      .finally(() => setIsLoading(false))
+      .finally(() => {
+        setIsLoading(false)
+        setIsLoadingHome(false)
+      })
 
     const channel = supabase
       .channel("admin-leads")
@@ -404,6 +513,44 @@ export default function LeadsPage() {
         selectable
         selectedIds={selectedLeadIds}
         onSelectionChange={setSelectedLeadIds}
+      />
+
+      <div className="flex items-center justify-between mt-8 mb-2">
+        <span className="text-sm text-muted-foreground">
+          {selectedLeadHomeIds.length > 0 ? `${selectedLeadHomeIds.length} selected` : ""}
+        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={selectedLeadHomeIds.length === 0 || isUpdatingHomeStatus}
+              className="gap-2"
+            >
+              {isUpdatingHomeStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
+              Change Status
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("contacted")}>Contacted</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("converted")}>Converted</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("lost")}>Lost</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("sent")}>Sent</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("new")}>New</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <DataTable
+        data={leadsHome}
+        columns={leadsHomeColumns}
+        title="Home Leads"
+        searchPlaceholder="Search home leads..."
+        searchFields={["name", "lastname", "email", "mobile_number"]}
+        isLoading={isLoadingHome}
+        selectable
+        selectedIds={selectedLeadHomeIds}
+        onSelectionChange={setSelectedLeadHomeIds}
       />
 
       {/* Documents Dialog */}
