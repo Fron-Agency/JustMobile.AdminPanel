@@ -397,8 +397,18 @@ export default function LeadsPage() {
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
-      key: "provider_name",
-      label: "Provider",
+      key: "oto_provider",
+      label: "OTO Provider",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+    },
+    {
+      key: "oto_number",
+      label: "OTO Number",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+    },
+    {
+      key: "landline_number",
+      label: "Landline number",
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
