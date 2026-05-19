@@ -126,57 +126,17 @@ export default function LeadsPage() {
       },
     },
     {
-      key: "plan_info",
+      key: "plan_mobile_name",
       label: "Plan",
       render: (_value, item) => {
-        const plan = (item as any).plans
-        if (!plan) return <span className="text-muted-foreground text-sm">—</span>
-        const provider = plan.providers
         return (
           <div className="flex items-center gap-2">
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">{plan.name}</span>
+              <span className="text-sm font-medium text-foreground">{item.plan_mobile_name}</span>
               <span className="text-xs text-muted-foreground">
-                {provider?.name} · {provider?.categories?.name}
+                {item.plan_mobile_provider_name} · {item.plan_mobile_provider_category_name}
               </span>
             </div>
-          </div>
-        )
-      },
-    },
-    {
-      key: "plan_price",
-      label: "Price",
-      render: (_value, item) => {
-        const plan = (item as any).plans
-        if (!plan) return <span className="text-muted-foreground text-sm">—</span>
-        return (
-          <div className="flex flex-col">
-            <span className="text-sm text-foreground">
-              CHF {plan.discount > 0
-                ? (plan.price * (1 - plan.discount / 100)).toFixed(2)
-                : plan.price}
-              /mo
-            </span>
-            {plan.discount > 0 && (
-              <span className="text-[0.6rem] text-green-600">{plan.discount}% off</span>
-            )}
-          </div>
-        )
-      },
-    },
-    {
-      key: "plan_network",
-      label: "Network",
-      render: (_value, item) => {
-        const plan = (item as any).plans
-        if (!plan) return <span className="text-muted-foreground text-sm">—</span>
-        return (
-          <div className="flex flex-col">
-            <span className="text-sm text-muted-foreground">{plan.network_technology}</span>
-            <span className="text-xs text-muted-foreground">
-              {plan.data_gb === null ? "Unlimited" : `${plan.data_gb}GB`}
-            </span>
           </div>
         )
       },
@@ -185,46 +145,28 @@ export default function LeadsPage() {
       key: "product_color_id",
       label: "Product",
       render: (_value, item) => {
-        const plan = (item as any).plans
-        const colorId = item.product_color_id
-        if (!plan?.products?.length || !colorId) return <span className="text-muted-foreground text-sm">—</span>
 
-        let matchedProduct: any = null
-        let matchedColor: any = null
-
-        for (const product of plan.products) {
-          const color = product.products_colors?.find((c: any) => c.id === colorId)
-          if (color) {
-            matchedProduct = product
-            matchedColor = color
-            break
-          }
-        }
-
-        if (!matchedProduct) return <span className="text-muted-foreground text-sm">—</span>
-
-        const primaryPhoto = matchedColor?.products_photos?.find((p: any) => p.is_primary)
-          ?? matchedColor?.products_photos?.[0]
+        const primaryPhoto = item.product_photo_file_url
 
         return (
           <div className="flex items-center gap-2">
-            {primaryPhoto?.file_url && (
+            {primaryPhoto && (
               <img
-                src={photoUrl(primaryPhoto.file_url)}
-                alt={matchedColor.name}
+                src={photoUrl(primaryPhoto)}
+                alt={item.product_color_name}
                 className="w-7 h-9 object-cover rounded border"
               />
             )}
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-foreground">{matchedProduct.name}</span>
+              <span className="text-xs font-medium text-foreground">{item.product_name}</span>
               <div className="flex items-center gap-1">
-                <span
+                {/* <span
                   className="w-2 h-2 rounded-full border border-border inline-block"
                   style={{ backgroundColor: matchedColor.hex_code }}
-                />
-                <span className="text-xs text-muted-foreground">{matchedColor.name}</span>
+                /> */}
+                <span className="text-xs text-muted-foreground">{item.product_color_name}</span>
               </div>
-              <span className="text-xs text-muted-foreground">CHF {matchedProduct.base_price}</span>
+              {/* <span className="text-xs text-muted-foreground">CHF {matchedProduct.base_price}</span> */}
             </div>
           </div>
         )

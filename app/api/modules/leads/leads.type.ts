@@ -1,5 +1,3 @@
-import { ExternalPlanDto } from "../plans_mobile/plans_mobile.type"
-
 export type AddressDto = {
   zip_code: string
   city: string
@@ -35,11 +33,19 @@ export type Lead = {
   applied_referral_code?: string | null
 }
 
-export type LeadWithRelations =  Lead & {
-  plan : ExternalPlanDto
+export type LeadWithRelations = Lead & {
+  plan_mobile_id: string
+  plan_mobile_name: string
+  plan_mobile_provider_name: string
+  plan_mobile_provider_category_name: string
+  product_id: string
+  product_name: string
+  product_color_name: string
+  product_photo_id: string
+  product_photo_file_url: string
 }
 
-export type CreateLeadDto = Omit<Lead, "id" | "created_at" | "address" | "documents" | "referral_code"> & {
+export type CreateLeadDto = Omit<Lead, "id" | "created_at"> & {
   address: AddressDto
   documents?: string[]
 }

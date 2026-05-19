@@ -7,10 +7,6 @@ function generateReferralCode(length = 8) {
 }
 
 export const LeadService = {
-  async getAll(): Promise<Lead[]> {
-    return LeadRepository.findAll()
-  },
-
   async getReferrals() {
     return LeadRepository.findReferrals()
   },

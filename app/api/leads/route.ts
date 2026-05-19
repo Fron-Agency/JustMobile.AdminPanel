@@ -7,8 +7,15 @@ export async function GET() {
   const auth = await requireAuth()
   if (auth instanceof NextResponse) return auth
 
-  const leads = await LeadService.getAllLeadsWithRelations()
-  return Response.json(leads)
+  try {
+    const leads = await LeadService.getAllLeadsWithRelations()
+    return Response.json(leads)
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Something went wrong" },
+      { status: 500 }
+    )
+  }
 }
 
 export async function POST(req: Request) {

@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import type { Lead, CreateLeadRepositoryDto, UpdateLeadDto, AddressDto, LeadWithRelations } from "./leads.type"
+import type { Lead, LeadWithRelations, CreateLeadRepositoryDto, UpdateLeadDto, AddressDto } from "./leads.type"
 
 async function client() {
   return createClient(await cookies())
@@ -13,68 +13,62 @@ const LEAD_SELECT = `
 `
 
 export const LeadRepository = {
-  async findAll(): Promise<Lead[]> {
-    const supabase = await client()
-    const { data, error } = await supabase
-      .from("leads")
-      .select(LEAD_SELECT)
-      .order("created_at", { ascending: false })
-    if (error) throw new Error(error.message)
-    return data
-  },
-
   async findAllLeadsWithRelations(): Promise<LeadWithRelations[]> {
     const supabase = await client()
 
     const { data, error } = await supabase
       .from("leads")
       .select(`
-        *,
-        address (
-          *
+        id,
+        fullname,
+        email,
+        phone,
+        plan_id,
+        status,
+        created_at,
+        date_of_birth,
+        swiss_number,
+        keep_swiss_number,
+        roaming_control,
+        child_date_of_birth,
+        is_child_order,
+        description,
+        referred_by_lead_id,
+        applied_referral_code,
+        product_color_id,
+
+        address (*),
+
+        documents (
+          id,
+          file_url,
+          lead_id
         ),
-        plans (
+
+        plans_mobile (
           id,
           name,
-          price,
-          data_gb,
-          network_technology,
-          contract_length,
-          discount,
-          is_favorite,
 
           providers (
             name,
-            file_url,
+
             categories (
               name
             )
           ),
 
-          countries (
-            name
-          ),
-
           products (
             id,
             name,
-            brand,
-            model,
-            description,
-            base_price,
-            is_active,
 
             products_colors (
               id,
               name,
-              hex_code,
-              is_active,
 
               products_photos (
                 id,
                 file_url,
-                is_primary,
-                sort_order
+                is_primary
               )
             )
           )
@@ -86,9 +80,67 @@ export const LeadRepository = {
       throw new Error(error.message)
     }
 
-    return data.map((item: any) => ({
-      ...item
-    }))
+    const leads: LeadWithRelations[] = data.map((item: any) => {
+      const plan = item.plans_mobile
+
+      const provider = plan?.providers
+
+      const category = provider?.categories
+
+      const product = plan?.products?.[0]
+
+      const color = product?.products_colors?.find(
+        (c: any) => c.id === item.product_color_id
+      )
+
+      const photo =
+        color?.products_photos?.find((p: any) => p.is_primary) ??
+        color?.products_photos?.[0]
+
+      return {
+        id: item.id,
+        fullname: item.fullname,
+        email: item.email,
+        phone: item.phone,
+
+        plan_id: item.plan_id,
+        plan_mobile_id: plan?.id ?? "",
+        plan_mobile_name: plan?.name ?? "",
+
+        plan_mobile_provider_name: provider?.name ?? "",
+
+        plan_mobile_provider_category_name:
+          category?.name ?? "",
+
+        status: item.status,
+        created_at: item.created_at,
+
+        date_of_birth: item.date_of_birth,
+        swiss_number: item.swiss_number,
+        keep_swiss_number: item.keep_swiss_number,
+        roaming_control: item.roaming_control,
+        child_date_of_birth: item.child_date_of_birth,
+        is_child_order: item.is_child_order,
+        description: item.description,
+
+        referred_by_lead_id: item.referred_by_lead_id,
+        applied_referral_code: item.applied_referral_code,
+
+        address: item.address,
+        documents: item.documents,
+
+        product_id: product?.id ?? "",
+        product_name: product?.name ?? "",
+
+        product_color_id: color?.id ?? null,
+        product_color_name: color?.name ?? "",
+
+        product_photo_id: photo?.id ?? "",
+        product_photo_file_url: photo?.file_url ?? "",
+      }
+    })
+
+    return leads
   },
 
   async findReferrals(): Promise<any[]> {
