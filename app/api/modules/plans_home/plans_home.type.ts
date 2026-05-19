@@ -21,6 +21,7 @@ export interface PlanHome {
   internet_content: PlanHomeJsonBlock | null
   tv: PlanHomeJsonBlock | null
   telephony: PlanHomeJsonBlock | null
+  other: PlanHomeJsonBlock | null
 }
 
 export interface PlanHomeWithProvider extends PlanHome {
@@ -39,6 +40,7 @@ export interface CreatePlanHomeDto {
   internet_content?: PlanHomeJsonBlock | null
   tv?: PlanHomeJsonBlock | null
   telephony?: PlanHomeJsonBlock | null
+  other?: PlanHomeJsonBlock | null
 }
 
 export type UpdatePlanHomeDto = Partial<CreatePlanHomeDto>

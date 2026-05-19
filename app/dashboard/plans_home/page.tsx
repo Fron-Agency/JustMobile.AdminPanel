@@ -31,6 +31,7 @@ const emptyForm = {
   internet_content: emptyBlock(),
   tv: emptyBlock(),
   telephony: emptyBlock(),
+  other: emptyBlock()
 }
 
 type FormState = typeof emptyForm
@@ -156,6 +157,7 @@ export default function PlansHomePage() {
     internet_content: blockIsEmpty(formData.internet_content) ? null : formData.internet_content,
     tv: blockIsEmpty(formData.tv) ? null : formData.tv,
     telephony: blockIsEmpty(formData.telephony) ? null : formData.telephony,
+    other: blockIsEmpty(formData.other) ? null : formData.other
   })
 
   const handleAdd = async () => {
@@ -197,6 +199,7 @@ export default function PlansHomePage() {
       internet_content: plan.internet_content ?? emptyBlock(),
       tv: plan.tv ?? emptyBlock(),
       telephony: plan.telephony ?? emptyBlock(),
+      other: plan.other ?? emptyBlock()
     })
     setEditingId(plan.id)
     setErrors({})
@@ -301,6 +304,13 @@ export default function PlansHomePage() {
         ? <span className="text-muted-foreground text-sm">{v.features.length} feature{v.features.length !== 1 ? "s" : ""}</span>
         : <span className="text-muted-foreground text-sm">—</span>,
     },
+    {
+      key: "other",
+      label: "Other",
+      render: (v: PlanHomeWithProvider["other"]) => v
+        ? <span className="text-muted-foreground text-sm">{v.features.length} feature{v.features.length !== 1 ? "s" : ""}</span>
+        : <span className="text-muted-foreground text-sm">—</span>,
+    }
   ]
 
   const formFields = (
@@ -390,6 +400,11 @@ export default function PlansHomePage() {
           label="Telephony"
           value={formData.telephony}
           onChange={(v) => setFormData({ ...formData, telephony: v })}
+        />
+        <JsonBlockEditor
+          label="Other"
+          value={formData.other}
+          onChange={(v) => setFormData({ ...formData, other: v })}
         />
       </div>
     </div>

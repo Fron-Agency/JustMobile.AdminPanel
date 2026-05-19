@@ -15,7 +15,7 @@ const leadStatusConfig = {
 
 export default async function DashboardPage() {
   const [leads, plans, providers] = await Promise.all([
-    LeadService.getAll(),
+    LeadService.getAllLeadsWithRelations(),
     PlanService.getAll(),
     ProviderService.getAll(),
   ])
@@ -31,13 +31,6 @@ export default async function DashboardPage() {
     converted: leads.filter((l) => l.status === "converted").length,
     lost: leads.filter((l) => l.status === "lost").length,
   }
-
-  const plansByProvider = providers
-    .filter((prov) => plans.some((plan) => plan.provider_id === prov.id))
-    .map((prov) => ({
-      provider: prov,
-      plans: plans.filter((plan) => plan.provider_id === prov.id),
-    }))
 
   const statCards = [
     {
@@ -114,15 +107,6 @@ export default async function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{lead.email}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="hidden sm:block text-xs text-muted-foreground">{plan?.name ?? "—"}</span>
-                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${status.color}`}>
-                          {status.label}
-                        </span>
-                        <span className="hidden md:block text-xs text-muted-foreground">
-                          {new Date(lead.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
                     </div>
                   )
                 })}
@@ -163,27 +147,6 @@ export default async function DashboardPage() {
                       </div>
                       <span className="text-sm font-medium text-foreground w-4 text-right">{count}</span>
                     </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Plans by provider */}
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-foreground">Plans by Provider</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              {plansByProvider.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No plans linked to providers yet.</p>
-              ) : (
-                plansByProvider.map(({ provider, plans: provPlans }) => (
-                  <div key={provider.id} className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">{provider.name}</span>
-                    <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-xs">
-                      {provPlans.length} plan{provPlans.length !== 1 ? "s" : ""}
-                    </Badge>
                   </div>
                 ))
               )}

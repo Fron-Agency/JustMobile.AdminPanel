@@ -20,6 +20,7 @@ export const createPlanHomeSchema = z.object({
   internet_content: jsonBlockSchema,
   tv: jsonBlockSchema,
   telephony: jsonBlockSchema,
+  other: jsonBlockSchema
 })
 
 export const updatePlanHomeSchema = createPlanHomeSchema.partial()
