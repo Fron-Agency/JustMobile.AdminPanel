@@ -45,7 +45,10 @@ export type LeadWithRelations = Lead & {
   product_photo_file_url: string
 }
 
-export type CreateLeadDto = Omit<Lead, "id" | "created_at"> & {
+export type CreateLeadDto = Omit<
+  Lead,
+  "id" | "created_at" | "referred_by_lead_id" | "documents"
+> & {
   address: AddressDto
   documents?: string[]
 }

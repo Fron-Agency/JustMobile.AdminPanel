@@ -73,6 +73,7 @@ export const LeadHomeRepository = {
     const supabase = await client()
     const { error } = await supabase.from("address").insert([{
       lead_home_id: leadHomeId,
+      lead_id: null,
       zip_code: address.zip_code,
       city: address.city,
       street: address.street ?? null,
