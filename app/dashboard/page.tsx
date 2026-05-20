@@ -7,7 +7,7 @@ import { ProviderService } from "@/app/api/modules/providers/providers.service"
 
 const leadStatusConfig = {
   new: { label: "New", color: "bg-primary/10 text-primary border-primary/20" },
-  sent: { label: "Sent", className: "bg-primary/80 text-white border-primary/90"},
+  sent: { label: "Sent", color: "bg-primary/80 text-white border-primary/90" },
   contacted: { label: "Contacted", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
   converted: { label: "Converted", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
   lost: { label: "Lost", color: "bg-destructive/10 text-destructive border-destructive/20" },
@@ -15,8 +15,8 @@ const leadStatusConfig = {
 
 export default async function DashboardPage() {
   const [leads, plans, providers] = await Promise.all([
-    LeadService.getAllLeadsWithRelations(),
-    PlanService.getAll(),
+    LeadService.getAll(),
+    PlanService.getPlansCounter(),
     ProviderService.getAll(),
   ])
 
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
     },
     {
       label: "Active Plans",
-      value: plans.length,
+      value: plans,
       icon: Package,
       sub: `across ${providers.filter((p) => p.is_active).length} providers`,
       positive: true,
@@ -94,7 +94,6 @@ export default async function DashboardPage() {
             ) : (
               <div className="divide-y divide-border">
                 {recentLeads.map((lead) => {
-                  const plan = plans.find((p) => p.id === lead.plan_id)
                   const status = leadStatusConfig[lead.status]
                   return (
                     <div key={lead.id} className="flex items-center justify-between px-6 py-3">
@@ -107,6 +106,7 @@ export default async function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{lead.email}</p>
                         </div>
                       </div>
+                      <Badge className={status.color}>{status.label}</Badge>
                     </div>
                   )
                 })}

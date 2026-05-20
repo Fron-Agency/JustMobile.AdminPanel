@@ -195,4 +195,16 @@ export const PlanRepository = {
     const { error } = await supabase.from("plans_mobile").delete().eq("id", id)
     if (error) throw new Error(error.message)
   },
+
+  async getPlansCounter() : Promise<number> {
+    const supabase = await client()
+
+    const { count, error } = await supabase
+      .from("plans_mobile")
+      .select("id", { count: "exact", head: true })
+
+    if (error) throw new Error(error.message)
+
+    return count ?? 0
+  }
 }

@@ -10,6 +10,10 @@ export const PlanService = {
     return PlanRepository.findAll()
   },
 
+  async getPlansCounter() : Promise<any> {
+    return PlanRepository.getPlansCounter()
+  },
+
   async getById(id: string): Promise<PlanMobile> {
     const plan = await PlanRepository.findById(id)
     if (!plan) throw new Error("Plan not found")

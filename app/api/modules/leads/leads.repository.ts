@@ -143,6 +143,18 @@ export const LeadRepository = {
     return leads
   },
 
+  async getAll(): Promise<Lead[]>{
+    const supabase = await client()
+
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+
+      if(error) throw new Error(error.message)
+      
+    return data;
+  },
+
   async findReferrals(): Promise<any[]> {
     const supabase = await client()
 

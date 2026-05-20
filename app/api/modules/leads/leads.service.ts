@@ -10,6 +10,10 @@ export const LeadService = {
   async getReferrals() {
     return LeadRepository.findReferrals()
   },
+
+  async getAll(): Promise<Lead[]> {
+    return LeadRepository.getAll()
+  },
   
   async getAllLeadsWithRelations() {
     return LeadRepository.findAllLeadsWithRelations()
