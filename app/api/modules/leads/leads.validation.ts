@@ -67,7 +67,7 @@ export const createLeadSchema = z.object({
       .nullable()
       .optional()
       .transform((v) => (v === "" ? null : v)),
-  }),
+  }).optional(),
 
   documents: z.array(z.string()).optional().default([]),
 
