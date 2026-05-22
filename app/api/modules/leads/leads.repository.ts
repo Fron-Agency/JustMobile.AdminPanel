@@ -218,7 +218,9 @@ export const LeadRepository = {
 
       if (error) throw new Error(error.message)
 
-      await LeadRepository.insertAddress(data.id, address)
+      if(address && address.zip_code && address.city) {
+        await LeadRepository.insertAddress(data.id, address)
+      }
 
       if (documents && documents.length > 0) {
         await Promise.all(
