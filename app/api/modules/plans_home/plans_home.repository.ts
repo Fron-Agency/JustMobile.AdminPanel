@@ -52,7 +52,7 @@ export const PlanHomeRepository = {
       .from("plans_home")
       .select(`
         *,
-        providers(name, file_url),
+        providers!inner(name, file_url),
         products(
           id, plan_mobile_id, plan_home_id, name, brand, model, description, base_price, is_active,
           products_colors(
@@ -62,6 +62,7 @@ export const PlanHomeRepository = {
         )
       `)
       .order("name", { ascending: true })
+      .eq("providers.is_active", true)
     if (error) throw new Error(error.message)
     return (data ?? []).map(mapRow)
   },
