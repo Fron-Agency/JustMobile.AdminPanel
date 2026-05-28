@@ -58,4 +58,4 @@ export type CreateLeadRepositoryDto = CreateLeadDto & {
   referred_by_lead_id: string | null
 }
 
-export type UpdateLeadDto = Partial<CreateLeadDto>
+export type UpdateLeadDto = Partial<CreateLeadRepositoryDto>

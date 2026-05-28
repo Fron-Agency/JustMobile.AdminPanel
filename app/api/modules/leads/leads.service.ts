@@ -1,5 +1,5 @@
 import { LeadRepository } from "./leads.repository"
-import type { CreateLeadDto, Lead, UpdateLeadDto} from "./leads.type"
+import type { CreateLeadDto, CreateLeadRepositoryDto, Lead, UpdateLeadDto} from "./leads.type"
 
 function generateReferralCode(length = 8) {
   return Math.random().toString(36).substring(2, 2 + length).toUpperCase()
@@ -24,8 +24,18 @@ export const LeadService = {
     return lead
   },
 
-  async create(input: CreateLeadDto): Promise<Lead> {
+  async create(input: CreateLeadRepositoryDto): Promise<Lead> {
     const referral_code = generateReferralCode().toUpperCase()
+    return LeadRepository.create({ ...input, referral_code })
+  },
+
+  async update(id: string, input: UpdateLeadDto): Promise<Lead> {
+    await LeadService.getById(id)
+
+    console.log({
+      incoming: input.applied_referral_code,
+      normalized: input.applied_referral_code?.trim().toUpperCase(),
+    })
 
     let referred_by_lead_id: string | null = null
     if (input.applied_referral_code) {
@@ -33,12 +43,7 @@ export const LeadService = {
       referred_by_lead_id = referrer?.id ?? null
     }
 
-    return LeadRepository.create({ ...input, referral_code, referred_by_lead_id })
-  },
-
-  async update(id: string, input: UpdateLeadDto): Promise<Lead> {
-    await LeadService.getById(id)
-    return LeadRepository.update(id, input)
+    return LeadRepository.update(id, { ...input, referred_by_lead_id })
   },
 
   async delete(id: string): Promise<void> {
