@@ -81,7 +81,7 @@ export const PlanRepository = {
       .select(`
         id, name, price, data_gb, network_technology, contract_length, discount, is_favorite,
         data_gb_europe,
-        providers(name, file_url, categories(name)),
+        providers!inner(name, file_url, categories(name)),
         products(
           id, name, brand, model, description, base_price, is_active,
           products_colors(
@@ -90,6 +90,7 @@ export const PlanRepository = {
           )
         )
       `)
+      .eq("providers.is_active", true)
     if (error) throw new Error(error.message)
     const plans = (data ?? []).map((row: any) => {
       const provider = Array.isArray(row.providers) ? row.providers[0] : row.providers
