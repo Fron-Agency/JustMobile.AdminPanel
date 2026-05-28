@@ -259,6 +259,14 @@ export const LeadRepository = {
       await LeadRepository.upsertAddress(id, address)
     }
 
+    if (documents && documents.length > 0) {
+      await Promise.all(
+        documents.map((fileUrl: string) =>
+          LeadRepository.insertDocument(id, fileUrl)
+        )
+      )
+    }
+
     if (!data) throw new Error("Lead not found")
     return data
   },
