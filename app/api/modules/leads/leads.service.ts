@@ -25,7 +25,7 @@ export const LeadService = {
   },
 
   async create(input: CreateLeadDto): Promise<Lead> {
-    const referral_code = generateReferralCode()
+    const referral_code = generateReferralCode().toUpperCase()
 
     let referred_by_lead_id: string | null = null
     if (input.applied_referral_code) {

@@ -185,11 +185,13 @@ export const LeadRepository = {
   },
 
   async findByReferralCode(code: string): Promise<{ id: string } | null> {
+    const normalized = code.trim().toUpperCase()
+
     const supabase = await client()
     const { data, error } = await supabase
       .from("leads")
       .select("id")
-      .eq("referral_code", code)
+      .eq("referral_code", normalized)
       .maybeSingle()
     if (error) throw new Error(error.message)
     return data
