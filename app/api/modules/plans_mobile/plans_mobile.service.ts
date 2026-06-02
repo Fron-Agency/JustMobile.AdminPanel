@@ -31,6 +31,7 @@ export const PlanService = {
         contract_length: input.contract_length ?? 0,
         discount: input.discount ?? 0,
         is_favorite: input.is_favorite ?? false,
+        product_price: input.product_price ?? 0,
       },
       zones
     )
@@ -42,6 +43,7 @@ export const PlanService = {
       ...input,
       contract_length: input.contract_length ?? undefined,
       discount: input.discount ?? undefined,
+      product_price: input.product_price ?? undefined,
     }
     return PlanRepository.update(id, sanitized, zones)
   },

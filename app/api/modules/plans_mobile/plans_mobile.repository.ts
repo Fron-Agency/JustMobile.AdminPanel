@@ -56,6 +56,7 @@ export const PlanRepository = {
       id: row.id,
       name: row.name,
       price: row.price,
+      product_price: row.product_price,
       data_gb: row.data_gb,
       network_technology: row.network_technology,
       contract_length: row.contract_length,
@@ -79,7 +80,7 @@ export const PlanRepository = {
     const { data, error } = await supabase
       .from("plans_mobile")
       .select(`
-        id, name, price, data_gb, network_technology, contract_length, discount, is_favorite,
+        id, name, price, product_price, data_gb, network_technology, contract_length, discount, is_favorite,
         data_gb_europe,
         providers!inner(name, file_url, categories(name)),
         products(
@@ -99,6 +100,7 @@ export const PlanRepository = {
         id: row.id,
         name: row.name,
         price: row.price,
+        product_price: row.product_price,
         data_gb: row.data_gb,
         network_technology: row.network_technology,
         contract_length: row.contract_length,

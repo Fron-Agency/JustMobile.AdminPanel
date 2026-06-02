@@ -34,6 +34,7 @@ const emptyForm = {
   name: "",
   provider_id: "",
   price: 0,
+  product_price: 0,
   data_gb: 0 as number | null,
   network_technology: "",
   contract_length: 0,
@@ -100,6 +101,7 @@ export default function PlansPage() {
     name: formData.name,
     provider_id: formData.provider_id,
     price: formData.price,
+    product_price: formData.product_price,
     data_gb: isUnlimited ? null : formData.data_gb,
     network_technology: formData.network_technology,
     contract_length: formData.contract_length,
@@ -151,6 +153,7 @@ export default function PlansPage() {
       name: plan.name,
       provider_id: plan.provider_id,
       price: plan.price,
+      product_price: plan.product_price,
       data_gb: plan.data_gb,
       network_technology: plan.network_technology,
       contract_length: plan.contract_length,
@@ -268,6 +271,11 @@ export default function PlansPage() {
       render: (v) => <span className="text-muted-foreground text-sm">CHF {v}/mo</span>,
     },
     {
+      key: "product_price",
+      label: "Product Price",
+      render: (v) => <span className="text-muted-foreground text-sm">CHF {v ?? "—"}/mo</span>,
+    },
+    {
       key: "data_gb",
       label: "Data",
       render: (v) => <span className="text-muted-foreground text-sm">{v === null ? "Unlimited" : `${v}GB`}</span>,
@@ -343,6 +351,16 @@ export default function PlansPage() {
             className={errors.price ? "border-red-500" : ""}
           />
           {errors.price && <p className="text-red-500 text-xs">{errors.price}</p>}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label>Product Price (CHF)</Label>
+          <Input
+            type="number"
+            value={formData.product_price}
+            onChange={(e) => setFormData({ ...formData, product_price: Number(e.target.value) })}
+            className={errors.product_price ? "border-red-500" : ""}
+          />
         </div>
 
         <div className="flex flex-col gap-1">

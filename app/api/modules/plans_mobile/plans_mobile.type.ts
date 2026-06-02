@@ -15,6 +15,7 @@ export type PlanMobile = {
   provider_file_url?: string
   category_name: string
   price: number
+  product_price: number
   data_gb: number | null
   network_technology: string
   contract_length: number
@@ -30,6 +31,7 @@ export type ExternalPlanMobileDto = {
   provider_name: string
   provider_file_url: string
   price: number
+  product_price: number
   data_gb: number | null
   network_technology: string
   contract_length: number
@@ -45,6 +47,7 @@ export type CreatePlanMobileDto = {
   name: string
   provider_id: string
   price: number
+  product_price: number
   data_gb: number | null
   network_technology: string
   contract_length: number

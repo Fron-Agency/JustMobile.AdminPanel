@@ -9,7 +9,8 @@ export const createPlanMobileSchema = z.object({
   contract_length: z.number().optional().nullable().default(null),
   is_favorite: z.boolean().optional(),
   discount: z.number().optional().nullable().default(null),
-  data_gb_europe: z.number().optional().nullable().default(null)
+  data_gb_europe: z.number().optional().nullable().default(null),
+  product_price: z.number().optional().nullable().default(null)
 })
 
 export const updatePlanMobileSchema = createPlanMobileSchema.partial().extend({
