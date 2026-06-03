@@ -372,6 +372,11 @@ export default function LeadsPage() {
       },
     },
     {
+      key: "date_of_birth",
+      label: "Date of Birth",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+    },
+    {
       key: "nationality",
       label: "Nationality",
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
@@ -407,6 +412,11 @@ export default function LeadsPage() {
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
+      key: "oto_expiry_date",
+      label: "OTO Expiry",
+      render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
+    },
+    {
       key: "landline_number",
       label: "Landline number",
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
@@ -429,6 +439,11 @@ export default function LeadsPage() {
       label: "Comment",
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
+    {
+      key: "created_at",
+      label: "Created",
+      render: (value) => <span className="text-muted-foreground text-sm">{new Date(value).toLocaleString()}</span>,
+    }
   ]
 
   useEffect(() => {

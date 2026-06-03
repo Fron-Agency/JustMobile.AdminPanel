@@ -32,6 +32,7 @@ export const createLeadHomeSchema = z.object({
       .transform((v) => (v === "" ? null : v)),
   }),
   status: z.enum(["new", "sent", "contacted", "converted", "lost"]).default("new"),
+  oto_expiry_date: z.coerce.date().transform((d) => d.toISOString().split("T")[0]).optional().nullable().default(null),
 })
 
 export const updateLeadHomeSchema = createLeadHomeSchema.partial()

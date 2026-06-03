@@ -18,6 +18,7 @@ export type LeadHome = {
   swiss_number: boolean
   provider_name: string | null
   oto_provider: string | null
+  oto_expiry_date: string | null
   comment: string | null
   status: "new" | "sent" | "contacted" | "converted" | "lost"
   address?: AddressDto
