@@ -33,6 +33,7 @@ export const CategoryRepository = {
             provider_id,
             name,
             price,
+            product_price,
             data_gb,
             network_technology,
             contract_length,

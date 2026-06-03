@@ -38,6 +38,7 @@ export type MenuPlan = {
   provider_id: string
   name: string
   price: number
+  product_price: number | null
   data_gb: number | null
   network_technology: string
   contract_length: number
