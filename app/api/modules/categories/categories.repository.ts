@@ -6,6 +6,21 @@ async function client() {
   return createClient(await cookies())
 }
 
+async function fetchCountryZones(supabase: any, planId: string) {
+  const { data } = await supabase
+    .from("countries_mobile_plans")
+    .select("id, country_id, data, countries(name)")
+    .eq("plan_mobile_id", planId)
+
+  if (!data) return []
+  return data.map((row: any) => ({
+    id: row.id,
+    country_id: row.country_id,
+    country_name: Array.isArray(row.countries) ? row.countries[0]?.name : row.countries?.name,
+    data: row.data,
+  }))
+}
+
 export const CategoryRepository = {
   async findAll(): Promise<Category[]> {
     const supabase = await client()
@@ -17,7 +32,7 @@ export const CategoryRepository = {
     return data
   },
 
-  async findCategoriesWithProvidersAndMobilePlans() : Promise<CategoryProvidersAndMobilePlans[]> {
+  async findCategoriesWithProvidersAndMobilePlans(): Promise<CategoryProvidersAndMobilePlans[]> {
     const supabase = await client()
     const { data, error } = await supabase
       .from("categories")
@@ -78,6 +93,29 @@ export const CategoryRepository = {
       .eq("is_active", true)
       .eq("providers.is_active", true)
     if (error) throw new Error(error.message)
+    if (!data) return []
+
+    await Promise.all(
+      data.map(async (category: any) => {
+        const providers = Array.isArray(category.providers) ? category.providers : category.providers ? [category.providers] : []
+        await Promise.all(
+          providers.map(async (provider: any) => {
+            const plans = Array.isArray(provider.plans_mobile)
+              ? provider.plans_mobile
+              : provider.plans_mobile
+              ? [provider.plans_mobile]
+              : []
+
+            await Promise.all(
+              plans.map(async (plan: any) => {
+                plan.country_zones = await fetchCountryZones(supabase, plan.id)
+              })
+            )
+          })
+        )
+      })
+    )
+
     return data
   },
 

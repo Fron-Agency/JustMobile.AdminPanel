@@ -1,4 +1,5 @@
 import { PlanHome } from "../plans_home/plans_home.type"
+import { CountryZoneEntry } from "../plans_mobile/plans_mobile.type"
 
 export type Category = {
   id: string
@@ -45,6 +46,7 @@ export type MenuPlan = {
   discount: number
   is_favorite: boolean
   products: MenuProduct[]
+  country_zones: CountryZoneEntry[]
 }
 
 export type CategoryProvidersAndMobilePlans = {
