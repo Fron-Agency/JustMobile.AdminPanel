@@ -5,6 +5,14 @@ export type CountryZoneEntry = {
   country_id: string
   country_name?: string
   data: string | null
+  language?: string
+}
+
+export type LanguageZoneObject = {
+  language_object: {
+    language: string
+    items: CountryZoneEntry[]
+  }
 }
 
 export type PlanMobile = {
@@ -22,7 +30,7 @@ export type PlanMobile = {
   discount: number
   is_favorite: boolean
   data_gb_europe: number | null
-  country_zones: CountryZoneEntry[]
+  country_zones: (CountryZoneEntry | LanguageZoneObject)[]
 }
 
 export type ExternalPlanMobileDto = {
@@ -40,7 +48,7 @@ export type ExternalPlanMobileDto = {
   category_name: string
   products: MenuProduct[] | null
   data_gb_europe: number | null
-  country_zones: CountryZoneEntry[]
+  country_zones: (CountryZoneEntry | LanguageZoneObject)[]
 }
 
 export type CreatePlanMobileDto = {

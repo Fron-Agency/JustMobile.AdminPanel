@@ -9,7 +9,7 @@ async function client() {
 async function fetchCountryZones(supabase: any, planId: string) {
   const { data } = await supabase
     .from("countries_mobile_plans")
-    .select("id, country_id, data, countries(name)")
+    .select("id, country_id, data, countries(name), language")
     .eq("plan_mobile_id", planId)
 
   if (!data) return []
