@@ -1,14 +1,23 @@
 import { z } from "zod"
 
 const featureSchema = z.object({
-  label: z.string().min(1),
-  value: z.string().min(1),
+  label: z.string(),
+  value: z.string(),
 })
 
 const jsonBlockSchema = z.object({
-  title: z.string().min(1),
+  title: z.string(),
   features: z.array(featureSchema),
-}).nullable().optional()
+})
+
+const localizedBlockSchema = z.object({
+  en: jsonBlockSchema.optional(),
+  de: jsonBlockSchema.optional(),
+  fr: jsonBlockSchema.optional(),
+  it: jsonBlockSchema.optional(),
+})
+
+const contentBlockSchema = z.union([jsonBlockSchema, localizedBlockSchema]).nullable().optional()
 
 export const createPlanHomeSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -17,10 +26,10 @@ export const createPlanHomeSchema = z.object({
   discount_price: z.number().nullable().optional(),
   without_mobile_price: z.number().nullable().optional(),
   contract_duration: z.string().nullable().optional(),
-  internet_content: jsonBlockSchema,
-  tv: jsonBlockSchema,
-  telephony: jsonBlockSchema,
-  other: jsonBlockSchema
+  internet_content: contentBlockSchema,
+  tv: contentBlockSchema,
+  telephony: contentBlockSchema,
+  other: contentBlockSchema
 })
 
 export const updatePlanHomeSchema = createPlanHomeSchema.partial()
