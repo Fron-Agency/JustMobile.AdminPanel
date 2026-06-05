@@ -119,7 +119,20 @@ export default function PlansPage() {
     data_gb_europe: isUnlimitedEurope ? null : formData.data_gb_europe,
     country_zones: zones
       .filter((z) => z.country_id !== "")
-      .map((z) => ({ country_id: z.country_id, data: z.rawData.trim() || null })),
+      .flatMap((z) =>
+        ([
+          { language: "en", data: z.rawData },
+          { language: "de", data: z.data_de },
+          { language: "fr", data: z.data_fr },
+          { language: "it", data: z.data_it },
+        ] as const)
+          .map(({ language, data }) => ({
+            country_id: z.country_id,
+            language,
+            data: data?.trim() || null,
+          }))
+          .filter((entry) => entry.data !== null)
+      ),
   })
 
   const handleAdd = async () => {
@@ -170,12 +183,37 @@ export default function PlansPage() {
       is_favorite: plan.is_favorite,
       data_gb_europe: plan.data_gb_europe
     })
-    setZones(
-      (plan.country_zones ?? []).map((z) => ({
-        country_id: z.country_id,
-        rawData: z.data ?? "",
-      }))
-    )
+    // `country_zones` may come either as flat entries [{country_id,data,...}]
+    // or grouped by language { language_object: { language, items: [...] } }.
+    // Normalize both shapes into our UI form state.
+    const zoneMap = new Map<string, ZoneEntry>()
+    for (const z of plan.country_zones ?? []) {
+      if (z && typeof z === "object" && "language_object" in z) {
+        const lo = (z as any).language_object as { language?: string; items?: any[] }
+        const lang = lo?.language
+        for (const item of lo?.items ?? []) {
+          const country_id = item?.country_id
+          if (!country_id) continue
+          const existing = zoneMap.get(country_id) ?? emptyZone()
+          existing.country_id = country_id
+          const data = item?.data ?? ""
+          if (lang === "de") existing.data_de = data
+          else if (lang === "fr") existing.data_fr = data
+          else if (lang === "it") existing.data_it = data
+          else existing.rawData = data
+          zoneMap.set(country_id, existing)
+        }
+      } else {
+        const entry = z as any
+        const country_id = entry?.country_id
+        if (!country_id) continue
+        const existing = zoneMap.get(country_id) ?? emptyZone()
+        existing.country_id = country_id
+        existing.rawData = entry?.data ?? existing.rawData ?? ""
+        zoneMap.set(country_id, existing)
+      }
+    }
+    setZones(Array.from(zoneMap.values()))
     setErrors({})
     await fetchProviders()
     setIsEditDialogOpen(true)
