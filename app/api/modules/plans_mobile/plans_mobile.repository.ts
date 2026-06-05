@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import type { PlanMobile, CreatePlanMobileDto, UpdatePlanMobileInput, ExternalPlanMobileDto, CountryZoneEntry } from "./plans_mobile.type"
+import type { PlanMobile, CreatePlanMobileDto, UpdatePlanMobileInput, ExternalPlanMobileDto, CountryZoneEntry, LanguageZoneObject } from "./plans_mobile.type"
 
 async function client() {
   return createClient(await cookies())
@@ -18,28 +18,46 @@ function mapProvider(row: any) {
   }
 }
 
-async function fetchCountryZones(supabase: any, planId: string): Promise<CountryZoneEntry[]> {
+async function fetchCountryZones(supabase: any, planId: string): Promise<any[]> {
   const { data } = await supabase
     .from("countries_mobile_plans")
-    .select("id, country_id, data, countries(name)")
+    .select("id, country_id, data, countries(name), language")
     .eq("plan_mobile_id", planId)
-  if (!data) return []
-  return data.map((row: any) => ({
-    id: row.id,
-    country_id: row.country_id,
-    country_name: Array.isArray(row.countries) ? row.countries[0]?.name : row.countries?.name,
-    data: row.data,
+  if (!data || data.length === 0) return []
+  
+  // Group zones by language
+  const grouped: Record<string, any[]> = {}
+  data.forEach((row: any) => {
+    const language = row.language || "en"
+    if (!grouped[language]) {
+      grouped[language] = []
+    }
+    grouped[language].push({
+      id: row.id,
+      country_id: row.country_id,
+      country_name: Array.isArray(row.countries) ? row.countries[0]?.name : row.countries?.name,
+      data: row.data,
+      language: language,
+    })
+  })
+  
+  // Convert to array of language objects
+  return Object.entries(grouped).map(([language, items]) => ({
+    language_object: {
+      language,
+      items,
+    },
   }))
 }
 
 async function syncCountryZones(
   supabase: any,
   planId: string,
-  zones: Array<{ country_id: string; data: string | null }>
+  zones: Array<{ country_id: string; data: string | null; language: string | null }>
 ): Promise<void> {
   await supabase.from("countries_mobile_plans").delete().eq("plan_mobile_id", planId)
   if (zones.length === 0) return
-  const rows = zones.map((z) => ({ plan_mobile_id: planId, country_id: z.country_id, data: z.data }))
+  const rows = zones.map((z) => ({ plan_mobile_id: planId, country_id: z.country_id, data: z.data, language: z.language }))
   const { error } = await supabase.from("countries_mobile_plans").insert(rows)
   if (error) throw new Error(error.message)
 }
@@ -163,7 +181,7 @@ export const PlanRepository = {
 
   async create(
     payload: CreatePlanMobileDto,
-    zones: Array<{ country_id: string; data: string | null }> = []
+    zones: Array<{ country_id: string; data: string | null; language: string | null }> = []
   ): Promise<PlanMobile> {
     const supabase = await client()
     const { data, error } = await supabase
@@ -179,7 +197,7 @@ export const PlanRepository = {
   async update(
     id: string,
     payload: UpdatePlanMobileInput,
-    zones?: Array<{ country_id: string; data: string | null }>
+    zones?: Array<{ country_id: string; data: string | null; language: string | null }>
   ): Promise<PlanMobile> {
     const supabase = await client()
     const { error } = await supabase

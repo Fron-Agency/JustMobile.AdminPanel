@@ -48,9 +48,18 @@ type FormState = typeof emptyForm
 type ZoneEntry = {
   country_id: string
   rawData: string
+  data_de?: string
+  data_fr?: string
+  data_it?: string
 }
 
-const emptyZone = (): ZoneEntry => ({ country_id: "", rawData: "" })
+const emptyZone = (): ZoneEntry => ({ 
+  country_id: "", 
+  rawData: "",
+  data_de: "",
+  data_fr: "",
+  data_it: ""
+})
 
 export default function PlansPage() {
   const [plans, setPlans] = useState<PlanMobile[]>([])
@@ -110,7 +119,20 @@ export default function PlansPage() {
     data_gb_europe: isUnlimitedEurope ? null : formData.data_gb_europe,
     country_zones: zones
       .filter((z) => z.country_id !== "")
-      .map((z) => ({ country_id: z.country_id, data: z.rawData.trim() || null })),
+      .flatMap((z) =>
+        ([
+          { language: "en", data: z.rawData },
+          { language: "de", data: z.data_de },
+          { language: "fr", data: z.data_fr },
+          { language: "it", data: z.data_it },
+        ] as const)
+          .map(({ language, data }) => ({
+            country_id: z.country_id,
+            language,
+            data: data?.trim() || null,
+          }))
+          .filter((entry) => entry.data !== null)
+      ),
   })
 
   const handleAdd = async () => {
@@ -161,12 +183,37 @@ export default function PlansPage() {
       is_favorite: plan.is_favorite,
       data_gb_europe: plan.data_gb_europe
     })
-    setZones(
-      (plan.country_zones ?? []).map((z) => ({
-        country_id: z.country_id,
-        rawData: z.data ?? "",
-      }))
-    )
+    // `country_zones` may come either as flat entries [{country_id,data,...}]
+    // or grouped by language { language_object: { language, items: [...] } }.
+    // Normalize both shapes into our UI form state.
+    const zoneMap = new Map<string, ZoneEntry>()
+    for (const z of plan.country_zones ?? []) {
+      if (z && typeof z === "object" && "language_object" in z) {
+        const lo = (z as any).language_object as { language?: string; items?: any[] }
+        const lang = lo?.language
+        for (const item of lo?.items ?? []) {
+          const country_id = item?.country_id
+          if (!country_id) continue
+          const existing = zoneMap.get(country_id) ?? emptyZone()
+          existing.country_id = country_id
+          const data = item?.data ?? ""
+          if (lang === "de") existing.data_de = data
+          else if (lang === "fr") existing.data_fr = data
+          else if (lang === "it") existing.data_it = data
+          else existing.rawData = data
+          zoneMap.set(country_id, existing)
+        }
+      } else {
+        const entry = z as any
+        const country_id = entry?.country_id
+        if (!country_id) continue
+        const existing = zoneMap.get(country_id) ?? emptyZone()
+        existing.country_id = country_id
+        existing.rawData = entry?.data ?? existing.rawData ?? ""
+        zoneMap.set(country_id, existing)
+      }
+    }
+    setZones(Array.from(zoneMap.values()))
     setErrors({})
     await fetchProviders()
     setIsEditDialogOpen(true)
@@ -241,6 +288,8 @@ export default function PlansPage() {
     setZones((prev) => prev.map((z, idx) => (idx === i ? { ...z, country_id } : z)))
   const updateZoneData = (i: number, rawData: string) =>
     setZones((prev) => prev.map((z, idx) => (idx === i ? { ...z, rawData } : z)))
+  const updateZoneDataByKey = (i: number, key: keyof ZoneEntry, value: string) =>
+    setZones((prev) => prev.map((z, idx) => (idx === i ? { ...z, [key]: value } : z)))
 
   const columns: Column<PlanMobile>[] = [
     {
@@ -313,7 +362,7 @@ export default function PlansPage() {
   ]
 
   const formFields = (
-    <div className="flex flex-col gap-4 py-2 max-h-[65vh] overflow-y-auto pr-1">
+    <div className="flex flex-col gap-4 py-2 max-h-[80vh] overflow-y-auto pr-1">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <Label>Name</Label>
@@ -454,9 +503,9 @@ export default function PlansPage() {
       </div>
 
       {/* Country zones section */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3 border-t pt-4">
         <div className="flex items-center justify-between">
-          <Label>Country Zone Details</Label>
+          <Label className="text-base font-semibold">Country Zone Details</Label>
           <Button type="button" variant="outline" size="sm" onClick={addZone} className="h-7 gap-1 text-xs">
             <Plus className="w-3 h-3" /> Add Zone
           </Button>
@@ -467,17 +516,18 @@ export default function PlansPage() {
         )}
 
         {zones.map((zone, i) => (
-          <div key={i} className="border rounded-md p-3 flex flex-col gap-2 bg-muted/30">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Zone {i + 1}</span>
+          <div key={i} className="border rounded-lg p-4 flex flex-col gap-3 bg-muted/20">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-foreground">Zone {i + 1}</span>
               <button type="button" onClick={() => removeZone(i)} className="text-red-400 hover:text-red-600">
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
+
             <div className="flex flex-col gap-1">
-              <Label className="text-xs">Country</Label>
+              <Label className="text-sm">Country</Label>
               <Select value={zone.country_id || "none"} onValueChange={(v) => updateZoneCountry(i, v === "none" ? "" : v)}>
-                <SelectTrigger className="h-8 text-sm">
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
@@ -488,14 +538,28 @@ export default function PlansPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex flex-col gap-1">
-              <Label className="text-xs">Description</Label>
-              <textarea
-                className="w-full rounded-md border bg-background px-3 py-2 text-xs font-mono min-h-[72px] resize-y focus:outline-none focus:ring-1 focus:ring-ring"
-                placeholder="e.g. Unlimited internet incl. 40GB at highspeed in/to 30 countries."
-                value={zone.rawData}
-                onChange={(e) => updateZoneData(i, e.target.value)}
-              />
+
+            {/* Language fields for data */}
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { lang: 'en', label: '🇬🇧 English', key: 'rawData' as const },
+                { lang: 'de', label: '🇩🇪 German', key: 'data_de' as const },
+                { lang: 'fr', label: '🇫🇷 French', key: 'data_fr' as const },
+                { lang: 'it', label: '🇮🇹 Italian', key: 'data_it' as const },
+              ].map(({ lang, label, key }) => (
+                <div key={lang} className="flex flex-col gap-1">
+                  <Label className="text-xs font-medium">{label}</Label>
+                  <textarea
+                    className="w-full rounded-md border bg-background px-2 py-2 text-xs font-mono min-h-[120px] resize-y focus:outline-none focus:ring-1 focus:ring-ring"
+                    placeholder={`${label} description...`}
+                    value={zone[key] || ""}
+                    onChange={(e) => {
+                      const newZone = { ...zone, [key]: e.target.value }
+                      updateZoneDataByKey(i, key, e.target.value)
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         ))}
@@ -530,7 +594,7 @@ export default function PlansPage() {
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Add Mobile Plan</DialogTitle>
             <DialogDescription>Add a new mobile plan to the system.</DialogDescription>
@@ -545,7 +609,7 @@ export default function PlansPage() {
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Edit Mobile Plan</DialogTitle>
             <DialogDescription>Update plan information.</DialogDescription>
