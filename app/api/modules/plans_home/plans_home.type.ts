@@ -10,6 +10,18 @@ export interface PlanHomeJsonBlock {
   features: PlanHomeFeature[]
 }
 
+export type PlanHomeLanguage = "en" | "de" | "fr" | "it"
+
+export interface PlanHomeLocalizedBlock {
+  en?: PlanHomeJsonBlock
+  de?: PlanHomeJsonBlock
+  fr?: PlanHomeJsonBlock
+  it?: PlanHomeJsonBlock
+}
+
+/** Legacy single-language block or localized block keyed by language. */
+export type PlanHomeContentBlock = PlanHomeJsonBlock | PlanHomeLocalizedBlock
+
 export interface PlanHome {
   id: string
   name: string
@@ -18,10 +30,10 @@ export interface PlanHome {
   without_mobile_price: number | null
   provider_id: string
   contract_duration: string | null
-  internet_content: PlanHomeJsonBlock | null
-  tv: PlanHomeJsonBlock | null
-  telephony: PlanHomeJsonBlock | null
-  other: PlanHomeJsonBlock | null
+  internet_content: PlanHomeContentBlock | null
+  tv: PlanHomeContentBlock | null
+  telephony: PlanHomeContentBlock | null
+  other: PlanHomeContentBlock | null
 }
 
 export interface PlanHomeWithProvider extends PlanHome {
@@ -37,10 +49,10 @@ export interface CreatePlanHomeDto {
   without_mobile_price?: number | null
   provider_id: string
   contract_duration?: string | null
-  internet_content?: PlanHomeJsonBlock | null
-  tv?: PlanHomeJsonBlock | null
-  telephony?: PlanHomeJsonBlock | null
-  other?: PlanHomeJsonBlock | null
+  internet_content?: PlanHomeContentBlock | null
+  tv?: PlanHomeContentBlock | null
+  telephony?: PlanHomeContentBlock | null
+  other?: PlanHomeContentBlock | null
 }
 
 export type UpdatePlanHomeDto = Partial<CreatePlanHomeDto>

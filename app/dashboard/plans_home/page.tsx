@@ -16,10 +16,32 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
-import type { PlanHomeWithProvider, PlanHomeJsonBlock } from "@/app/api/modules/plans_home/plans_home.type"
+import type {
+  PlanHomeWithProvider,
+  PlanHomeJsonBlock,
+  PlanHomeLocalizedBlock,
+  PlanHomeContentBlock,
+  PlanHomeLanguage,
+} from "@/app/api/modules/plans_home/plans_home.type"
 import { Plus, Trash2 } from "lucide-react"
 
+const LANGUAGES: { code: PlanHomeLanguage; label: string }[] = [
+  { code: "en", label: "🇬🇧 English" },
+  { code: "de", label: "🇩🇪 German" },
+  { code: "fr", label: "🇫🇷 French" },
+  { code: "it", label: "🇮🇹 Italian" },
+]
+
 const emptyBlock = (): PlanHomeJsonBlock => ({ title: "", features: [] })
+
+type LocalizedBlockForm = Record<PlanHomeLanguage, PlanHomeJsonBlock>
+
+const emptyLocalizedBlock = (): LocalizedBlockForm => ({
+  en: emptyBlock(),
+  de: emptyBlock(),
+  fr: emptyBlock(),
+  it: emptyBlock(),
+})
 
 const emptyForm = {
   name: "",
@@ -28,15 +50,49 @@ const emptyForm = {
   discount_price: null as number | null,
   without_mobile_price: null as number | null,
   contract_duration: "",
-  internet_content: emptyBlock(),
-  tv: emptyBlock(),
-  telephony: emptyBlock(),
-  other: emptyBlock()
+  internet_content: emptyLocalizedBlock(),
+  tv: emptyLocalizedBlock(),
+  telephony: emptyLocalizedBlock(),
+  other: emptyLocalizedBlock(),
 }
 
 type FormState = typeof emptyForm
 
-function JsonBlockEditor({
+function isLegacyBlock(block: PlanHomeContentBlock): block is PlanHomeJsonBlock {
+  return "title" in block && "features" in block
+}
+
+function parseLocalizedBlock(block: PlanHomeContentBlock | null | undefined): LocalizedBlockForm {
+  const empty = emptyLocalizedBlock()
+  if (!block) return empty
+  if (isLegacyBlock(block)) return { ...empty, en: block }
+  return {
+    en: block.en ?? emptyBlock(),
+    de: block.de ?? emptyBlock(),
+    fr: block.fr ?? emptyBlock(),
+    it: block.it ?? emptyBlock(),
+  }
+}
+
+function blockIsEmpty(block: PlanHomeJsonBlock) {
+  return !block.title.trim() && block.features.every((f) => !f.label.trim() && !f.value.trim())
+}
+
+function serializeLocalizedBlock(block: LocalizedBlockForm): PlanHomeLocalizedBlock | null {
+  const result: PlanHomeLocalizedBlock = {}
+  for (const { code } of LANGUAGES) {
+    if (!blockIsEmpty(block[code])) result[code] = block[code]
+  }
+  return Object.keys(result).length === 0 ? null : result
+}
+
+function getContentFeatureCount(block: PlanHomeContentBlock | null) {
+  if (!block) return 0
+  if (isLegacyBlock(block)) return block.features.length
+  return Math.max(...LANGUAGES.map(({ code }) => block[code]?.features.length ?? 0), 0)
+}
+
+function LanguageBlockEditor({
   label,
   value,
   onChange,
@@ -58,43 +114,44 @@ function JsonBlockEditor({
   }
 
   return (
-    <div className="border rounded-md p-3 space-y-3 bg-muted/20">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+    <div className="flex flex-col gap-2">
       <div>
         <Label className="text-xs">Section Title</Label>
         <Input
           value={value.title}
           onChange={(e) => onChange({ ...value, title: e.target.value })}
           placeholder={`e.g. ${label}`}
-          className="mt-1"
+          className="mt-1 h-8 text-xs"
         />
       </div>
       <div className="space-y-2">
         {value.features.map((f, i) => (
-          <div key={i} className="flex gap-2 items-center">
+          <div key={i} className="flex flex-col gap-1">
             <Input
               value={f.label}
               onChange={(e) => updateFeature(i, "label", e.target.value)}
-              placeholder="Label (e.g. Speed)"
-              className="flex-1"
+              placeholder="Label"
+              className="h-8 text-xs"
             />
-            <Input
-              value={f.value}
-              onChange={(e) => updateFeature(i, "value", e.target.value)}
-              placeholder="Value (e.g. 1 Gbit/s)"
-              className="flex-1"
-            />
-            <button
-              type="button"
-              onClick={() => removeFeature(i)}
-              className="text-destructive hover:opacity-70"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <div className="flex gap-1 items-center">
+              <Input
+                value={f.value}
+                onChange={(e) => updateFeature(i, "value", e.target.value)}
+                placeholder="Value"
+                className="h-8 text-xs flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => removeFeature(i)}
+                className="text-destructive hover:opacity-70 shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         ))}
-        <Button type="button" variant="outline" size="sm" onClick={addFeature} className="gap-1 mt-1">
-          <Plus className="w-3.5 h-3.5" />
+        <Button type="button" variant="outline" size="sm" onClick={addFeature} className="gap-1 h-7 text-xs w-full">
+          <Plus className="w-3 h-3" />
           Add feature
         </Button>
       </div>
@@ -102,8 +159,35 @@ function JsonBlockEditor({
   )
 }
 
-function blockIsEmpty(block: PlanHomeJsonBlock) {
-  return !block.title && block.features.length === 0
+function LocalizedJsonBlockEditor({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: LocalizedBlockForm
+  onChange: (v: LocalizedBlockForm) => void
+}) {
+  const updateLanguage = (code: PlanHomeLanguage, block: PlanHomeJsonBlock) =>
+    onChange({ ...value, [code]: block })
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="grid grid-cols-4 gap-3">
+        {LANGUAGES.map(({ code, label: langLabel }) => (
+          <div key={code} className="border rounded-md p-2 bg-background">
+            <p className="text-xs font-medium mb-2">{langLabel}</p>
+            <LanguageBlockEditor
+              label={label}
+              value={value[code]}
+              onChange={(block) => updateLanguage(code, block)}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function PlansHomePage() {
@@ -154,10 +238,10 @@ export default function PlansHomePage() {
     discount_price: formData.discount_price || null,
     without_mobile_price: formData.without_mobile_price || null,
     contract_duration: formData.contract_duration || null,
-    internet_content: blockIsEmpty(formData.internet_content) ? null : formData.internet_content,
-    tv: blockIsEmpty(formData.tv) ? null : formData.tv,
-    telephony: blockIsEmpty(formData.telephony) ? null : formData.telephony,
-    other: blockIsEmpty(formData.other) ? null : formData.other
+    internet_content: serializeLocalizedBlock(formData.internet_content),
+    tv: serializeLocalizedBlock(formData.tv),
+    telephony: serializeLocalizedBlock(formData.telephony),
+    other: serializeLocalizedBlock(formData.other),
   })
 
   const handleAdd = async () => {
@@ -196,10 +280,10 @@ export default function PlansHomePage() {
       discount_price: plan.discount_price,
       without_mobile_price: plan.without_mobile_price,
       contract_duration: plan.contract_duration ?? "",
-      internet_content: plan.internet_content ?? emptyBlock(),
-      tv: plan.tv ?? emptyBlock(),
-      telephony: plan.telephony ?? emptyBlock(),
-      other: plan.other ?? emptyBlock()
+      internet_content: parseLocalizedBlock(plan.internet_content),
+      tv: parseLocalizedBlock(plan.tv),
+      telephony: parseLocalizedBlock(plan.telephony),
+      other: parseLocalizedBlock(plan.other),
     })
     setEditingId(plan.id)
     setErrors({})
@@ -286,30 +370,42 @@ export default function PlansHomePage() {
     {
       key: "internet_content",
       label: "Internet",
-      render: (v: PlanHomeWithProvider["internet_content"]) => v
-        ? <span className="text-muted-foreground text-sm">{v.features.length} feature{v.features.length !== 1 ? "s" : ""}</span>
-        : <span className="text-muted-foreground text-sm">—</span>,
+      render: (v: PlanHomeWithProvider["internet_content"]) => {
+        const count = getContentFeatureCount(v)
+        return count > 0
+          ? <span className="text-muted-foreground text-sm">{count} feature{count !== 1 ? "s" : ""}</span>
+          : <span className="text-muted-foreground text-sm">—</span>
+      },
     },
     {
       key: "tv",
       label: "TV",
-      render: (v: PlanHomeWithProvider["tv"]) => v
-        ? <span className="text-muted-foreground text-sm">{v.features.length} feature{v.features.length !== 1 ? "s" : ""}</span>
-        : <span className="text-muted-foreground text-sm">—</span>,
+      render: (v: PlanHomeWithProvider["tv"]) => {
+        const count = getContentFeatureCount(v)
+        return count > 0
+          ? <span className="text-muted-foreground text-sm">{count} feature{count !== 1 ? "s" : ""}</span>
+          : <span className="text-muted-foreground text-sm">—</span>
+      },
     },
     {
       key: "telephony",
       label: "Telephony",
-      render: (v: PlanHomeWithProvider["telephony"]) => v
-        ? <span className="text-muted-foreground text-sm">{v.features.length} feature{v.features.length !== 1 ? "s" : ""}</span>
-        : <span className="text-muted-foreground text-sm">—</span>,
+      render: (v: PlanHomeWithProvider["telephony"]) => {
+        const count = getContentFeatureCount(v)
+        return count > 0
+          ? <span className="text-muted-foreground text-sm">{count} feature{count !== 1 ? "s" : ""}</span>
+          : <span className="text-muted-foreground text-sm">—</span>
+      },
     },
     {
       key: "other",
       label: "Other",
-      render: (v: PlanHomeWithProvider["other"]) => v
-        ? <span className="text-muted-foreground text-sm">{v.features.length} feature{v.features.length !== 1 ? "s" : ""}</span>
-        : <span className="text-muted-foreground text-sm">—</span>,
+      render: (v: PlanHomeWithProvider["other"]) => {
+        const count = getContentFeatureCount(v)
+        return count > 0
+          ? <span className="text-muted-foreground text-sm">{count} feature{count !== 1 ? "s" : ""}</span>
+          : <span className="text-muted-foreground text-sm">—</span>
+      },
     }
   ]
 
@@ -386,22 +482,22 @@ export default function PlansHomePage() {
 
       <div className="flex flex-col gap-3 mt-1">
         <p className="text-sm font-medium text-foreground">Content Sections</p>
-        <JsonBlockEditor
+        <LocalizedJsonBlockEditor
           label="Internet"
           value={formData.internet_content}
           onChange={(v) => setFormData({ ...formData, internet_content: v })}
         />
-        <JsonBlockEditor
+        <LocalizedJsonBlockEditor
           label="TV"
           value={formData.tv}
           onChange={(v) => setFormData({ ...formData, tv: v })}
         />
-        <JsonBlockEditor
+        <LocalizedJsonBlockEditor
           label="Telephony"
           value={formData.telephony}
           onChange={(v) => setFormData({ ...formData, telephony: v })}
         />
-        <JsonBlockEditor
+        <LocalizedJsonBlockEditor
           label="Other"
           value={formData.other}
           onChange={(v) => setFormData({ ...formData, other: v })}
@@ -437,7 +533,7 @@ export default function PlansHomePage() {
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] sm:max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Add Home Plan</DialogTitle>
             <DialogDescription>Create a new home internet / TV / telephony plan.</DialogDescription>
@@ -452,7 +548,7 @@ export default function PlansHomePage() {
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] sm:max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Edit Home Plan</DialogTitle>
             <DialogDescription>Update plan details and content sections.</DialogDescription>
