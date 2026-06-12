@@ -12,6 +12,7 @@ function mapProvider(row: any) {
   const p = Array.isArray(row.providers) ? row.providers[0] : row.providers
   const cat = Array.isArray(p?.categories) ? p.categories[0] : p?.categories
   return {
+    provider_id: p?.id,
     provider_name: p?.name ?? "",
     provider_file_url: p?.file_url ?? "",
     category_name: cat?.name ?? "",
@@ -124,6 +125,7 @@ export const PlanRepository = {
         contract_length: row.contract_length,
         discount: row.discount,
         is_favorite: row.is_favorite,
+        provider_id: provider?.id,
         provider_name: provider?.name ?? "",
         provider_file_url: provider?.file_url ?? "",
         category_name: category?.name ?? "",

@@ -36,6 +36,7 @@ export type PlanMobile = {
 export type ExternalPlanMobileDto = {
   id: string
   name: string
+  provider_id: string
   provider_name: string
   provider_file_url: string
   price: number

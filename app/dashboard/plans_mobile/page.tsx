@@ -77,6 +77,8 @@ export default function PlansPage() {
   const [isUnlimited, setIsUnlimited] = useState(false)
   const [isUnlimitedEurope, setIsUnlimitedEurope] = useState(false)
   const [zones, setZones] = useState<ZoneEntry[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedProvider, setSelectedProvider] = useState<string>("all")
 
   useEffect(() => {
     Promise.all([
@@ -361,6 +363,26 @@ export default function PlansPage() {
     },
   ]
 
+  const categories = [
+    ...new Set(plans.map((p) => p.category_name).filter(Boolean))
+  ]
+
+  const providerNames = [
+    ...new Set(plans.map((p) => p.provider_name).filter(Boolean))
+  ]
+
+  const filteredPlans = plans.filter((plan) => {
+    const categoryMatch =
+      selectedCategory === "all" ||
+      plan.category_name === selectedCategory
+
+    const providerMatch =
+      selectedProvider === "all" ||
+      plan.provider_name === selectedProvider
+
+    return categoryMatch && providerMatch
+  })
+
   const formFields = (
     <div className="flex flex-col gap-4 py-2 max-h-[80vh] overflow-y-auto pr-1">
       <div className="grid grid-cols-2 gap-3">
@@ -382,7 +404,12 @@ export default function PlansPage() {
             </SelectTrigger>
             <SelectContent>
               {providers.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name} — {p.category_name}</SelectItem>
+                <SelectItem 
+                  key={p.id} 
+                  value={p.id}
+                >
+                    {p.name} — {p.category_name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -576,12 +603,53 @@ export default function PlansPage() {
             title={feedback.title}
             description={feedback.description}
             onAutoDismiss={() => setFeedback(null)}
-          />
+          />x
         </div>
       )}
 
+      <div className="flex gap-4 mb-4">
+        <Select
+          value={selectedCategory}
+          onValueChange={setSelectedCategory}
+        >
+          <SelectTrigger className="w-[220px]">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+
+            {categories.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Provider filter */}
+        <Select
+          value={selectedProvider}
+          onValueChange={setSelectedProvider}
+        >
+          <SelectTrigger className="w-[220px]">
+            <SelectValue placeholder="Provider" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="all">All Providers</SelectItem>
+
+            {providerNames.map((provider) => (
+              <SelectItem key={provider} value={provider}>
+                {provider}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <DataTable
-        data={plans}
+        data={filteredPlans}
         columns={columns}
         title="Mobile Plans"
         searchPlaceholder="Search plans..."
