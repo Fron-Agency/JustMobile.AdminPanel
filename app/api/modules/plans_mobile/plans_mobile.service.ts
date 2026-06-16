@@ -52,7 +52,7 @@ export const PlanService = {
     return PlanRepository.delete(id)
   },
 
-  async getPlanMobileByName(name: string) : Promise<PlanMobileFormDto | null>{
-    return await PlanRepository.findPlanMobileByName(name);
+  async getPlanMobileByName(provider: string ,name: string) : Promise<PlanMobileFormDto | null>{
+    return await PlanRepository.findPlanMobileByName(provider, name);
   }
 }

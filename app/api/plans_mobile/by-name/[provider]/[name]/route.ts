@@ -1,9 +1,9 @@
 import { PlanService } from "@/app/api/modules/plans_mobile/plans_mobile.service"
 
-export async function GET(request: Request, { params }: { params: Promise<{ name: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ provider: string, name: string }> }) {
   try {
-    const { name } = await params
-    const plan = await PlanService.getPlanMobileByName(name)
+    const { provider, name } = await params
+    const plan = await PlanService.getPlanMobileByName(provider, name)
 
     if (!plan) {
       return Response.json(

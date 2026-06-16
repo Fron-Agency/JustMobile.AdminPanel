@@ -94,30 +94,59 @@ export const PlanRepository = {
     return plans
   },
 
-  async findPlanMobileByName(name: string): Promise<PlanMobileFormDto | null> {
+  
+
+  async findPlanMobileByName(provider: string, name: string): Promise<PlanMobileFormDto | null> {
+    const normalizedName = name
+      .replace(/-/g, "")
+      .replace(/\s+/g, "")
+      .toLowerCase()
+
+    const normalizedProvider = provider
+      .replace(/-/g, "")
+      .replace(/\s+/g, "")
+      .toLowerCase()
+
     const supabase = await client()
+
     const { data, error } = await supabase
       .from("plans_mobile")
       .select(`*, ${PROVIDER_SELECT}`)
-      .eq("name", name)
-      .maybeSingle()
 
-    if (error) throw new Error(error.message);
-    if(!data) return null
+    if (error) throw new Error(error.message)
 
-    const country_zones = await fetchCountryZones(supabase, data.id)
+    const plan = data?.find((p) => {
+      const providerName = mapProvider(p).provider_name
+        .replace(/-/g, "")
+        .replace(/\s+/g, "")
+        .toLowerCase()
+
+      const planName = p.name
+        .replace(/-/g, "")
+        .replace(/\s+/g, "")
+        .toLowerCase()
+
+      return (
+        providerName === normalizedProvider &&
+        planName === normalizedName
+      )
+    })
+
+    if (!plan) return null
+
+    const country_zones = await fetchCountryZones(supabase, plan.id)
 
     return {
-      name: data.name,
-      provider_id: data.provider_id,
-      provider_name: data.provider_name,
-      provider_file_url: mapProvider(data).provider_file_url,
-      product_price: data.product_price,
-      price: data.price,
-      data_gb: data.data_gb,
-      network_technology: data.network_technology,
-      discount: data.discount,
-      data_gb_europe: data.data_gb_europe,
+      name: plan.name,
+      provider_id: plan.provider_id,
+      provider_name: mapProvider(plan).provider_name,
+      provider_file_url: mapProvider(plan).provider_file_url,
+      product_price: plan.product_price,
+      price: plan.price,
+      data_gb: plan.data_gb,
+      network_technology: plan.network_technology,
+      discount: plan.discount,
+      data_gb_europe: plan.data_gb_europe,
       country_zones,
     }
   },
