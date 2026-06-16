@@ -65,4 +65,18 @@ export type CreatePlanMobileDto = {
   data_gb_europe: number | null
 }
 
+export type PlanMobileFormDto = {
+  name: string
+  provider_id: string
+  provider_name: string
+  provider_file_url: string
+  product_price: number
+  price: number
+  data_gb: number | null
+  network_technology: string
+  discount: number
+  data_gb_europe: number | null
+  country_zones: (CountryZoneEntry | LanguageZoneObject)[]
+}
+
 export type UpdatePlanMobileInput = Partial<CreatePlanMobileDto>

@@ -1,7 +1,7 @@
 
 import type { CreatePlanMobileInput, UpdatePlanMobileInput } from "./plans_mobile.validation"
 import { PlanRepository } from "./plans_mobile.repository"
-import type { ExternalPlanMobileDto, PlanMobile } from "./plans_mobile.type"
+import type { ExternalPlanMobileDto, PlanMobile, PlanMobileFormDto } from "./plans_mobile.type"
 
 type ZoneInput = { country_id: string; data: string | null; language: string | null }
 
@@ -51,4 +51,8 @@ export const PlanService = {
   async delete(id: string): Promise<void> {
     return PlanRepository.delete(id)
   },
+
+  async getPlanMobileByName(name: string) : Promise<PlanMobileFormDto | null>{
+    return await PlanRepository.findPlanMobileByName(name);
+  }
 }

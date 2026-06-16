@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import type { PlanMobile, CreatePlanMobileDto, UpdatePlanMobileInput, ExternalPlanMobileDto, CountryZoneEntry, LanguageZoneObject } from "./plans_mobile.type"
+import type { PlanMobile, CreatePlanMobileDto, UpdatePlanMobileInput, ExternalPlanMobileDto, CountryZoneEntry, LanguageZoneObject, PlanMobileFormDto } from "./plans_mobile.type"
 
 async function client() {
   return createClient(await cookies())
@@ -92,6 +92,34 @@ export const PlanRepository = {
       })
     )
     return plans
+  },
+
+  async findPlanMobileByName(name: string): Promise<PlanMobileFormDto | null> {
+    const supabase = await client()
+    const { data, error } = await supabase
+      .from("plans_mobile")
+      .select(`*, ${PROVIDER_SELECT}`)
+      .eq("name", name)
+      .maybeSingle()
+
+    if (error) throw new Error(error.message);
+    if(!data) return null
+
+    const country_zones = await fetchCountryZones(supabase, data.id)
+
+    return {
+      name: data.name,
+      provider_id: data.provider_id,
+      provider_name: data.provider_name,
+      provider_file_url: mapProvider(data).provider_file_url,
+      product_price: data.product_price,
+      price: data.price,
+      data_gb: data.data_gb,
+      network_technology: data.network_technology,
+      discount: data.discount,
+      data_gb_europe: data.data_gb_europe,
+      country_zones,
+    }
   },
 
   async findAllExternal(): Promise<ExternalPlanMobileDto[]> {
