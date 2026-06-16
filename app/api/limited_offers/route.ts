@@ -21,6 +21,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
+    console.log(body)
     const parsed = createLimitedOffers.parse(body)
     const lead = await LimitedOffersService.create(parsed)
     return NextResponse.json(lead, { status: 201 })

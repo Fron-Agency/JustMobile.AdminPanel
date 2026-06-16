@@ -138,6 +138,7 @@ export const PlanRepository = {
 
     return {
       name: plan.name,
+      mobile_plan_id: plan.id,
       provider_id: plan.provider_id,
       provider_name: mapProvider(plan).provider_name,
       provider_file_url: mapProvider(plan).provider_file_url,

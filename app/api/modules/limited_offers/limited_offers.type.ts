@@ -5,5 +5,3 @@ export type LimitedOffersDto = {
   time: string
   created_at: string
 }
-
-export type CreateLimitedOffers = Omit<LimitedOffersDto, "id" | "created_at" | "time">
