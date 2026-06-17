@@ -2,12 +2,12 @@ import { LimitedOffersService } from "../../../modules/limited_offers/limited_of
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ email: string; planId: string }> }
+  { params }: { params: Promise<{ email: string; plan_id: string }> }
 ) {
   try {
-    const { email, planId } = await params
+    const { email, plan_id } = await params
 
-    const offer = await LimitedOffersService.getByEmail(email, planId)
+    const offer = await LimitedOffersService.getByEmail(email, plan_id)
 
     if (!offer) {
       return Response.json(
