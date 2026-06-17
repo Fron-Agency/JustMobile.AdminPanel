@@ -14,12 +14,26 @@ export const LimitedOffersRepository = {
 
     const { data, error } = await supabase
       .from("limited_offers")
-      .select("*")
+      .select(`
+        *,
+        plans_mobile (
+          name
+        )
+      `)
       .order("created_at", { ascending: false })
 
     if (error) throw new Error(error.message)
 
-    return data ?? []
+    return (
+      data?.map((offer) => ({
+        id: offer.id,
+        plan_mobile_id: offer.plan_mobile_id,
+        plan_mobile_name: offer.plans_mobile?.name ?? "",
+        email: offer.email,
+        time: offer.time,
+        created_at: offer.created_at,
+      })) ?? []
+    )
   },
 
   async findByEmail(email: string): Promise<LimitedOffersDto> {

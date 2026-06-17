@@ -51,6 +51,7 @@ const navItems: NavItem[] = [
       { href: "/dashboard/plans_home", label: "Home Plans", icon: Home },
     ],
   },
+  { href: "/dashboard/limited_offers", label: "Limited offers", icon: Users },
   { href: "/dashboard/products", label: "Products", icon: Smartphone },
   { href: "/dashboard/providers", label: "Providers", icon: Building2 },
   { href: "/dashboard/categories", label: "Categories", icon: Tag },
