@@ -36,13 +36,14 @@ export const LimitedOffersRepository = {
     )
   },
 
-  async findByEmail(email: string): Promise<LimitedOffersDto> {
+  async findByEmail(email: string, plan_id: string): Promise<LimitedOffersDto> {
     const supabase = await client()
 
     const { data, error } = await supabase
       .from("limited_offers")
       .select("*")
       .eq("email", email)
+      .eq("plan_mobile_id", plan_id)
       .maybeSingle();
 
     if(error) throw new Error(error.message);

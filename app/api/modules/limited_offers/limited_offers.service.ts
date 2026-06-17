@@ -7,8 +7,8 @@ export const LimitedOffersService = {
     return LimitedOffersRepository.findAll()
   },
 
-  async getByEmail(email: string) {
-    return LimitedOffersRepository.findByEmail(email)
+  async getByEmail(email: string, plan_id: string) {
+    return LimitedOffersRepository.findByEmail(email, plan_id)
   },
 
   async create(input: CreateLimitedOffers): Promise<LimitedOffersDto> {
