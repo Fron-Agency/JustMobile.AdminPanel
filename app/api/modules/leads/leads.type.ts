@@ -13,10 +13,10 @@ export type Document = {
 
 export type Lead = {
   id: string
-  fullname: string
-  email: string
+  fullname: string | null
+  email: string | null
   phone: string | null
-  plan_id: string
+  plan_id: string | null
   status: "new" | "sent" | "contacted" | "converted" | "lost"
   created_at: string
   date_of_birth?: string | null

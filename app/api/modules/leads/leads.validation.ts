@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const createLeadSchema = z.object({
-  fullname: z.string().min(1, "Full name is required"),
+  fullname: z.string().nullable().optional(),
   email: z.string().email("Invalid email"),
 
   phone: z
@@ -10,7 +10,7 @@ export const createLeadSchema = z.object({
     .optional()
     .transform((v) => (v === "" || v === undefined ? null : v)),
 
-  plan_id: z.string().min(1, "Plan is required"),
+  plan_id: z.string().nullable().optional(),
 
   status: z.enum(["new", "sent", "contacted", "converted", "lost"]).default("new"),
 
