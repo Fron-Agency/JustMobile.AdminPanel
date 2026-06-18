@@ -2,7 +2,7 @@ import { z } from "zod"
 
 export const createLeadSchema = z.object({
   fullname: z.string().nullable().optional(),
-  email: z.string().email("Invalid email"),
+  email: z.string().email().optional(),
 
   phone: z
     .string()
