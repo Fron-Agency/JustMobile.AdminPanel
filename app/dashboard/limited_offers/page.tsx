@@ -37,13 +37,27 @@ export default function UsersPage() {
     }
   ]
 
-    useEffect(() => {
-        setIsLoading(true)
-        fetch("/api/limited_offers")
-            .then((res) => res.json())
-            .then(setLimitedOffers)
-            .finally(() => setIsLoading(false))
-    }, [])
+  useEffect(() => {
+    setIsLoading(true)
+
+    fetch("/api/limited_offers")
+      .then((res) => res.json())
+      .then((data) => {
+        const today = new Date()
+        const yesterday = new Date()
+
+        yesterday.setDate(today.getDate() - 1)
+
+        const filtered = data.filter((offer: LimitedOffersDto) => {
+          const created = new Date(offer.created_at)
+
+          return created >= yesterday && created <= today
+        })
+
+        setLimitedOffers(filtered)
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
 
   return (
     <>
