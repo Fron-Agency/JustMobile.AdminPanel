@@ -276,6 +276,9 @@ export default function LeadsPage() {
       await Promise.all(
         emailLeads.map((lead) => {
           const plan = (lead as any).plans
+
+          console.log(lead);
+          
           return fetch("/api/leads/email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -285,7 +288,7 @@ export default function LeadsPage() {
               leadName: lead.fullname,
               leadEmail: lead.email,
               leadPhone: lead.phone,
-              leadPlan: plan?.name,
+              leadPlan: lead.plan_mobile_name,
               leadAddress: Array.isArray(lead.address) ? lead.address[0] : lead.address,
               leadDateOfBirth: lead.date_of_birth,
               leadSwissNumber: lead.swiss_number,
