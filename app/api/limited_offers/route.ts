@@ -1,34 +1,16 @@
-import { NextResponse } from "next/server"
-import { requireAuth } from "@/utils/supabase/require-auth"
-import { createLimitedOffers } from "../modules/limited_offers/limited_offers.validation"
+import { NextRequest, NextResponse } from "next/server"
 import { LimitedOffersService } from "../modules/limited_offers/limited_offers.service"
 
-export async function GET() {
-  const auth = await requireAuth()
-  if (auth instanceof NextResponse) return auth
+export async function GET(req: NextRequest) {
+  const searchParams = req.nextUrl.searchParams
 
-  try {
-    const leads = await LimitedOffersService.get()
-    return Response.json(leads)
-  } catch (error) {
-    return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Something went wrong" },
-      { status: 500 }
-    )
-  }
-}
+  const startDate = searchParams.get("startDate")
+  const endDate = searchParams.get("endDate")
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json()
-    console.log(body)
-    const parsed = createLimitedOffers.parse(body)
-    const lead = await LimitedOffersService.create(parsed)
-    return NextResponse.json(lead, { status: 201 })
-  } catch (error) {
-    return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Something went wrong" },
-      { status: 400 }
-    )
-  }
+  const offers = await LimitedOffersService.findAll(
+    startDate,
+    endDate
+  )
+
+  return NextResponse.json(offers)
 }

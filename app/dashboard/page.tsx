@@ -99,7 +99,7 @@ export default async function DashboardPage() {
                     <div key={lead.id} className="flex items-center justify-between px-6 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
-                          {lead.fullname.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                          {lead.fullname?.split(" ").map((n) => n[0]).join("").slice(0, 2) ?? " "}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">{lead.fullname}</p>

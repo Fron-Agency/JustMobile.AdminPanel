@@ -9,10 +9,10 @@ async function client() {
 }
 
 export const LimitedOffersRepository = {
-  async findAll(): Promise<LimitedOffersDto[]> {
+  async findAll(startDate?: string | null, endDate?: string | null): Promise<LimitedOffersDto[]> {
     const supabase = await client()
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("limited_offers")
       .select(`
         *,
@@ -20,7 +20,18 @@ export const LimitedOffersRepository = {
           name
         )
       `)
-      .order("created_at", { ascending: false })
+
+    if (startDate) {
+      query = query.gte("created_at", startDate)
+    }
+
+    if (endDate) {
+      query = query.lte("created_at", endDate)
+    }
+
+    const { data, error } = await query.order("created_at", {
+      ascending: false,
+    })
 
     if (error) throw new Error(error.message)
 

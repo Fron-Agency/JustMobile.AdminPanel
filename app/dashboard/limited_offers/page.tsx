@@ -7,13 +7,16 @@ import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-
 import { LimitedOffersDto } from "@/app/api/modules/limited_offers/limited_offers.type"
 
 export default function UsersPage() {
-    const [limitedOffers, setLimitedOffers] = useState<LimitedOffersDto[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [feedback, setFeedback] = useState<{
-      tone: FeedbackAlertTone
-      title: string
-      description?: string
-    } | null>(null)
+  const [limitedOffers, setLimitedOffers] = useState<LimitedOffersDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [feedback, setFeedback] = useState<{
+    tone: FeedbackAlertTone
+    title: string
+    description?: string
+  } | null>(null)
+
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")  
 
   const columns: Column<LimitedOffersDto>[] = [
     {
@@ -37,27 +40,33 @@ export default function UsersPage() {
     }
   ]
 
+  const filteredOffers = limitedOffers.filter((offer) => {
+    const created = new Date(offer.created_at)
+
+    if (startDate && created < new Date(startDate))
+      return false
+
+    return true
+  })
+
   useEffect(() => {
     setIsLoading(true)
 
-    fetch("/api/limited_offers")
+    const params = new URLSearchParams()
+
+    if (startDate) {
+      params.append("startDate", startDate)
+    }
+
+    if (endDate) {
+      params.append("endDate", endDate)
+    }
+
+    fetch(`/api/limited_offers?${params.toString()}`)
       .then((res) => res.json())
-      .then((data) => {
-        const today = new Date()
-        const yesterday = new Date()
-
-        yesterday.setDate(today.getDate() - 1)
-
-        const filtered = data.filter((offer: LimitedOffersDto) => {
-          const created = new Date(offer.created_at)
-
-          return created >= yesterday && created <= today
-        })
-
-        setLimitedOffers(filtered)
-      })
+      .then(setLimitedOffers)
       .finally(() => setIsLoading(false))
-  }, [])
+  }, [startDate, endDate])
 
   return (
     <>
@@ -71,8 +80,35 @@ export default function UsersPage() {
             />
           </div>
         ) : null}
+        <div className="mb-4 flex gap-4">
+          <div>
+            <label className="block text-sm mb-1">
+              From
+            </label>
+
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border rounded-md px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">
+              To
+            </label>
+
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border rounded-md px-3 py-2"
+            />
+          </div>
+        </div>
         <DataTable
-          data={limitedOffers}
+          data={filteredOffers}
           columns={columns}
           title="Users"
           searchPlaceholder="Search users..."

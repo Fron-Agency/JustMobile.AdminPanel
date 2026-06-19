@@ -3,8 +3,8 @@ import { LimitedOffersDto } from "./limited_offers.type"
 import { CreateLimitedOffers } from "./limited_offers.validation"
 
 export const LimitedOffersService = {
-  async get() {
-    return LimitedOffersRepository.findAll()
+  async findAll(startDate?: string | null, endDate?: string | null) {
+    return LimitedOffersRepository.findAll(startDate, endDate)
   },
 
   async getByEmail(email: string, plan_id: string) {
