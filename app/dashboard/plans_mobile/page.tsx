@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Star, Plus, Trash2 } from "lucide-react"
+import { Star, Plus, Trash2, Link, LinkIcon } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,7 @@ import type { PlanMobile } from "@/app/api/modules/plans_mobile/plans_mobile.typ
 import type { Country } from "@/app/api/modules/countries/countries.type"
 import { Button } from "@/components/ui/button"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
+import { toast } from "sonner"
 
 const emptyForm = {
   name: "",
@@ -361,6 +362,25 @@ export default function PlansPage() {
         return <span className="text-muted-foreground text-sm">{count > 0 ? `${count} zone${count !== 1 ? "s" : ""}` : "—"}</span>
       },
     },
+    {
+      key: "link",
+      label: "Link",
+      render: (_, item) => {
+        const url = `https://justmobile.ch/form/${item.provider_name}/${item.name}`
+
+        return (
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(url)
+              toast.success("Link copied!")
+            }}
+            className="text-muted-foreground hover:text-primary transition-colors"
+          >
+            <LinkIcon className="w-4 h-4" />
+          </button>
+        )
+      },
+    }
   ]
 
   const categories = [
