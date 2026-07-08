@@ -6,8 +6,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'JustMobile Admin',
-  description: 'Admin panel for JustMobile — manage leads, plans, providers, categories and users.',
+  title: 'Admin Panel',
+  description: 'Admin panel to manage leads and users.',
   generator: 'v0.app',
   icons: {
     icon: [

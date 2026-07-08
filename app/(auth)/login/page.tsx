@@ -177,13 +177,6 @@ export default function LoginPage() {
                 </form>
               </CardContent>
             </Card>
-
-            <p className="text-center text-sm text-muted-foreground mt-6">
-              Looking for Colos?{" "}
-              <a href="/login/colos" className="text-primary hover:underline">
-                Go to Colos login
-              </a>
-            </p>
           </div>
         </div>
       </div>

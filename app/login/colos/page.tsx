@@ -103,13 +103,6 @@ export default function ColosLoginPage() {
             </form>
           </CardContent>
         </Card>
-
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          Looking for JustMobile or JustCompare?{" "}
-          <a href="/login" className="text-primary hover:underline">
-            Go to admin login
-          </a>
-        </p>
       </div>
     </div>
   )
