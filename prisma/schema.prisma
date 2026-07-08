@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_DATABASE_URL")
+}
+
+// Enum for Age Groups for better data integrity
+enum AgeGroup {
+  CHILD // 0-18 years
+  YOUNG_ADULT // 19-25 years
+  ADULT // 26+ years
+}
+
+// Enum for the different tariff types
+enum TariffType {
+  STANDARD
+  HMO
+  TELMED
+  HAUSARZT // German for General Practitioner model
+  OTHER
+}
+
+// Which platform a Quote was submitted from
+enum QuoteSource {
+  justcompare
+  colos
+}
+
+// The main model to store premium data
+model Premium {
+  id               Int        @id @default(autoincrement())
+  insurerId        String // The ID of the insurance company from the CSV
+  canton           String // Swiss Canton (e.g., 'AG')
+  region           String // Premium region (e.g., 'PR-REG CH0')
+  year             Int // The year the premium is valid for
+  ageGroup         AgeGroup
+  accidentIncluded Boolean // Whether accident coverage is in the premium
+  tariffType       TariffType
+  tariffName       String // Descriptive name of the tariff
+  franchise        Int // The deductible amount
+  premium          Float // The monthly premium
+
+  // Add a unique constraint to prevent duplicate entries
+  @@unique([insurerId, canton, region, year, ageGroup, tariffType, franchise, accidentIncluded])
+}
+
+// Model to store quote requests from users
+model Quote {
+  id Int @id @default(autoincrement())
+
+  // Contact information
+  name  String
+  email String
+  phone String
+
+  // Location and form data
+  postcode         String
+  town             String
+  locationId       String
+  currentInsurer   String
+  yearOfBirth      String
+  franchise        Int
+  accidentIncluded Boolean
+  selectedTariff   String
+
+  // Which platform this quote was submitted from
+  source QuoteSource @default(justcompare)
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// COLOS models
+// These belong to the separate COLOS platform, which shares this Postgres
+// database via the same PRISMA_DATABASE_URL / DATABASE_URL. They are not
+// used by JustCompare itself.
+// ---------------------------------------------------------------------------
+
+enum ColosUserRole {
+  ADMIN
+  USER
+}
+
+model ColosUser {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String?
+  role         ColosUserRole @default(USER)
+  isActive     Boolean       @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions ColosSession[]
+
+  @@map("colos_users")
+}
+
+model ColosSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      ColosUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("colos_sessions")
+}

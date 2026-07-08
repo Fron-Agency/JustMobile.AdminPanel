@@ -19,10 +19,20 @@ import {
   Headphones,
   Home,
   Globe,
+  FileText,
+  Check,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { usePlatform } from "@/components/providers/platform-provider"
+import { PLATFORMS, PLATFORM_LABELS, type Platform } from "@/lib/platform"
 
 type NavChild = { href: string; label: string; icon: React.ElementType }
 type NavItem = {
@@ -30,14 +40,16 @@ type NavItem = {
   label: string
   icon: React.ElementType
   children?: NavChild[]
+  platforms?: Platform[]
 }
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, platforms: ["justmobile"] },
   {
     href: "/dashboard/leads",
     label: "Leads",
     icon: PhoneCall,
+    platforms: ["justmobile"],
     children: [
       { href: "/dashboard/leads/referrals", label: "Referrals", icon: GitBranch },
     ],
@@ -46,25 +58,32 @@ const navItems: NavItem[] = [
     href: "/dashboard/plans_mobile",
     label: "Plans",
     icon: Package,
+    platforms: ["justmobile"],
     children: [
       { href: "/dashboard/plans_mobile", label: "Mobile Plans", icon: Smartphone },
       { href: "/dashboard/plans_home", label: "Home Plans", icon: Home },
     ],
   },
-  { href: "/dashboard/limited_offers", label: "Limited offers", icon: Users },
-  { href: "/dashboard/products", label: "Products", icon: Smartphone },
-  { href: "/dashboard/providers", label: "Providers", icon: Building2 },
-  { href: "/dashboard/categories", label: "Categories", icon: Tag },
-  { href: "/dashboard/countries", label: "Country Zones", icon: Globe },
-  { href: "/dashboard/users", label: "Users", icon: Users },
-  { href: "/dashboard/partners", label: "Partners", icon: Users },
-  { href: "/dashboard/support", label: "Support", icon: Headphones },
+  { href: "/dashboard/limited_offers", label: "Limited offers", icon: Users, platforms: ["justmobile"] },
+  { href: "/dashboard/products", label: "Products", icon: Smartphone, platforms: ["justmobile"] },
+  { href: "/dashboard/providers", label: "Providers", icon: Building2, platforms: ["justmobile"] },
+  { href: "/dashboard/categories", label: "Categories", icon: Tag, platforms: ["justmobile"] },
+  { href: "/dashboard/countries", label: "Country Zones", icon: Globe, platforms: ["justmobile"] },
+  { href: "/dashboard/users", label: "Users", icon: Users, platforms: ["justmobile"] },
+  { href: "/dashboard/partners", label: "Partners", icon: Users, platforms: ["justmobile"] },
+  { href: "/dashboard/support", label: "Support", icon: Headphones, platforms: ["justmobile"] },
+  { href: "/dashboard/quotes", label: "Leads", icon: FileText, platforms: ["justcompare"] },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { platform, setPlatform } = usePlatform()
   const [collapsed, setCollapsed] = useState(false)
   const [openGroups, setOpenGroups] = useState<string[]>(["/dashboard/leads"])
+
+  const visibleNavItems = navItems.filter(
+    (item) => !item.platforms || item.platforms.includes(platform)
+  )
 
   const toggleGroup = (href: string) => {
     setOpenGroups((prev) =>
@@ -79,14 +98,43 @@ export default function Sidebar() {
         collapsed ? "w-16" : "w-60"
       )}
     >
-      {/* Logo */}
+      {/* Platform switcher */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border min-h-[64px]">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-          <Wifi className="w-4 h-4 text-primary-foreground" />
-        </div>
-        {!collapsed && (
-          <span className="text-sidebar-foreground font-semibold text-base whitespace-nowrap">JustMobile</span>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                "flex items-center gap-3 flex-1 min-w-0 rounded-md focus:outline-none focus:ring-2 focus:ring-ring",
+                collapsed && "justify-center"
+              )}
+              title={collapsed ? PLATFORM_LABELS[platform] : undefined}
+            >
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+                <Wifi className="w-4 h-4 text-primary-foreground" />
+              </div>
+              {!collapsed && (
+                <>
+                  <span className="text-sidebar-foreground font-semibold text-base whitespace-nowrap truncate">
+                    {PLATFORM_LABELS[platform]}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-sidebar-foreground/40 flex-shrink-0" />
+                </>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {PLATFORMS.map((p) => (
+              <DropdownMenuItem
+                key={p}
+                className="cursor-pointer justify-between"
+                onClick={() => setPlatform(p)}
+              >
+                {PLATFORM_LABELS[p]}
+                {p === platform && <Check className="w-4 h-4" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Collapse toggle */}
@@ -105,7 +153,7 @@ export default function Sidebar() {
             Navigation
           </p>
         )}
-        {navItems.map(({ href, label, icon: Icon, children }) => {
+        {visibleNavItems.map(({ href, label, icon: Icon, children }) => {
           const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
           const isOpen = openGroups.includes(href)
 

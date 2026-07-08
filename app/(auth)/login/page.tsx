@@ -102,7 +102,7 @@ export default function LoginPage() {
             <blockquote className="text-sidebar-foreground/80 text-lg leading-relaxed">
               &ldquo;The admin panel gives our team full visibility over leads and plans — it&apos;s fast, clean, and exactly what we needed.&rdquo;
             </blockquote>
-            <p className="mt-4 text-sm text-sidebar-foreground/50">— JustMobile Operations Team</p>
+            <p className="mt-4 text-sm text-sidebar-foreground/50">— JustMobile, JustCompare, Colos Operations Team</p>
           </div>
           <div className="grid grid-cols-3 gap-4">
             {[["2,400+", "Active Leads"], ["140+", "Plans"], ["18", "Providers"]].map(([num, label]) => (
@@ -178,6 +178,13 @@ export default function LoginPage() {
                 </form>
               </CardContent>
             </Card>
+
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Looking for Colos?{" "}
+              <a href="/login/colos" className="text-primary hover:underline">
+                Go to Colos login
+              </a>
+            </p>
           </div>
         </div>
       </div>
