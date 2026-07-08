@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { ColosAuthService } from "@/app/api/modules/colos/colos-auth.service"
 import { COLOS_SESSION_COOKIE } from "@/utils/colos/require-auth"
 import ColosTopbar from "@/components/colos/colos-topbar"
+import ColosSidebar from "@/components/colos/colos-sidebar"
 
 export default async function ColosLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -14,9 +15,12 @@ export default async function ColosLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
-      <ColosTopbar />
-      <main className="flex-1 overflow-y-auto p-6">{children}</main>
+    <div className="flex h-screen overflow-hidden bg-background">
+      <ColosSidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <ColosTopbar />
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      </div>
     </div>
   )
 }
