@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { colosPrisma } from "@/lib/colos-prisma"
 import type { ColosUserDto, CreateColosUserDto, UpdateColosUserDto } from "./colos-users.type"
 
 function serialize(user: {
@@ -23,17 +23,17 @@ function serialize(user: {
 
 export const ColosUserRepository = {
   async findAll(): Promise<ColosUserDto[]> {
-    const users = await prisma.colosUser.findMany({ orderBy: { createdAt: "desc" } })
+    const users = await colosPrisma.user.findMany({ orderBy: { createdAt: "desc" } })
     return users.map(serialize)
   },
 
   async findById(id: string): Promise<ColosUserDto | null> {
-    const user = await prisma.colosUser.findUnique({ where: { id } })
+    const user = await colosPrisma.user.findUnique({ where: { id } })
     return user ? serialize(user) : null
   },
 
   async create(payload: CreateColosUserDto): Promise<ColosUserDto> {
-    const user = await prisma.colosUser.create({
+    const user = await colosPrisma.user.create({
       data: {
         email: payload.email,
         name: payload.name ?? null,
@@ -45,7 +45,7 @@ export const ColosUserRepository = {
   },
 
   async update(id: string, payload: UpdateColosUserDto): Promise<ColosUserDto> {
-    const user = await prisma.colosUser.update({
+    const user = await colosPrisma.user.update({
       where: { id },
       data: payload,
     })
@@ -53,6 +53,6 @@ export const ColosUserRepository = {
   },
 
   async delete(id: string): Promise<void> {
-    await prisma.colosUser.delete({ where: { id } })
+    await colosPrisma.user.delete({ where: { id } })
   },
 }

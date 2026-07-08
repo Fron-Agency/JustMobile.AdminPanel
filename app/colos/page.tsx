@@ -34,7 +34,14 @@ export default function ColosQuotesPage() {
     setIsLoading(true)
     fetch("/api/colos/quotes")
       .then((res) => res.json())
-      .then((data: QuoteJson[]) => setQuotes(data.map((q) => ({ ...q, id: String(q.id) }))))
+      .then((data: QuoteJson[] | { message: string }) => {
+        if (!Array.isArray(data)) {
+          console.error("Failed to load Colos quotes:", data.message)
+          setQuotes([])
+          return
+        }
+        setQuotes(data.map((q) => ({ ...q, id: String(q.id) })))
+      })
       .finally(() => setIsLoading(false))
   }, [])
 

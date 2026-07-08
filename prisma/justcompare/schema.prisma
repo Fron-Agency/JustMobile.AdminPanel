@@ -3,11 +3,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../../app/generated/justcompare"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("PRISMA_DATABASE_URL")
+  url      = env("JUSTCOMPARE_DATABASE_URL")
 }
 
 // Enum for Age Groups for better data integrity
@@ -75,44 +76,4 @@ model Quote {
   // Metadata
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-// ---------------------------------------------------------------------------
-// COLOS models
-// These belong to the separate COLOS platform, which shares this Postgres
-// database via the same PRISMA_DATABASE_URL / DATABASE_URL. They are not
-// used by JustCompare itself.
-// ---------------------------------------------------------------------------
-
-enum ColosUserRole {
-  ADMIN
-  USER
-}
-
-model ColosUser {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
-  name         String?
-  role         ColosUserRole @default(USER)
-  isActive     Boolean       @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  sessions ColosSession[]
-
-  @@map("colos_users")
-}
-
-model ColosSession {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      ColosUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@map("colos_sessions")
 }
