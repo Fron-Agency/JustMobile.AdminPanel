@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextRequest, NextResponse } from "next/server"
+import { PLATFORM_COOKIE, type Platform } from "@/lib/platform"
 
 // ---------------------------------------------------------------------------
 // Hostname -> tenant landing page routing
@@ -12,9 +13,25 @@ const TENANT_LOGIN_PATH_BY_HOSTNAME: Record<string, string> = {
   "admin.colos.ch": "/login/colos",
   "admin.justmobile.ch": "/login",
   "admin.justcompare.ch": "/login",
+  "admin.optimusmarketing.ch": "/login",
 }
 
 const DEFAULT_LOGIN_PATH = "/login"
+
+// ---------------------------------------------------------------------------
+// Hostname -> default sidebar platform
+//
+// The dashboard's sidebar/nav items are scoped by a "platform" cookie
+// (see lib/platform.ts). Domains that map to a dedicated platform get that
+// cookie set automatically so the correct sidebar shows up without the user
+// having to switch manually. Domains not listed here (localhost, preview
+// URLs, admin.justmobile.ch) keep today's behavior of defaulting to/staying
+// on whatever platform is already selected.
+// ---------------------------------------------------------------------------
+const PLATFORM_BY_HOSTNAME: Record<string, Platform> = {
+  "admin.justcompare.ch": "justcompare",
+  "admin.optimusmarketing.ch": "optimusmarketing",
+}
 
 function resolveTenantLoginPath(hostname: string): string {
   return TENANT_LOGIN_PATH_BY_HOSTNAME[hostname] ?? DEFAULT_LOGIN_PATH
@@ -76,6 +93,18 @@ export async function middleware(request: NextRequest) {
 
   if (user && isLogin) {
     return NextResponse.redirect(new URL("/dashboard", request.url))
+  }
+
+  // Domains with a dedicated platform (see PLATFORM_BY_HOSTNAME) always show
+  // that platform's sidebar, regardless of any previously stored cookie —
+  // e.g. admin.optimusmarketing.ch must always show Candidates, even if the
+  // browser previously visited admin.justmobile.ch and picked up that cookie.
+  const platformForHostname = PLATFORM_BY_HOSTNAME[hostname]
+  if (platformForHostname && request.cookies.get(PLATFORM_COOKIE)?.value !== platformForHostname) {
+    supabaseResponse.cookies.set(PLATFORM_COOKIE, platformForHostname, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    })
   }
 
   return supabaseResponse

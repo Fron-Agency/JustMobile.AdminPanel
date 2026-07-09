@@ -21,6 +21,7 @@ import {
   Globe,
   FileText,
   Check,
+  Contact,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -73,6 +74,7 @@ const navItems: NavItem[] = [
   { href: "/dashboard/partners", label: "Partners", icon: Users, platforms: ["justmobile"] },
   { href: "/dashboard/support", label: "Support", icon: Headphones, platforms: ["justmobile"] },
   { href: "/dashboard/quotes", label: "Leads", icon: FileText, platforms: ["justcompare"] },
+  { href: "/dashboard/candidates", label: "Candidates", icon: Contact, platforms: ["optimusmarketing"] },
 ]
 
 export default function Sidebar() {
