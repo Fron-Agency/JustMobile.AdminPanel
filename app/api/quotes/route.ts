@@ -7,7 +7,7 @@ export async function GET() {
   if (auth instanceof NextResponse) return auth
 
   try {
-    const quotes = await QuoteService.getAllBySource("justcompare")
+    const quotes = await QuoteService.getAllBySource()
     return Response.json(quotes)
   } catch (error) {
     return NextResponse.json(

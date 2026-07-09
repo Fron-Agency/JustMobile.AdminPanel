@@ -1,9 +1,9 @@
 import { QuoteRepository } from "./quotes.repository"
-import type { Quote, QuoteSource } from "./quotes.type"
+import type { Quote } from "./quotes.type"
 
 export const QuoteService = {
-  async getAllBySource(source: QuoteSource): Promise<Quote[]> {
-    return QuoteRepository.findAllBySource(source)
+  async getAllBySource(): Promise<Quote[]> {
+    return QuoteRepository.findAllBySource()
   },
 
   async getById(id: number): Promise<Quote> {

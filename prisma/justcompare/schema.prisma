@@ -27,12 +27,6 @@ enum TariffType {
   OTHER
 }
 
-// Which platform a Quote was submitted from
-enum QuoteSource {
-  justcompare
-  colos
-}
-
 // The main model to store premium data
 model Premium {
   id               Int        @id @default(autoincrement())
@@ -69,9 +63,6 @@ model Quote {
   franchise        Int
   accidentIncluded Boolean
   selectedTariff   String
-
-  // Which platform this quote was submitted from
-  source QuoteSource @default(justcompare)
 
   // Metadata
   createdAt DateTime @default(now())

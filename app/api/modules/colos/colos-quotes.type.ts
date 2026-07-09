@@ -1,4 +1,4 @@
-export type Quote = {
+export type ColosQuote = {
   id: number
   name: string
   email: string

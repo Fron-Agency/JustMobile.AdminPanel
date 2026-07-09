@@ -43,3 +43,37 @@ model UserSession {
   @@index([userId])
   @@map("colos_sessions")
 }
+
+// A lead (quote request) submitted through the Colos platform
+model Quote {
+  id Int @id @default(autoincrement())
+
+  name  String
+  email String
+  phone String
+
+  postcode         String
+  town             String
+  locationId       String
+  currentInsurer   String
+  yearOfBirth      String
+  franchise        Int
+  accidentIncluded Boolean
+  selectedTariff   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pdf LeadPdf?
+}
+
+// Generated mandate PDF for a Colos lead
+model LeadPdf {
+  id             String   @id @default(cuid())
+  quoteId        Int      @unique
+  quote          Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  pdfUrl         String
+  pdfGeneratedAt DateTime @default(now())
+
+  @@map("colos_lead_pdfs")
+}
