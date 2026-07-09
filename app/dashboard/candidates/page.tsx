@@ -31,8 +31,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 import type { Candidates, CandidateStatus, CandidateLanguage, CefrLevel } from "@/app/api/modules/candidates/candidates.types"
+import { CANDIDATE_LANGUAGES, CANDIDATE_LANGUAGE_LABELS } from "@/app/api/modules/candidates/candidates.types"
 
 const STATUS_OPTIONS: CandidateStatus[] = ["new", "reviewed", "accepted", "rejected"]
+const ALL_LANGUAGES_VALUE = "all"
 
 const STATUS_BADGE_VARIANT: Record<CandidateStatus, "default" | "secondary" | "destructive" | "outline"> = {
   new: "secondary",
@@ -73,8 +75,9 @@ export default function CandidatesPage() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [isSavingStatus, setIsSavingStatus] = useState(false)
+  const [savingStatusId, setSavingStatusId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [languageFilter, setLanguageFilter] = useState<string>(ALL_LANGUAGES_VALUE)
   const [feedback, setFeedback] = useState<{
     tone: FeedbackAlertTone
     title: string
@@ -100,12 +103,11 @@ export default function CandidatesPage() {
     setIsDeleteDialogOpen(true)
   }
 
-  const handleStatusChange = async (status: CandidateStatus) => {
-    if (!viewing) return
-    setIsSavingStatus(true)
+  const handleStatusChange = async (candidateId: string, status: CandidateStatus) => {
+    setSavingStatusId(candidateId)
 
     try {
-      const res = await fetch(`/api/candidates/${viewing.id}`, {
+      const res = await fetch(`/api/candidates/${candidateId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -123,10 +125,10 @@ export default function CandidatesPage() {
 
       const updated = await res.json()
       setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
-      setViewing(updated)
+      setViewing((prev) => (prev?.id === updated.id ? updated : prev))
       setFeedback({ tone: "success", title: "Status updated" })
     } finally {
-      setIsSavingStatus(false)
+      setSavingStatusId(null)
     }
   }
 
@@ -157,6 +159,11 @@ export default function CandidatesPage() {
       setIsDeleting(false)
     }
   }
+
+  const filteredCandidates =
+    languageFilter === ALL_LANGUAGES_VALUE
+      ? candidates
+      : candidates.filter((c) => Boolean(c.languages?.[languageFilter as CandidateLanguage]))
 
   const columns: Column<Candidates>[] = [
     {
@@ -202,8 +209,25 @@ export default function CandidatesPage() {
     {
       key: "status",
       label: "Status",
-      render: (value: CandidateStatus) => (
-        <Badge variant={STATUS_BADGE_VARIANT[value]}>{value}</Badge>
+      render: (value: CandidateStatus, item) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <Select
+            value={value}
+            onValueChange={(status) => handleStatusChange(item.id, status as CandidateStatus)}
+            disabled={savingStatusId === item.id}
+          >
+            <SelectTrigger size="sm" className="w-fit h-7 text-xs border-none shadow-none px-1 gap-1 bg-transparent hover:bg-muted/40">
+              <Badge variant={STATUS_BADGE_VARIANT[value]}>{value}</Badge>
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       ),
     },
     {
@@ -230,8 +254,24 @@ export default function CandidatesPage() {
           />
         </div>
       ) : null}
+      <div className="mb-4 flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">Language</span>
+        <Select value={languageFilter} onValueChange={setLanguageFilter}>
+          <SelectTrigger size="sm" className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_LANGUAGES_VALUE}>All languages</SelectItem>
+            {CANDIDATE_LANGUAGES.map((lang) => (
+              <SelectItem key={lang} value={lang}>
+                {CANDIDATE_LANGUAGE_LABELS[lang]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <DataTable
-        data={candidates}
+        data={filteredCandidates}
         columns={columns}
         title="Candidates"
         searchPlaceholder="Search candidates..."
@@ -287,8 +327,8 @@ export default function CandidatesPage() {
                 <div className="col-span-2">
                   <Select
                     value={viewing.status}
-                    onValueChange={(value) => handleStatusChange(value as CandidateStatus)}
-                    disabled={isSavingStatus}
+                    onValueChange={(value) => handleStatusChange(viewing.id, value as CandidateStatus)}
+                    disabled={savingStatusId === viewing.id}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue />
