@@ -1,12 +1,27 @@
 import { createClient } from "@/utils/supabase/server"
+import { adminClient } from "@/utils/supabase/admin"
 import { cookies } from "next/headers"
 import type { Candidates, UpdateCandidateStatusDto } from "./candidates.types"
+import type { CreateCandidateInput } from "./candidates.validation"
 
 async function client() {
   return createClient(await cookies())
 }
 
 export const CandidatesRepository = {
+  // Called from the unauthenticated (no Supabase session) create route, guarded
+  // instead by a static API key — uses the service-role client to bypass RLS
+  // since there is no user session for anon-role policies to key off of.
+  async create(input: CreateCandidateInput): Promise<Candidates> {
+    const { data, error } = await adminClient
+      .from("candidates")
+      .insert({ ...input, status: "new" })
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
   async findAll(): Promise<Candidates[]> {
     const supabase = await client()
     const { data, error } = await supabase

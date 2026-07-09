@@ -1,8 +1,12 @@
 import { CandidatesRepository } from "./candidates.repository"
-import type { UpdateCandidateStatusInput } from "./candidates.validation"
+import type { CreateCandidateInput, UpdateCandidateStatusInput } from "./candidates.validation"
 import type { Candidates } from "./candidates.types"
 
 export const CandidatesService = {
+  async create(input: CreateCandidateInput): Promise<Candidates> {
+    return CandidatesRepository.create(input)
+  },
+
   async getAll(): Promise<Candidates[]> {
     return CandidatesRepository.findAll()
   },
