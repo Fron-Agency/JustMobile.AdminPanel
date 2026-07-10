@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -30,8 +30,12 @@ import { DataTable, type Column } from "@/components/ui/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Upload } from "lucide-react"
 import type { Candidates, CandidateStatus, CandidateLanguage, CefrLevel } from "@/app/api/modules/candidates/candidates.types"
 import { CANDIDATE_LANGUAGES, CANDIDATE_LANGUAGE_LABELS } from "@/app/api/modules/candidates/candidates.types"
+import { parseOptimusCandidatesCsv, type ImportParseResult } from "./csv-import"
 
 const STATUS_OPTIONS: CandidateStatus[] = ["new", "reviewed", "accepted", "rejected"]
 const ALL_LANGUAGES_VALUE = "all"
@@ -52,6 +56,34 @@ const LANGUAGE_CODES: Record<CandidateLanguage, string> = {
   turkish: "TR",
   spanish: "ES",
   english: "EN",
+}
+
+// created_at is a plain `date` column (e.g. "2025-01-28") — format from the
+// string directly rather than via `new Date(...)`, which would parse it as UTC
+// midnight and can roll it back a day once .toLocaleDateString() applies the
+// browser's local timezone.
+function formatAppliedDate(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
+  if (!match) return value || "—"
+  const [, year, month, day] = match
+  return `${month}/${day}/${year}`
+}
+
+// Truncated table cell that reveals the full text in a tooltip on hover,
+// so long free-text answers (previous role, why-us) don't blow out row height.
+function TruncatedCell({ value }: { value: string | null | undefined }) {
+  const text = value?.trim()
+  if (!text) return <span className="text-muted-foreground">—</span>
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="text-muted-foreground text-xs block max-w-[160px] truncate cursor-default">
+          {text}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs whitespace-pre-wrap text-left">{text}</TooltipContent>
+    </Tooltip>
+  )
 }
 
 function LanguageBadges({ languages }: { languages: Partial<Record<CandidateLanguage, CefrLevel>> }) {
@@ -83,6 +115,16 @@ export default function CandidatesPage() {
     title: string
     description?: string
   } | null>(null)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+  const [importStage, setImportStage] = useState<"idle" | "parsing" | "uploading" | "done">("idle")
+  const [parseResult, setParseResult] = useState<ImportParseResult | null>(null)
+  const [importOutcome, setImportOutcome] = useState<{
+    imported: number
+    failed: Array<{ row: number; email: string; error: string }>
+  } | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
 
   useEffect(() => {
     setIsLoading(true)
@@ -160,6 +202,66 @@ export default function CandidatesPage() {
     }
   }
 
+  const openImportDialog = () => {
+    setImportStage("idle")
+    setParseResult(null)
+    setImportOutcome(null)
+    setImportError(null)
+    setIsImportDialogOpen(true)
+  }
+
+  const handleFilePicked = async (file: File) => {
+    setImportError(null)
+    setImportOutcome(null)
+    setImportStage("parsing")
+
+    try {
+      const text = await file.text()
+      const result = parseOptimusCandidatesCsv(text)
+      setParseResult(result)
+      setImportStage("idle")
+      if (result.rows.length === 0) {
+        setImportError("No importable rows found — every row was missing a valid email or name.")
+      }
+    } catch {
+      setImportError("Could not read this file. Make sure it's a valid CSV export.")
+      setImportStage("idle")
+    }
+  }
+
+  const confirmImport = async () => {
+    if (!parseResult || parseResult.rows.length === 0) return
+    setImportStage("uploading")
+    setImportError(null)
+
+    try {
+      const res = await fetch("/api/candidates/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows: parseResult.rows }),
+      })
+
+      const body = await res.json()
+      if (!res.ok || !body.ok) {
+        setImportError(body.error || "Import failed.")
+        setImportStage("idle")
+        return
+      }
+
+      setImportOutcome({ imported: body.imported, failed: body.failed ?? [] })
+      setImportStage("done")
+
+      setIsLoading(true)
+      fetch("/api/candidates")
+        .then((r) => r.json())
+        .then(setCandidates)
+        .finally(() => setIsLoading(false))
+    } catch {
+      setImportError("Import failed. Check your connection and try again.")
+      setImportStage("idle")
+    }
+  }
+
   const filteredCandidates =
     languageFilter === ALL_LANGUAGES_VALUE
       ? candidates
@@ -177,7 +279,11 @@ export default function CandidatesPage() {
     },
     { key: "email", label: "Email" },
     { key: "phone_number", label: "Phone" },
-    { key: "city", label: "City" },
+    {
+      key: "city",
+      label: "City",
+      render: (value: string) => <TruncatedCell value={value} />,
+    },
     {
       key: "date_of_birth",
       label: "Date of birth",
@@ -193,17 +299,13 @@ export default function CandidatesPage() {
     {
       key: "previous_role",
       label: "Previous role",
-      render: (value) => <span className="text-muted-foreground text-sm">{value || "—"}</span>,
+      render: (value: string) => <TruncatedCell value={value} />,
       hidden: true,
     },
     {
       key: "why_us",
       label: "Why us",
-      render: (value: string) => (
-        <span className="text-muted-foreground text-sm block max-w-xs truncate" title={value}>
-          {value || "—"}
-        </span>
-      ),
+      render: (value: string) => <TruncatedCell value={value} />,
       hidden: true,
     },
     {
@@ -234,9 +336,7 @@ export default function CandidatesPage() {
       key: "created_at",
       label: "Applied",
       render: (value) => (
-        <span className="text-muted-foreground text-sm">
-          {new Date(value).toLocaleDateString()}
-        </span>
+        <span className="text-muted-foreground text-sm">{formatAppliedDate(value)}</span>
       ),
       hidden: true,
     },
@@ -254,21 +354,27 @@ export default function CandidatesPage() {
           />
         </div>
       ) : null}
-      <div className="mb-4 flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Language</span>
-        <Select value={languageFilter} onValueChange={setLanguageFilter}>
-          <SelectTrigger size="sm" className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_LANGUAGES_VALUE}>All languages</SelectItem>
-            {CANDIDATE_LANGUAGES.map((lang) => (
-              <SelectItem key={lang} value={lang}>
-                {CANDIDATE_LANGUAGE_LABELS[lang]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Language</span>
+          <Select value={languageFilter} onValueChange={setLanguageFilter}>
+            <SelectTrigger size="sm" className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_LANGUAGES_VALUE}>All languages</SelectItem>
+              {CANDIDATE_LANGUAGES.map((lang) => (
+                <SelectItem key={lang} value={lang}>
+                  {CANDIDATE_LANGUAGE_LABELS[lang]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button variant="outline" size="sm" className="gap-2" onClick={openImportDialog}>
+          <Upload className="w-4 h-4" />
+          Import CSV
+        </Button>
       </div>
       <DataTable
         data={filteredCandidates}
@@ -371,6 +477,132 @@ export default function CandidatesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Import candidates from CSV</DialogTitle>
+            <DialogDescription>
+              Upload a CSV export (e.g. from Google Forms). Columns are matched by name, so
+              header order or wording doesn&apos;t need to match exactly.
+            </DialogDescription>
+          </DialogHeader>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handleFilePicked(file)
+              e.target.value = ""
+            }}
+          />
+
+          {importStage === "done" && importOutcome ? (
+            <div className="grid gap-3 py-2 text-sm">
+              <FeedbackAlert
+                tone={importOutcome.failed.length > 0 ? "default" : "success"}
+                title={`Imported ${importOutcome.imported} candidate${importOutcome.imported === 1 ? "" : "s"}`}
+                description={
+                  importOutcome.failed.length > 0
+                    ? `${importOutcome.failed.length} row(s) could not be inserted.`
+                    : undefined
+                }
+              />
+              {importOutcome.failed.length > 0 && (
+                <ScrollArea className="h-40 rounded-md border border-border p-2">
+                  <div className="grid gap-1">
+                    {importOutcome.failed.map((f) => (
+                      <div key={f.row} className="text-xs text-muted-foreground">
+                        Row {f.row + 2} ({f.email}): {f.error}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-3 py-2 text-sm">
+              {importError && (
+                <FeedbackAlert tone="destructive" title="Import problem" description={importError} />
+              )}
+
+              {!parseResult ? (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={importStage === "parsing"}
+                  className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border py-10 text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+                >
+                  <Upload className="w-6 h-6" />
+                  <span>{importStage === "parsing" ? "Reading file…" : "Click to choose a .csv file"}</span>
+                </button>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    <span className="text-muted-foreground">Ready to import</span>
+                    <span className="col-span-2 font-medium text-foreground">
+                      {parseResult.rows.length} candidate{parseResult.rows.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  {parseResult.duplicates > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="text-muted-foreground">Merged duplicates</span>
+                      <span className="col-span-2">{parseResult.duplicates} repeat application(s) by email</span>
+                    </div>
+                  )}
+                  {parseResult.skipped.length > 0 && (
+                    <div className="grid gap-1">
+                      <div className="grid grid-cols-3 gap-2">
+                        <span className="text-muted-foreground">Skipped rows</span>
+                        <span className="col-span-2">
+                          {parseResult.skipped.length} row(s) missing a valid email or name
+                        </span>
+                      </div>
+                      <ScrollArea className="h-24 rounded-md border border-border p-2">
+                        <div className="grid gap-1">
+                          {parseResult.skipped.map((s) => (
+                            <div key={s.line} className="text-xs text-muted-foreground">
+                              Row {s.line}: {s.reason}
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-fit"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Choose a different file
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
+              {importStage === "done" ? "Close" : "Cancel"}
+            </Button>
+            {importStage !== "done" && (
+              <Button
+                onClick={confirmImport}
+                disabled={!parseResult || parseResult.rows.length === 0 || importStage === "uploading"}
+              >
+                {importStage === "uploading"
+                  ? "Importing…"
+                  : `Import ${parseResult?.rows.length ?? 0} candidate${parseResult?.rows.length === 1 ? "" : "s"}`}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

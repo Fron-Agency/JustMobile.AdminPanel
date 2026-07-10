@@ -20,3 +20,30 @@ export const createCandidateSchema = z.object({
 })
 
 export type CreateCandidateInput = z.infer<typeof createCandidateSchema>
+
+// Bulk CSV import: source spreadsheets are years of manually-maintained recruiting
+// data with inconsistent formats, so this is deliberately looser than
+// createCandidateSchema (empty date_of_birth / why_us / previous_role allowed,
+// email format still enforced since it's how we dedupe rows).
+export const importCandidateSchema = z.object({
+  firstname: z.string().trim().min(1),
+  lastname: z.string().trim().min(1),
+  date_of_birth: z.string().trim().default(""),
+  phone_number: z.string().trim().default(""),
+  city: z.string().trim().default(""),
+  email: z.string().trim().email(),
+  languages: z.record(z.enum(CANDIDATE_LANGUAGES), z.enum(CEFR_LEVELS)).default({}),
+  previous_role: z.string().trim().max(200).default(""),
+  why_us: z.string().trim().max(5000).default(""),
+  status: z.enum(["new", "reviewed", "accepted", "rejected"]).default("new"),
+  // ISO date (YYYY-MM-DD), from the CSV's Timestamp column — lets imported rows
+  // show their real application date instead of the import moment. Omitted/empty
+  // falls back to the DB column default (today) via CandidatesRepository.bulkInsert.
+  created_at: z.string().trim().optional(),
+})
+
+export type ImportCandidateInput = z.infer<typeof importCandidateSchema>
+
+export const importCandidatesRequestSchema = z.object({
+  rows: z.array(importCandidateSchema).min(1).max(2000),
+})

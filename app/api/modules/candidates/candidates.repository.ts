@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server"
 import { adminClient } from "@/utils/supabase/admin"
 import { cookies } from "next/headers"
 import type { Candidates, UpdateCandidateStatusDto } from "./candidates.types"
-import type { CreateCandidateInput } from "./candidates.validation"
+import type { CreateCandidateInput, ImportCandidateInput } from "./candidates.validation"
 
 async function client() {
   return createClient(await cookies())
@@ -18,6 +18,25 @@ export const CandidatesRepository = {
       .insert({ ...input, status: "new" })
       .select()
       .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  // Plain insert, not upsert: the candidates table has no known unique constraint
+  // on email to conflict-target against. Cross-import de-duplication happens
+  // client-side before rows reach here (see candidates.service.ts).
+  async bulkInsert(rows: ImportCandidateInput[]): Promise<Candidates[]> {
+    const supabase = await client()
+    const { data, error } = await supabase
+      .from("candidates")
+      .insert(
+        rows.map(({ created_at, ...row }) =>
+          // created_at is a `date` column — an empty string is invalid input,
+          // so omit the key entirely and let the column default (today) apply.
+          created_at ? { ...row, created_at } : row
+        )
+      )
+      .select()
     if (error) throw new Error(error.message)
     return data
   },
