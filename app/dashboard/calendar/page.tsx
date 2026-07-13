@@ -118,7 +118,7 @@ export default function CalendarPage() {
               <div className="grid grid-cols-3 gap-2">
                 <span className="text-muted-foreground">When</span>
                 <span className="col-span-2">
-                  {selected.start.toLocaleDateString()}{" "}
+                  {format(selected.start, "dd/MM/yyyy")}{" "}
                   {selected.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>

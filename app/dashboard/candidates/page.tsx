@@ -76,15 +76,18 @@ function formatAppliedDate(value: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
   if (!match) return value || "—"
   const [, year, month, day] = match
-  return `${month}/${day}/${year}`
+  return `${day}/${month}/${year}`
 }
 
-// interview_date is a `timestamptz` — display in the browser's local time.
+// interview_date is a `timestamptz` — display in the browser's local time, as dd/mm/yyyy.
 function formatInterviewDate(value: string | null): string {
   if (!value) return "—"
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "—"
-  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+  const pad = (n: number) => String(n).padStart(2, "0")
+  const dateStr = `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`
+  const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  return `${dateStr} ${timeStr}`
 }
 
 // <input type="datetime-local"> needs "YYYY-MM-DDTHH:mm" in local time, with no
