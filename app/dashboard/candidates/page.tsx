@@ -86,7 +86,7 @@ function formatInterviewDate(value: string | null): string {
   if (Number.isNaN(date.getTime())) return "—"
   const pad = (n: number) => String(n).padStart(2, "0")
   const dateStr = `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`
-  const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  const timeStr = `${pad(date.getHours())}:${pad(date.getMinutes())}`
   return `${dateStr} ${timeStr}`
 }
 

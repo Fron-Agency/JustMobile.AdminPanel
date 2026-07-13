@@ -28,6 +28,18 @@ const localizer = dateFnsLocalizer({
   locales,
 })
 
+// Force 24-hour time everywhere in the calendar (gutter, event labels,
+// agenda view) instead of date-fns' default 12-hour AM/PM formatting.
+const calendarFormats = {
+  timeGutterFormat: (date: Date) => format(date, "HH:mm"),
+  eventTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
+    `${format(start, "HH:mm")} – ${format(end, "HH:mm")}`,
+  agendaTimeFormat: (date: Date) => format(date, "HH:mm"),
+  agendaTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
+    `${format(start, "HH:mm")} – ${format(end, "HH:mm")}`,
+  dayHeaderFormat: (date: Date) => format(date, "EEEE dd/MM"),
+}
+
 const STATUS_BADGE_VARIANT: Record<CandidateStatus, "default" | "secondary" | "destructive" | "outline"> = {
   new: "secondary",
   reviewed: "outline",
@@ -92,6 +104,7 @@ export default function CalendarPage() {
           <Calendar
             localizer={localizer}
             events={events}
+            formats={calendarFormats}
             view={view}
             onView={setView}
             date={date}
@@ -118,8 +131,7 @@ export default function CalendarPage() {
               <div className="grid grid-cols-3 gap-2">
                 <span className="text-muted-foreground">When</span>
                 <span className="col-span-2">
-                  {format(selected.start, "dd/MM/yyyy")}{" "}
-                  {selected.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {format(selected.start, "dd/MM/yyyy HH:mm")}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
