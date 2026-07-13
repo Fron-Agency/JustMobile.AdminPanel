@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { CandidatesService } from "@/app/api/modules/candidates/candidates.service"
-import { updateCandidateStatusSchema } from "@/app/api/modules/candidates/candidates.validation"
+import { updateCandidateSchema } from "@/app/api/modules/candidates/candidates.validation"
 import { requireAuth } from "@/utils/supabase/require-auth"
 
 export async function GET(
@@ -32,8 +32,8 @@ export async function PATCH(
   try {
     const { id } = await params
     const body = await req.json()
-    const parsed = updateCandidateStatusSchema.parse(body)
-    const updated = await CandidatesService.updateStatus(id, parsed)
+    const parsed = updateCandidateSchema.parse(body)
+    const updated = await CandidatesService.update(id, parsed)
     return NextResponse.json(updated)
   } catch (error) {
     return NextResponse.json(

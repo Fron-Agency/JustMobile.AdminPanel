@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Upload } from "lucide-react"
 import type { Candidates, CandidateStatus, CandidateLanguage, CefrLevel } from "@/app/api/modules/candidates/candidates.types"
@@ -39,6 +40,14 @@ import { parseOptimusCandidatesCsv, type ImportParseResult } from "./csv-import"
 
 const STATUS_OPTIONS: CandidateStatus[] = ["new", "reviewed", "accepted", "rejected"]
 const ALL_LANGUAGES_VALUE = "all"
+const ALL_STATUSES_VALUE = "all"
+
+const STATUS_LABELS: Record<CandidateStatus, string> = {
+  new: "New",
+  reviewed: "Reviewing",
+  accepted: "Accepted",
+  rejected: "Rejected",
+}
 
 const STATUS_BADGE_VARIANT: Record<CandidateStatus, "default" | "secondary" | "destructive" | "outline"> = {
   new: "secondary",
@@ -70,14 +79,24 @@ function formatAppliedDate(value: string): string {
 }
 
 // Truncated table cell that reveals the full text in a tooltip on hover,
-// so long free-text answers (previous role, why-us) don't blow out row height.
-function TruncatedCell({ value }: { value: string | null | undefined }) {
+// so long free-text answers (previous role, why-us, notes) don't blow out
+// row height or column width.
+function TruncatedCell({
+  value,
+  maxWidth = "160px",
+}: {
+  value: string | null | undefined
+  maxWidth?: string
+}) {
   const text = value?.trim()
   if (!text) return <span className="text-muted-foreground">—</span>
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="text-muted-foreground text-xs block max-w-[160px] truncate cursor-default">
+        <span
+          className="text-muted-foreground text-xs block truncate cursor-default"
+          style={{ maxWidth }}
+        >
           {text}
         </span>
       </TooltipTrigger>
@@ -109,7 +128,10 @@ export default function CandidatesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [notesDraft, setNotesDraft] = useState("")
+  const [isSavingNotes, setIsSavingNotes] = useState(false)
   const [languageFilter, setLanguageFilter] = useState<string>(ALL_LANGUAGES_VALUE)
+  const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES_VALUE)
   const [feedback, setFeedback] = useState<{
     tone: FeedbackAlertTone
     title: string
@@ -137,6 +159,7 @@ export default function CandidatesPage() {
   const handleView = (candidate: Candidates) => {
     setFeedback(null)
     setViewing(candidate)
+    setNotesDraft(candidate.notes ?? "")
     setIsViewDialogOpen(true)
   }
 
@@ -171,6 +194,36 @@ export default function CandidatesPage() {
       setFeedback({ tone: "success", title: "Status updated" })
     } finally {
       setSavingStatusId(null)
+    }
+  }
+
+  const handleSaveNotes = async () => {
+    if (!viewing) return
+    setIsSavingNotes(true)
+
+    try {
+      const res = await fetch(`/api/candidates/${viewing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: notesDraft.trim() || null }),
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not save notes",
+          description: text || "Request failed",
+        })
+        return
+      }
+
+      const updated = await res.json()
+      setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+      setViewing((prev) => (prev?.id === updated.id ? updated : prev))
+      setFeedback({ tone: "success", title: "Notes saved" })
+    } finally {
+      setIsSavingNotes(false)
     }
   }
 
@@ -262,10 +315,24 @@ export default function CandidatesPage() {
     }
   }
 
-  const filteredCandidates =
+  const languageFilteredCandidates =
     languageFilter === ALL_LANGUAGES_VALUE
       ? candidates
       : candidates.filter((c) => Boolean(c.languages?.[languageFilter as CandidateLanguage]))
+
+  const statusCounts = STATUS_OPTIONS.reduce(
+    (acc, status) => {
+      acc[status] = languageFilteredCandidates.filter((c) => c.status === status).length
+      return acc
+    },
+    {} as Record<CandidateStatus, number>
+  )
+  const totalCount = languageFilteredCandidates.length
+
+  const filteredCandidates =
+    statusFilter === ALL_STATUSES_VALUE
+      ? languageFilteredCandidates
+      : languageFilteredCandidates.filter((c) => c.status === statusFilter)
 
   const columns: Column<Candidates>[] = [
     {
@@ -278,7 +345,11 @@ export default function CandidatesPage() {
       ),
     },
     { key: "email", label: "Email" },
-    { key: "phone_number", label: "Phone" },
+    {
+      key: "phone_number",
+      label: "Phone",
+      render: (value: string) => <TruncatedCell value={value} maxWidth="120px" />,
+    },
     {
       key: "city",
       label: "City",
@@ -306,6 +377,12 @@ export default function CandidatesPage() {
       key: "why_us",
       label: "Why us",
       render: (value: string) => <TruncatedCell value={value} />,
+      hidden: true,
+    },
+    {
+      key: "notes",
+      label: "Notes",
+      render: (value: string | null) => <TruncatedCell value={value} />,
       hidden: true,
     },
     {
@@ -354,6 +431,33 @@ export default function CandidatesPage() {
           />
         </div>
       ) : null}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setStatusFilter(ALL_STATUSES_VALUE)}
+          className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+            statusFilter === ALL_STATUSES_VALUE
+              ? "bg-primary text-primary-foreground border-primary"
+              : "border-border text-muted-foreground hover:text-foreground hover:border-foreground"
+          }`}
+        >
+          All <span className="font-semibold">{totalCount}</span>
+        </button>
+        {STATUS_OPTIONS.map((status) => (
+          <button
+            key={status}
+            type="button"
+            onClick={() => setStatusFilter(status)}
+            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+              statusFilter === status
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border text-muted-foreground hover:text-foreground hover:border-foreground"
+            }`}
+          >
+            {STATUS_LABELS[status]} <span className="font-semibold">{statusCounts[status]}</span>
+          </button>
+        ))}
+      </div>
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Language</span>
@@ -448,6 +552,23 @@ export default function CandidatesPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="grid gap-2">
+                <span className="text-muted-foreground">Notes</span>
+                <Textarea
+                  value={notesDraft}
+                  onChange={(e) => setNotesDraft(e.target.value)}
+                  placeholder="Add internal notes about this candidate…"
+                  rows={4}
+                />
+                <Button
+                  size="sm"
+                  className="w-fit justify-self-end"
+                  onClick={handleSaveNotes}
+                  disabled={isSavingNotes || notesDraft === (viewing.notes ?? "")}
+                >
+                  {isSavingNotes ? "Saving…" : "Save notes"}
+                </Button>
               </div>
             </div>
           )}

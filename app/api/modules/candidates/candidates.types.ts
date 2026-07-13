@@ -41,8 +41,10 @@ export interface Candidates {
   why_us: string
   created_at: string
   status: CandidateStatus
+  notes: string | null
 }
 
-export interface UpdateCandidateStatusDto {
-  status: CandidateStatus
+export interface UpdateCandidateDto {
+  status?: CandidateStatus
+  notes?: string | null
 }

@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { adminClient } from "@/utils/supabase/admin"
 import { cookies } from "next/headers"
-import type { Candidates, UpdateCandidateStatusDto } from "./candidates.types"
+import type { Candidates, UpdateCandidateDto } from "./candidates.types"
 import type { CreateCandidateInput, ImportCandidateInput } from "./candidates.validation"
 
 async function client() {
@@ -62,7 +62,7 @@ export const CandidatesRepository = {
     return data
   },
 
-  async updateStatus(id: string, payload: UpdateCandidateStatusDto): Promise<Candidates> {
+  async update(id: string, payload: UpdateCandidateDto): Promise<Candidates> {
     const supabase = await client()
     const { data, error } = await supabase
       .from("candidates")

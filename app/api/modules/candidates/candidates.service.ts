@@ -1,5 +1,5 @@
 import { CandidatesRepository } from "./candidates.repository"
-import type { CreateCandidateInput, ImportCandidateInput, UpdateCandidateStatusInput } from "./candidates.validation"
+import type { CreateCandidateInput, ImportCandidateInput, UpdateCandidateInput } from "./candidates.validation"
 import type { Candidates } from "./candidates.types"
 
 export interface ImportCandidatesResult {
@@ -55,9 +55,9 @@ export const CandidatesService = {
     return candidate
   },
 
-  async updateStatus(id: string, input: UpdateCandidateStatusInput): Promise<Candidates> {
+  async update(id: string, input: UpdateCandidateInput): Promise<Candidates> {
     await CandidatesService.getById(id)
-    return CandidatesRepository.updateStatus(id, input)
+    return CandidatesRepository.update(id, input)
   },
 
   async delete(id: string): Promise<void> {

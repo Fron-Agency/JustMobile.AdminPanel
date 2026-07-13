@@ -1,11 +1,16 @@
 import { z } from "zod"
 import { CANDIDATE_LANGUAGES, CEFR_LEVELS } from "./candidates.types"
 
-export const updateCandidateStatusSchema = z.object({
-  status: z.enum(["new", "reviewed", "accepted", "rejected"]),
-})
+export const updateCandidateSchema = z
+  .object({
+    status: z.enum(["new", "reviewed", "accepted", "rejected"]).optional(),
+    notes: z.string().trim().max(5000).nullable().optional(),
+  })
+  .refine((data) => data.status !== undefined || data.notes !== undefined, {
+    message: "Provide at least one of status or notes.",
+  })
 
-export type UpdateCandidateStatusInput = z.infer<typeof updateCandidateStatusSchema>
+export type UpdateCandidateInput = z.infer<typeof updateCandidateSchema>
 
 export const createCandidateSchema = z.object({
   firstname: z.string().trim().min(1),
