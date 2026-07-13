@@ -623,6 +623,7 @@ export default function CandidatesPage() {
                 <div className="col-span-2 flex items-center gap-2">
                   <Input
                     type="datetime-local"
+                    lang="en-GB"
                     value={interviewDateDraft}
                     onChange={(e) => setInterviewDateDraft(e.target.value)}
                     className="w-full"
