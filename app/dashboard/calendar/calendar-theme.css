@@ -1,0 +1,93 @@
+/* Theme react-big-calendar to match the shadcn/Tailwind design tokens used
+   elsewhere in the app, in both light and dark mode. */
+
+.rbc-calendar {
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.rbc-off-range-bg {
+  background: var(--muted);
+}
+
+.rbc-off-range {
+  color: var(--muted-foreground);
+}
+
+.rbc-header {
+  padding: 0.5rem 0;
+  font-weight: 500;
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+
+.rbc-month-view,
+.rbc-time-view,
+.rbc-agenda-view table.rbc-agenda-table {
+  border-color: var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.rbc-day-bg + .rbc-day-bg,
+.rbc-month-row + .rbc-month-row,
+.rbc-header + .rbc-header,
+.rbc-time-content > * + * > *,
+.rbc-time-header-content,
+.rbc-time-header.rbc-overflowing,
+.rbc-timeslot-group,
+.rbc-time-content,
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th,
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  border-color: var(--border);
+}
+
+.rbc-today {
+  background-color: color-mix(in oklch, var(--primary) 12%, transparent);
+}
+
+.rbc-current-time-indicator {
+  background-color: var(--destructive);
+}
+
+.rbc-event {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: calc(var(--radius) - 4px);
+  border: none;
+  padding: 2px 6px;
+}
+
+.rbc-event.rbc-selected {
+  background-color: color-mix(in oklch, var(--primary) 80%, black);
+}
+
+.rbc-slot-selection {
+  background-color: color-mix(in oklch, var(--primary) 20%, transparent);
+}
+
+.rbc-toolbar button {
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.rbc-toolbar button:hover {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.rbc-time-gutter .rbc-timeslot-group,
+.rbc-label {
+  color: var(--muted-foreground);
+}
+
+.rbc-show-more {
+  color: var(--primary);
+  background: transparent;
+}

@@ -5,10 +5,16 @@ export const updateCandidateSchema = z
   .object({
     status: z.enum(["new", "reviewed", "accepted", "rejected"]).optional(),
     notes: z.string().trim().max(5000).nullable().optional(),
+    // ISO timestamp (e.g. from <input type="datetime-local">), null clears it.
+    interview_date: z.string().trim().min(1).nullable().optional(),
   })
-  .refine((data) => data.status !== undefined || data.notes !== undefined, {
-    message: "Provide at least one of status or notes.",
-  })
+  .refine(
+    (data) =>
+      data.status !== undefined || data.notes !== undefined || data.interview_date !== undefined,
+    {
+      message: "Provide at least one of status, notes, or interview_date.",
+    }
+  )
 
 export type UpdateCandidateInput = z.infer<typeof updateCandidateSchema>
 

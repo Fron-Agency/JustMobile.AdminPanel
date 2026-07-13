@@ -42,9 +42,12 @@ export interface Candidates {
   created_at: string
   status: CandidateStatus
   notes: string | null
+  /** ISO timestamp (timestamptz) of the scheduled interview, or null if unscheduled. */
+  interview_date: string | null
 }
 
 export interface UpdateCandidateDto {
   status?: CandidateStatus
   notes?: string | null
+  interview_date?: string | null
 }

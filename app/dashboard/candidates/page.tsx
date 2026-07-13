@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Upload } from "lucide-react"
 import type { Candidates, CandidateStatus, CandidateLanguage, CefrLevel } from "@/app/api/modules/candidates/candidates.types"
@@ -76,6 +77,24 @@ function formatAppliedDate(value: string): string {
   if (!match) return value || "—"
   const [, year, month, day] = match
   return `${month}/${day}/${year}`
+}
+
+// interview_date is a `timestamptz` — display in the browser's local time.
+function formatInterviewDate(value: string | null): string {
+  if (!value) return "—"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "—"
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+}
+
+// <input type="datetime-local"> needs "YYYY-MM-DDTHH:mm" in local time, with no
+// timezone suffix — new Date(iso).toISOString() would shift back to UTC.
+function toDatetimeLocalValue(value: string | null): string {
+  if (!value) return ""
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 // Truncated table cell that reveals the full text in a tooltip on hover,
@@ -130,6 +149,8 @@ export default function CandidatesPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [notesDraft, setNotesDraft] = useState("")
   const [isSavingNotes, setIsSavingNotes] = useState(false)
+  const [interviewDateDraft, setInterviewDateDraft] = useState("")
+  const [isSavingInterviewDate, setIsSavingInterviewDate] = useState(false)
   const [languageFilter, setLanguageFilter] = useState<string>(ALL_LANGUAGES_VALUE)
   const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES_VALUE)
   const [feedback, setFeedback] = useState<{
@@ -160,6 +181,7 @@ export default function CandidatesPage() {
     setFeedback(null)
     setViewing(candidate)
     setNotesDraft(candidate.notes ?? "")
+    setInterviewDateDraft(toDatetimeLocalValue(candidate.interview_date))
     setIsViewDialogOpen(true)
   }
 
@@ -224,6 +246,38 @@ export default function CandidatesPage() {
       setFeedback({ tone: "success", title: "Notes saved" })
     } finally {
       setIsSavingNotes(false)
+    }
+  }
+
+  const handleSaveInterviewDate = async () => {
+    if (!viewing) return
+    setIsSavingInterviewDate(true)
+
+    try {
+      const res = await fetch(`/api/candidates/${viewing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          interview_date: interviewDateDraft ? new Date(interviewDateDraft).toISOString() : null,
+        }),
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: "Could not save interview date",
+          description: text || "Request failed",
+        })
+        return
+      }
+
+      const updated = await res.json()
+      setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+      setViewing((prev) => (prev?.id === updated.id ? updated : prev))
+      setFeedback({ tone: "success", title: "Interview date saved" })
+    } finally {
+      setIsSavingInterviewDate(false)
     }
   }
 
@@ -334,7 +388,7 @@ export default function CandidatesPage() {
       ? languageFilteredCandidates
       : languageFilteredCandidates.filter((c) => c.status === statusFilter)
 
-  const columns: Column<Candidates>[] = [
+  const columns: Column<Candidates>[] = useMemo(() => [
     {
       key: "firstname",
       label: "Name",
@@ -417,7 +471,15 @@ export default function CandidatesPage() {
       ),
       hidden: true,
     },
-  ]
+    {
+      key: "interview_date",
+      label: "Interview",
+      render: (value: string | null) => (
+        <span className="text-muted-foreground text-sm">{formatInterviewDate(value)}</span>
+      ),
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [savingStatusId])
 
   return (
     <>
@@ -551,6 +613,29 @@ export default function CandidatesPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 items-center">
+                <span className="text-muted-foreground">Interview</span>
+                <div className="col-span-2 flex items-center gap-2">
+                  <Input
+                    type="datetime-local"
+                    value={interviewDateDraft}
+                    onChange={(e) => setInterviewDateDraft(e.target.value)}
+                    className="w-full"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    onClick={handleSaveInterviewDate}
+                    disabled={
+                      isSavingInterviewDate ||
+                      interviewDateDraft === toDatetimeLocalValue(viewing.interview_date)
+                    }
+                  >
+                    {isSavingInterviewDate ? "Saving…" : "Save"}
+                  </Button>
                 </div>
               </div>
               <div className="grid gap-2">

@@ -1,7 +1,8 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { Bell, LogOut } from "lucide-react"
+import { Bell, LogOut, Menu } from "lucide-react"
+import { useState } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { SidebarContent } from "@/components/admin/sidebar"
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -28,6 +31,7 @@ export default function Topbar() {
   const pathname = usePathname()
   const router = useRouter()
   const title = pageTitles[pathname] ?? "Admin"
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
@@ -35,13 +39,32 @@ export default function Topbar() {
   }
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 bg-card border-b border-border">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">{title}</h1>
-        <p className="text-xs text-muted-foreground">JustMobile Admin Panel</p>
+    <header className="h-16 flex items-center justify-between gap-2 px-3 sm:px-6 bg-card border-b border-border">
+      <div className="flex items-center gap-2 min-w-0">
+        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden text-muted-foreground hover:text-foreground flex-shrink-0"
+            onClick={() => setIsMenuOpen(true)}
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+          <SheetContent side="left" className="w-72 p-0 gap-0">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <SheetDescription className="sr-only">Admin panel navigation menu</SheetDescription>
+            <SidebarContent onNavigate={() => setIsMenuOpen(false)} />
+          </SheetContent>
+        </Sheet>
+
+        <div className="min-w-0">
+          <h1 className="text-base sm:text-lg font-semibold text-foreground truncate">{title}</h1>
+          <p className="hidden sm:block text-xs text-muted-foreground">JustMobile Admin Panel</p>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
         <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
