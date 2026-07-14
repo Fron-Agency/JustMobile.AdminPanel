@@ -32,9 +32,10 @@ import { Button } from "@/components/ui/button"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { Upload } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { Upload, CalendarIcon } from "lucide-react"
 import type { Candidates, CandidateStatus, CandidateLanguage, CefrLevel } from "@/app/api/modules/candidates/candidates.types"
 import { CANDIDATE_LANGUAGES, CANDIDATE_LANGUAGE_LABELS } from "@/app/api/modules/candidates/candidates.types"
 import { parseOptimusCandidatesCsv, type ImportParseResult } from "./csv-import"
@@ -98,6 +99,91 @@ function toDatetimeLocalValue(value: string | null): string {
   if (Number.isNaN(date.getTime())) return ""
   const pad = (n: number) => String(n).padStart(2, "0")
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"))
+const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"))
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0")
+}
+
+// Custom date + hour + minute picker over the same "YYYY-MM-DDTHH:mm" draft
+// value used by the datetime-local input this replaces — kept so the save
+// logic elsewhere doesn't need to change. Built from separate controls
+// (rather than <input type="datetime-local">) so the date always renders as
+// dd/mm/yyyy and the time is always a plain 24-hour 00–23 dropdown, since the
+// native input's display format is locale-dependent and not fully overridable.
+function InterviewDateTimePicker({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (next: string) => void
+}) {
+  const [year, month, day] = value ? value.split("T")[0].split("-") : ["", "", ""]
+  const [hour, minute] = value ? value.split("T")[1].split(":") : ["", ""]
+  const selectedDate = value ? new Date(`${value}:00`) : undefined
+
+  const setDatePart = (date: Date) => {
+    const datePart = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+    onChange(`${datePart}T${hour || "09"}:${minute || "00"}`)
+  }
+
+  const setTimePart = (nextHour: string, nextMinute: string) => {
+    if (!year) return
+    onChange(`${year}-${month}-${day}T${nextHour}:${nextMinute}`)
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="flex-1 justify-start font-normal text-foreground"
+          >
+            <CalendarIcon className="w-4 h-4 mr-2 text-muted-foreground" />
+            {year ? `${day}/${month}/${year}` : "Pick a date"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date: Date | undefined) => date && setDatePart(date)}
+            captionLayout="dropdown"
+          />
+        </PopoverContent>
+      </Popover>
+
+      <Select value={hour || undefined} onValueChange={(h) => setTimePart(h, minute || "00")} disabled={!year}>
+        <SelectTrigger className="w-[72px]">
+          <SelectValue placeholder="HH" />
+        </SelectTrigger>
+        <SelectContent>
+          {HOURS.map((h) => (
+            <SelectItem key={h} value={h}>
+              {h}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <span className="text-muted-foreground">:</span>
+      <Select value={minute || undefined} onValueChange={(m) => setTimePart(hour || "09", m)} disabled={!year}>
+        <SelectTrigger className="w-[72px]">
+          <SelectValue placeholder="MM" />
+        </SelectTrigger>
+        <SelectContent>
+          {MINUTES.map((m) => (
+            <SelectItem key={m} value={m}>
+              {m}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
 }
 
 // Truncated table cell that reveals the full text in a tooltip on hover,
@@ -618,29 +704,21 @@ export default function CandidatesPage() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 items-center">
+              <div className="grid gap-2">
                 <span className="text-muted-foreground">Interview</span>
-                <div className="col-span-2 flex items-center gap-2">
-                  <Input
-                    type="datetime-local"
-                    lang="en-GB"
-                    value={interviewDateDraft}
-                    onChange={(e) => setInterviewDateDraft(e.target.value)}
-                    className="w-full"
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0"
-                    onClick={handleSaveInterviewDate}
-                    disabled={
-                      isSavingInterviewDate ||
-                      interviewDateDraft === toDatetimeLocalValue(viewing.interview_date)
-                    }
-                  >
-                    {isSavingInterviewDate ? "Saving…" : "Save"}
-                  </Button>
-                </div>
+                <InterviewDateTimePicker value={interviewDateDraft} onChange={setInterviewDateDraft} />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-fit justify-self-end"
+                  onClick={handleSaveInterviewDate}
+                  disabled={
+                    isSavingInterviewDate ||
+                    interviewDateDraft === toDatetimeLocalValue(viewing.interview_date)
+                  }
+                >
+                  {isSavingInterviewDate ? "Saving…" : "Save"}
+                </Button>
               </div>
               <div className="grid gap-2">
                 <span className="text-muted-foreground">Notes</span>
