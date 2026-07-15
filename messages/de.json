@@ -79,7 +79,7 @@
     "failedToSendEmail": "E-Mail konnte nicht gesendet werden",
     "somethingWentWrong": "Etwas ist schiefgelaufen",
     "columns": {
-      "name": "Name",
+      "name": "Vorname",
       "email": "E-Mail",
       "phone": "Telefon",
       "mobile": "Mobil",
@@ -138,7 +138,7 @@
     }
   },
   "Referrals": {
-    "leadName": "Lead-Name",
+    "leadName": "Lead-Vorname",
     "leadEmail": "Lead-E-Mail",
     "leadPhone": "Lead-Telefon",
     "referredBy": "Empfohlen von",
@@ -146,7 +146,7 @@
     "searchPlaceholder": "Empfehlungen durchsuchen..."
   },
   "PlansMobile": {
-    "nameRequired": "Name ist erforderlich",
+    "nameRequired": "Vorname ist erforderlich",
     "providerRequired": "Anbieter ist erforderlich",
     "priceGreaterThanZero": "Preis muss größer als 0 sein",
     "failedToAddPlan": "Tarif konnte nicht hinzugefügt werden",
@@ -167,7 +167,7 @@
     "couldNotUpdateFavorite": "Favorit konnte nicht aktualisiert werden",
     "linkCopied": "Link kopiert!",
     "columns": {
-      "name": "Name",
+      "name": "Vorname",
       "provider": "Anbieter",
       "category": "Kategorie",
       "price": "Preis",
@@ -193,7 +193,7 @@
       "addButton": "Tarif hinzufügen"
     },
     "form": {
-      "name": "Name",
+      "name": "Vorname",
       "provider": "Anbieter",
       "selectProvider": "Anbieter auswählen",
       "priceChf": "Preis (CHF)",
@@ -243,7 +243,7 @@
   },
   "PlansHome": {
     "failedToLoadPlans": "Tarife konnten nicht geladen werden",
-    "nameRequired": "Name ist erforderlich",
+    "nameRequired": "Vorname ist erforderlich",
     "providerRequired": "Anbieter ist erforderlich",
     "priceGreaterThanZero": "Preis muss größer als 0 sein",
     "failedToCreatePlan": "Tarif konnte nicht erstellt werden",
@@ -253,7 +253,7 @@
     "failedToUpdatePlan": "Tarif konnte nicht aktualisiert werden",
     "failedToDeletePlan": "Tarif konnte nicht gelöscht werden",
     "columns": {
-      "name": "Name",
+      "name": "Vorname",
       "provider": "Anbieter",
       "price": "Preis",
       "discounted": "Rabattiert",
@@ -271,7 +271,7 @@
       "addButton": "Festnetztarif hinzufügen"
     },
     "form": {
-      "name": "Name",
+      "name": "Vorname",
       "provider": "Anbieter",
       "selectProvider": "Anbieter auswählen",
       "priceChf": "Preis (CHF)",
@@ -329,14 +329,14 @@
     "searchPlaceholder": "Angebote durchsuchen..."
   },
   "Products": {
-    "nameRequired": "Name ist erforderlich",
+    "nameRequired": "Vorname ist erforderlich",
     "brandRequired": "Marke ist erforderlich",
     "modelRequired": "Modell ist erforderlich",
     "basePriceNonNegative": "Grundpreis muss >= 0 sein",
     "colorNameRequired": "Farbname ist erforderlich",
     "hexCodeRequired": "Hex-Code ist erforderlich",
     "columns": {
-      "name": "Name",
+      "name": "Vorname",
       "brand": "Marke",
       "model": "Modell",
       "mobilePlan": "Mobilfunktarif",
@@ -370,7 +370,7 @@
       "mobilePlan": "Mobilfunktarif",
       "homePlan": "Festnetztarif",
       "none": "Keine",
-      "name": "Name",
+      "name": "Vorname",
       "brand": "Marke",
       "model": "Modell",
       "description": "Beschreibung",
@@ -415,7 +415,7 @@
     }
   },
   "Providers": {
-    "nameRequired": "Name ist erforderlich",
+    "nameRequired": "Vorname ist erforderlich",
     "categoryRequired": "Kategorie ist erforderlich",
     "logoUploadFailed": "Logo-Upload fehlgeschlagen",
     "providerActivated": "Anbieter aktiviert",
@@ -439,7 +439,7 @@
     "viewingProvider": "Anbieter wird angezeigt: {name}",
     "columns": {
       "logo": "Logo",
-      "name": "Name",
+      "name": "Vorname",
       "category": "Kategorie",
       "created": "Erstellt",
       "active": "Aktiv"
@@ -452,7 +452,7 @@
       "addButton": "Anbieter hinzufügen"
     },
     "form": {
-      "name": "Name",
+      "name": "Vorname",
       "category": "Kategorie",
       "selectCategory": "Kategorie auswählen",
       "logo": "Logo",
@@ -479,7 +479,7 @@
     }
   },
   "Categories": {
-    "nameRequired": "Name ist erforderlich",
+    "nameRequired": "Vorname ist erforderlich",
     "failedToUpdateStatus": "Kategoriestatus konnte nicht aktualisiert werden",
     "categoryUpdated": "Kategorie aktualisiert",
     "statusChangedDescription": "{name} ist jetzt {status}.",
@@ -494,7 +494,7 @@
     "categoryUpdatedDescription": "{name} wurde aktualisiert.",
     "viewingCategory": "Kategorie wird angezeigt: {name}",
     "columns": {
-      "name": "Name",
+      "name": "Vorname",
       "badge": "Abzeichen",
       "active": "Aktiv"
     },
@@ -507,7 +507,7 @@
       "addButton": "Kategorie hinzufügen"
     },
     "form": {
-      "name": "Name",
+      "name": "Vorname",
       "badge": "Abzeichen"
     },
     "addDialog": {
@@ -598,7 +598,7 @@
       "viewer": "Betrachter"
     },
     "columns": {
-      "name": "Name",
+      "name": "Vorname",
       "email": "E-Mail",
       "role": "Rolle",
       "active": "Aktiv",
@@ -613,7 +613,7 @@
       "addButton": "Benutzer hinzufügen"
     },
     "form": {
-      "fullName": "Vollständiger Name",
+      "fullName": "Vollständiger Vorname",
       "email": "E-Mail",
       "role": "Rolle"
     },
@@ -638,7 +638,7 @@
     }
   },
   "Partners": {
-    "nameRequired": "Name ist erforderlich",
+    "nameRequired": "Vorname ist erforderlich",
     "logoUploadFailed": "Logo-Upload fehlgeschlagen",
     "requestFailed": "Anfrage fehlgeschlagen",
     "couldNotAddPartner": "Partner konnte nicht hinzugefügt werden",
@@ -652,7 +652,7 @@
     "partnerDeletedDescription": "{name} wurde gelöscht.",
     "columns": {
       "logo": "Logo",
-      "name": "Name",
+      "name": "Vorname",
       "created": "Erstellt"
     },
     "table": {
@@ -661,7 +661,7 @@
       "addButton": "Partner hinzufügen"
     },
     "form": {
-      "name": "Name",
+      "name": "Vorname",
       "logo": "Logo",
       "preview": "Vorschau"
     },
@@ -703,7 +703,7 @@
   },
   "Quotes": {
     "columns": {
-      "name": "Name",
+      "name": "Vorname",
       "email": "E-Mail",
       "phone": "Telefon",
       "town": "Ort",
@@ -731,7 +731,7 @@
       "english": "Englisch"
     },
     "columns": {
-      "name": "Name",
+      "name": "Vorname",
       "email": "E-Mail",
       "phone": "Telefon",
       "city": "Stadt",
