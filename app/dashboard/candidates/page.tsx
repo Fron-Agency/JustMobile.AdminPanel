@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -37,19 +38,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Upload, CalendarIcon } from "lucide-react"
 import type { Candidates, CandidateStatus, CandidateLanguage, CefrLevel } from "@/app/api/modules/candidates/candidates.types"
-import { CANDIDATE_LANGUAGES, CANDIDATE_LANGUAGE_LABELS } from "@/app/api/modules/candidates/candidates.types"
+import { CANDIDATE_LANGUAGES } from "@/app/api/modules/candidates/candidates.types"
 import { parseOptimusCandidatesCsv, type ImportParseResult } from "./csv-import"
 
 const STATUS_OPTIONS: CandidateStatus[] = ["new", "reviewed", "accepted", "rejected"]
 const ALL_LANGUAGES_VALUE = "all"
 const ALL_STATUSES_VALUE = "all"
-
-const STATUS_LABELS: Record<CandidateStatus, string> = {
-  new: "New",
-  reviewed: "Reviewing",
-  accepted: "Accepted",
-  rejected: "Rejected",
-}
 
 const STATUS_BADGE_VARIANT: Record<CandidateStatus, "default" | "secondary" | "destructive" | "outline"> = {
   new: "secondary",
@@ -108,6 +102,8 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0")
 }
 
+type CandidatesT = ReturnType<typeof useTranslations<"Candidates">>
+
 // Custom date + hour + minute picker over the same "YYYY-MM-DDTHH:mm" draft
 // value used by the datetime-local input this replaces — kept so the save
 // logic elsewhere doesn't need to change. Built from separate controls
@@ -117,9 +113,11 @@ function pad2(n: number): string {
 function InterviewDateTimePicker({
   value,
   onChange,
+  t,
 }: {
   value: string
   onChange: (next: string) => void
+  t: CandidatesT
 }) {
   const [year, month, day] = value ? value.split("T")[0].split("-") : ["", "", ""]
   const [hour, minute] = value ? value.split("T")[1].split(":") : ["", ""]
@@ -144,7 +142,7 @@ function InterviewDateTimePicker({
             className="flex-1 justify-start font-normal text-foreground"
           >
             <CalendarIcon className="w-4 h-4 mr-2 text-muted-foreground" />
-            {year ? `${day}/${month}/${year}` : "Pick a date"}
+            {year ? `${day}/${month}/${year}` : t("viewDialog.pickDate")}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -228,6 +226,8 @@ function LanguageBadges({ languages }: { languages: Partial<Record<CandidateLang
 }
 
 export default function CandidatesPage() {
+  const t = useTranslations("Candidates")
+
   const [candidates, setCandidates] = useState<Candidates[]>([])
   const [viewing, setViewing] = useState<Candidates | null>(null)
   const [candidateToDelete, setCandidateToDelete] = useState<Candidates | null>(null)
@@ -293,8 +293,8 @@ export default function CandidatesPage() {
         const text = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not update status",
-          description: text || "Request failed",
+          title: t("couldNotUpdateStatus"),
+          description: text || t("requestFailed"),
         })
         return
       }
@@ -302,7 +302,7 @@ export default function CandidatesPage() {
       const updated = await res.json()
       setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
       setViewing((prev) => (prev?.id === updated.id ? updated : prev))
-      setFeedback({ tone: "success", title: "Status updated" })
+      setFeedback({ tone: "success", title: t("statusUpdated") })
     } finally {
       setSavingStatusId(null)
     }
@@ -323,8 +323,8 @@ export default function CandidatesPage() {
         const text = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not save notes",
-          description: text || "Request failed",
+          title: t("couldNotSaveNotes"),
+          description: text || t("requestFailed"),
         })
         return
       }
@@ -332,7 +332,7 @@ export default function CandidatesPage() {
       const updated = await res.json()
       setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
       setViewing((prev) => (prev?.id === updated.id ? updated : prev))
-      setFeedback({ tone: "success", title: "Notes saved" })
+      setFeedback({ tone: "success", title: t("notesSaved") })
     } finally {
       setIsSavingNotes(false)
     }
@@ -355,8 +355,8 @@ export default function CandidatesPage() {
         const text = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not save interview date",
-          description: text || "Request failed",
+          title: t("couldNotSaveInterviewDate"),
+          description: text || t("requestFailed"),
         })
         return
       }
@@ -364,7 +364,7 @@ export default function CandidatesPage() {
       const updated = await res.json()
       setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
       setViewing((prev) => (prev?.id === updated.id ? updated : prev))
-      setFeedback({ tone: "success", title: "Interview date saved" })
+      setFeedback({ tone: "success", title: t("interviewDateSaved") })
     } finally {
       setIsSavingInterviewDate(false)
     }
@@ -383,8 +383,8 @@ export default function CandidatesPage() {
         const text = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not delete candidate",
-          description: text || "Request failed",
+          title: t("couldNotDeleteCandidate"),
+          description: text || t("requestFailed"),
         })
         return
       }
@@ -392,7 +392,7 @@ export default function CandidatesPage() {
       setCandidates((prev) => prev.filter((c) => c.id !== candidateToDelete.id))
       setIsDeleteDialogOpen(false)
       setCandidateToDelete(null)
-      setFeedback({ tone: "success", title: "Candidate deleted" })
+      setFeedback({ tone: "success", title: t("candidateDeleted") })
     } finally {
       setIsDeleting(false)
     }
@@ -417,10 +417,10 @@ export default function CandidatesPage() {
       setParseResult(result)
       setImportStage("idle")
       if (result.rows.length === 0) {
-        setImportError("No importable rows found — every row was missing a valid email or name.")
+        setImportError(t("noImportableRows"))
       }
     } catch {
-      setImportError("Could not read this file. Make sure it's a valid CSV export.")
+      setImportError(t("couldNotReadFile"))
       setImportStage("idle")
     }
   }
@@ -439,7 +439,7 @@ export default function CandidatesPage() {
 
       const body = await res.json()
       if (!res.ok || !body.ok) {
-        setImportError(body.error || "Import failed.")
+        setImportError(body.error || t("importFailed"))
         setImportStage("idle")
         return
       }
@@ -453,7 +453,7 @@ export default function CandidatesPage() {
         .then(setCandidates)
         .finally(() => setIsLoading(false))
     } catch {
-      setImportError("Import failed. Check your connection and try again.")
+      setImportError(t("importFailedRetry"))
       setImportStage("idle")
     }
   }
@@ -480,57 +480,57 @@ export default function CandidatesPage() {
   const columns: Column<Candidates>[] = useMemo(() => [
     {
       key: "firstname",
-      label: "Name",
+      label: t("columns.name"),
       render: (_value, item) => (
         <span className="font-medium text-foreground">
           {item.firstname} {item.lastname}
         </span>
       ),
     },
-    { key: "email", label: "Email" },
+    { key: "email", label: t("columns.email") },
     {
       key: "phone_number",
-      label: "Phone",
+      label: t("columns.phone"),
       render: (value: string) => <TruncatedCell value={value} maxWidth="120px" />,
     },
     {
       key: "city",
-      label: "City",
+      label: t("columns.city"),
       render: (value: string) => <TruncatedCell value={value} />,
     },
     {
       key: "date_of_birth",
-      label: "Date of birth",
+      label: t("columns.dateOfBirth"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
       hidden: true,
     },
     {
       key: "languages",
-      label: "Languages",
+      label: t("columns.languages"),
       render: (value: Candidates["languages"]) => <LanguageBadges languages={value} />,
       hidden: true,
     },
     {
       key: "previous_role",
-      label: "Previous role",
+      label: t("columns.previousRole"),
       render: (value: string) => <TruncatedCell value={value} />,
       hidden: true,
     },
     {
       key: "why_us",
-      label: "Why us",
+      label: t("columns.whyUs"),
       render: (value: string) => <TruncatedCell value={value} />,
       hidden: true,
     },
     {
       key: "notes",
-      label: "Notes",
+      label: t("columns.notes"),
       render: (value: string | null) => <TruncatedCell value={value} />,
       hidden: true,
     },
     {
       key: "status",
-      label: "Status",
+      label: t("columns.status"),
       render: (value: CandidateStatus, item) => (
         <div onClick={(e) => e.stopPropagation()}>
           <Select
@@ -539,12 +539,12 @@ export default function CandidatesPage() {
             disabled={savingStatusId === item.id}
           >
             <SelectTrigger size="sm" className="w-fit h-7 text-xs border-none shadow-none px-1 gap-1 bg-transparent hover:bg-muted/40">
-              <Badge variant={STATUS_BADGE_VARIANT[value]}>{value}</Badge>
+              <Badge variant={STATUS_BADGE_VARIANT[value]}>{t(`status.${value}`)}</Badge>
             </SelectTrigger>
             <SelectContent>
               {STATUS_OPTIONS.map((status) => (
                 <SelectItem key={status} value={status}>
-                  {status}
+                  {t(`status.${status}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -554,7 +554,7 @@ export default function CandidatesPage() {
     },
     {
       key: "created_at",
-      label: "Applied",
+      label: t("columns.applied"),
       render: (value) => (
         <span className="text-muted-foreground text-sm">{formatAppliedDate(value)}</span>
       ),
@@ -562,7 +562,7 @@ export default function CandidatesPage() {
     },
     {
       key: "interview_date",
-      label: "Interview",
+      label: t("columns.interview"),
       render: (value: string | null) => (
         <span className="text-muted-foreground text-sm">{formatInterviewDate(value)}</span>
       ),
@@ -592,7 +592,7 @@ export default function CandidatesPage() {
               : "border-border text-muted-foreground hover:text-foreground hover:border-foreground"
           }`}
         >
-          All <span className="font-semibold">{totalCount}</span>
+          {t("all")} <span className="font-semibold">{totalCount}</span>
         </button>
         {STATUS_OPTIONS.map((status) => (
           <button
@@ -605,22 +605,22 @@ export default function CandidatesPage() {
                 : "border-border text-muted-foreground hover:text-foreground hover:border-foreground"
             }`}
           >
-            {STATUS_LABELS[status]} <span className="font-semibold">{statusCounts[status]}</span>
+            {t(`status.${status}`)} <span className="font-semibold">{statusCounts[status]}</span>
           </button>
         ))}
       </div>
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Language</span>
+          <span className="text-sm text-muted-foreground">{t("language")}</span>
           <Select value={languageFilter} onValueChange={setLanguageFilter}>
             <SelectTrigger size="sm" className="w-[180px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_LANGUAGES_VALUE}>All languages</SelectItem>
+              <SelectItem value={ALL_LANGUAGES_VALUE}>{t("allLanguages")}</SelectItem>
               {CANDIDATE_LANGUAGES.map((lang) => (
                 <SelectItem key={lang} value={lang}>
-                  {CANDIDATE_LANGUAGE_LABELS[lang]}
+                  {t(`languages.${lang}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -628,14 +628,14 @@ export default function CandidatesPage() {
         </div>
         <Button variant="outline" size="sm" className="gap-2" onClick={openImportDialog}>
           <Upload className="w-4 h-4" />
-          Import CSV
+          {t("importCsv")}
         </Button>
       </div>
       <DataTable
         data={filteredCandidates}
         columns={columns}
-        title="Candidates"
-        searchPlaceholder="Search candidates..."
+        title={t("table.title")}
+        searchPlaceholder={t("table.searchPlaceholder")}
         searchFields={["firstname", "lastname", "email", "city"]}
         onView={handleView}
         onDelete={handleDelete}
@@ -647,44 +647,44 @@ export default function CandidatesPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {viewing ? `${viewing.firstname} ${viewing.lastname}` : "Candidate"}
+              {viewing ? `${viewing.firstname} ${viewing.lastname}` : t("viewDialog.defaultTitle")}
             </DialogTitle>
-            <DialogDescription>Candidate application details.</DialogDescription>
+            <DialogDescription>{t("viewDialog.description")}</DialogDescription>
           </DialogHeader>
           {viewing && (
             <div className="grid gap-3 py-2 text-sm">
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Email</span>
+                <span className="text-muted-foreground">{t("viewDialog.email")}</span>
                 <span className="col-span-2">{viewing.email}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Phone</span>
+                <span className="text-muted-foreground">{t("viewDialog.phone")}</span>
                 <span className="col-span-2">{viewing.phone_number}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">City</span>
+                <span className="text-muted-foreground">{t("viewDialog.city")}</span>
                 <span className="col-span-2">{viewing.city}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Date of birth</span>
+                <span className="text-muted-foreground">{t("viewDialog.dateOfBirth")}</span>
                 <span className="col-span-2">{viewing.date_of_birth}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Languages</span>
+                <span className="text-muted-foreground">{t("viewDialog.languages")}</span>
                 <div className="col-span-2">
                   <LanguageBadges languages={viewing.languages} />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Previous role</span>
+                <span className="text-muted-foreground">{t("viewDialog.previousRole")}</span>
                 <span className="col-span-2">{viewing.previous_role}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Why us</span>
+                <span className="text-muted-foreground">{t("viewDialog.whyUs")}</span>
                 <span className="col-span-2">{viewing.why_us}</span>
               </div>
               <div className="grid grid-cols-3 gap-2 items-center">
-                <span className="text-muted-foreground">Status</span>
+                <span className="text-muted-foreground">{t("viewDialog.status")}</span>
                 <div className="col-span-2">
                   <Select
                     value={viewing.status}
@@ -697,7 +697,7 @@ export default function CandidatesPage() {
                     <SelectContent>
                       {STATUS_OPTIONS.map((status) => (
                         <SelectItem key={status} value={status}>
-                          {status}
+                          {t(`status.${status}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -705,8 +705,8 @@ export default function CandidatesPage() {
                 </div>
               </div>
               <div className="grid gap-2">
-                <span className="text-muted-foreground">Interview</span>
-                <InterviewDateTimePicker value={interviewDateDraft} onChange={setInterviewDateDraft} />
+                <span className="text-muted-foreground">{t("viewDialog.interview")}</span>
+                <InterviewDateTimePicker value={interviewDateDraft} onChange={setInterviewDateDraft} t={t} />
                 <Button
                   size="sm"
                   variant="outline"
@@ -717,15 +717,15 @@ export default function CandidatesPage() {
                     interviewDateDraft === toDatetimeLocalValue(viewing.interview_date)
                   }
                 >
-                  {isSavingInterviewDate ? "Saving…" : "Save"}
+                  {isSavingInterviewDate ? t("viewDialog.saving") : t("viewDialog.save")}
                 </Button>
               </div>
               <div className="grid gap-2">
-                <span className="text-muted-foreground">Notes</span>
+                <span className="text-muted-foreground">{t("viewDialog.notes")}</span>
                 <Textarea
                   value={notesDraft}
                   onChange={(e) => setNotesDraft(e.target.value)}
-                  placeholder="Add internal notes about this candidate…"
+                  placeholder={t("viewDialog.notesPlaceholder")}
                   rows={4}
                 />
                 <Button
@@ -734,14 +734,14 @@ export default function CandidatesPage() {
                   onClick={handleSaveNotes}
                   disabled={isSavingNotes || notesDraft === (viewing.notes ?? "")}
                 >
-                  {isSavingNotes ? "Saving…" : "Save notes"}
+                  {isSavingNotes ? t("viewDialog.saving") : t("viewDialog.saveNotes")}
                 </Button>
               </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
-              Close
+              {t("viewDialog.close")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -751,16 +751,17 @@ export default function CandidatesPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Candidate</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {candidateToDelete?.firstname}{" "}
-              {candidateToDelete?.lastname}? This action cannot be undone.
+              {t("deleteDialog.description", {
+                name: `${candidateToDelete?.firstname ?? ""} ${candidateToDelete?.lastname ?? ""}`.trim(),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? t("deleteDialog.deleting") : t("deleteDialog.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -770,10 +771,9 @@ export default function CandidatesPage() {
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Import candidates from CSV</DialogTitle>
+            <DialogTitle>{t("importDialog.title")}</DialogTitle>
             <DialogDescription>
-              Upload a CSV export (e.g. from Google Forms). Columns are matched by name, so
-              header order or wording doesn&apos;t need to match exactly.
+              {t("importDialog.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -793,10 +793,10 @@ export default function CandidatesPage() {
             <div className="grid gap-3 py-2 text-sm">
               <FeedbackAlert
                 tone={importOutcome.failed.length > 0 ? "default" : "success"}
-                title={`Imported ${importOutcome.imported} candidate${importOutcome.imported === 1 ? "" : "s"}`}
+                title={t("importDialog.importedCount", { count: importOutcome.imported })}
                 description={
                   importOutcome.failed.length > 0
-                    ? `${importOutcome.failed.length} row(s) could not be inserted.`
+                    ? t("importDialog.rowsCouldNotBeInserted", { count: importOutcome.failed.length })
                     : undefined
                 }
               />
@@ -805,7 +805,7 @@ export default function CandidatesPage() {
                   <div className="grid gap-1">
                     {importOutcome.failed.map((f) => (
                       <div key={f.row} className="text-xs text-muted-foreground">
-                        Row {f.row + 2} ({f.email}): {f.error}
+                        {t("importDialog.rowLine", { line: f.row + 2, reason: `(${f.email}): ${f.error}` })}
                       </div>
                     ))}
                   </div>
@@ -815,7 +815,7 @@ export default function CandidatesPage() {
           ) : (
             <div className="grid gap-3 py-2 text-sm">
               {importError && (
-                <FeedbackAlert tone="destructive" title="Import problem" description={importError} />
+                <FeedbackAlert tone="destructive" title={t("importDialog.importProblem")} description={importError} />
               )}
 
               {!parseResult ? (
@@ -826,35 +826,35 @@ export default function CandidatesPage() {
                   className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border py-10 text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
                 >
                   <Upload className="w-6 h-6" />
-                  <span>{importStage === "parsing" ? "Reading file…" : "Click to choose a .csv file"}</span>
+                  <span>{importStage === "parsing" ? t("importDialog.readingFile") : t("importDialog.clickToChoose")}</span>
                 </button>
               ) : (
                 <>
                   <div className="grid grid-cols-3 gap-2">
-                    <span className="text-muted-foreground">Ready to import</span>
+                    <span className="text-muted-foreground">{t("importDialog.readyToImport")}</span>
                     <span className="col-span-2 font-medium text-foreground">
-                      {parseResult.rows.length} candidate{parseResult.rows.length === 1 ? "" : "s"}
+                      {t("importDialog.candidatesCount", { count: parseResult.rows.length })}
                     </span>
                   </div>
                   {parseResult.duplicates > 0 && (
                     <div className="grid grid-cols-3 gap-2">
-                      <span className="text-muted-foreground">Merged duplicates</span>
-                      <span className="col-span-2">{parseResult.duplicates} repeat application(s) by email</span>
+                      <span className="text-muted-foreground">{t("importDialog.mergedDuplicates")}</span>
+                      <span className="col-span-2">{t("importDialog.duplicatesDescription", { count: parseResult.duplicates })}</span>
                     </div>
                   )}
                   {parseResult.skipped.length > 0 && (
                     <div className="grid gap-1">
                       <div className="grid grid-cols-3 gap-2">
-                        <span className="text-muted-foreground">Skipped rows</span>
+                        <span className="text-muted-foreground">{t("importDialog.skippedRows")}</span>
                         <span className="col-span-2">
-                          {parseResult.skipped.length} row(s) missing a valid email or name
+                          {t("importDialog.skippedRowsDescription", { count: parseResult.skipped.length })}
                         </span>
                       </div>
                       <ScrollArea className="h-24 rounded-md border border-border p-2">
                         <div className="grid gap-1">
                           {parseResult.skipped.map((s) => (
                             <div key={s.line} className="text-xs text-muted-foreground">
-                              Row {s.line}: {s.reason}
+                              {t("importDialog.rowLine", { line: s.line, reason: s.reason })}
                             </div>
                           ))}
                         </div>
@@ -867,7 +867,7 @@ export default function CandidatesPage() {
                     className="w-fit"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    Choose a different file
+                    {t("importDialog.chooseDifferentFile")}
                   </Button>
                 </>
               )}
@@ -876,7 +876,7 @@ export default function CandidatesPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
-              {importStage === "done" ? "Close" : "Cancel"}
+              {importStage === "done" ? t("importDialog.close") : t("importDialog.cancel")}
             </Button>
             {importStage !== "done" && (
               <Button
@@ -884,8 +884,8 @@ export default function CandidatesPage() {
                 disabled={!parseResult || parseResult.rows.length === 0 || importStage === "uploading"}
               >
                 {importStage === "uploading"
-                  ? "Importing…"
-                  : `Import ${parseResult?.rows.length ?? 0} candidate${parseResult?.rows.length === 1 ? "" : "s"}`}
+                  ? t("importDialog.importing")
+                  : t("importDialog.importButton", { count: parseResult?.rows.length ?? 0 })}
               </Button>
             )}
           </DialogFooter>

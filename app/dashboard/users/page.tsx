@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -31,10 +32,10 @@ import { Switch } from "@/components/ui/switch"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 
-const roleConfig: Record<User["role"], { label: string; className: string }> = {
-  admin: { label: "Admin", className: "bg-green-500/10 text-green-600 border-green-500/20" },
-  agent: { label: "Agent", className: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-  viewer: { label: "Viewer", className: "bg-gray-500/10 text-gray-600 border-gray-500/20" },
+const roleClassNames: Record<User["role"], string> = {
+  admin: "bg-green-500/10 text-green-600 border-green-500/20",
+  agent: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  viewer: "bg-gray-500/10 text-gray-600 border-gray-500/20",
 }
 
 const emptyUser: Omit<User, "id" | "created_at"> = {
@@ -45,6 +46,8 @@ const emptyUser: Omit<User, "id" | "created_at"> = {
 }
 
 export default function UsersPage() {
+    const t = useTranslations("Users")
+
     const [users, setUsers] = useState<User[]>([])
     const [editingUser, setEditingUser] = useState<User | null>(null)
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -63,10 +66,10 @@ export default function UsersPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.fullname.trim()) newErrors.fullname = "Full name is required"
-    if (!formData.email.trim()) newErrors.email = "Email is required"
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email address"
-    if (!formData.role) newErrors.role = "Role is required"
+    if (!formData.fullname.trim()) newErrors.fullname = t("fullNameRequired")
+    if (!formData.email.trim()) newErrors.email = t("emailRequired")
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = t("invalidEmail")
+    if (!formData.role) newErrors.role = t("roleRequired")
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -108,21 +111,21 @@ export default function UsersPage() {
 
       if (!res.ok) {
         const errorText = await res.text()
-        throw new Error(errorText || "Failed to update user status")
+        throw new Error(errorText || t("failedToUpdateStatus"))
       }
 
       const updated = await res.json()
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
       setFeedback({
         tone: "success",
-        title: isActive ? "User activated" : "User deactivated",
-        description: `${user.fullname}'s account is now ${isActive ? "active" : "inactive"}.`,
+        title: isActive ? t("userActivated") : t("userDeactivated"),
+        description: t("accountStatusDescription", { name: user.fullname, status: isActive ? t("active") : t("inactive") }),
       })
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Something went wrong"
+      const message = e instanceof Error ? e.message : t("somethingWentWrong")
       setFeedback({
         tone: "destructive",
-        title: "Could not update status",
+        title: t("couldNotUpdateStatus"),
         description: message,
       })
     } finally {
@@ -137,26 +140,26 @@ export default function UsersPage() {
   const columns: Column<User>[] = [
     {
       key: "fullname",
-      label: "Name",
+      label: t("columns.name"),
       render: (value) => <span className="font-medium text-foreground">{value}</span>,
     },
     {
       key: "email",
-      label: "Email",
+      label: t("columns.email"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
       key: "role",
-      label: "Role",
+      label: t("columns.role"),
       render: (value) => (
-        <Badge className={roleConfig[value as User["role"]].className}>
-          {roleConfig[value as User["role"]].label}
+        <Badge className={roleClassNames[value as User["role"]]}>
+          {t(`roles.${value as User["role"]}`)}
         </Badge>
       ),
     },
     {
       key: "is_active",
-      label: "Active",
+      label: t("columns.active"),
       render: (value, item) => {
         const isToggling = toggleLoading[item.id]
         return (
@@ -169,7 +172,7 @@ export default function UsersPage() {
             {isToggling ? (
               <Spinner className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <FieldLabel>{value ? "On" : "Off"}</FieldLabel>
+              <FieldLabel>{value ? t("on") : t("off")}</FieldLabel>
             )}
           </Field>
         )
@@ -177,7 +180,7 @@ export default function UsersPage() {
     },
     {
       key: "created_at",
-      label: "Created",
+      label: t("columns.created"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
       hidden: true,
     },
@@ -200,8 +203,8 @@ export default function UsersPage() {
       const errorText = await res.text()
       setFeedback({
         tone: "destructive",
-        title: "Could not add user",
-        description: errorText || "Request failed",
+        title: t("couldNotAddUser"),
+        description: errorText || t("requestFailed"),
       })
       return
     }
@@ -212,8 +215,8 @@ export default function UsersPage() {
     setIsAddDialogOpen(false)
     setFeedback({
       tone: "success",
-      title: "User added",
-      description: `${created.fullname} has been created.`,
+      title: t("userAdded"),
+      description: t("userCreatedDescription", { name: created.fullname }),
     })
     } finally {
       setIsLoading(false)
@@ -232,36 +235,36 @@ export default function UsersPage() {
         role: formData.role,
         // is_active: formData.is_active,
       }
-  
+
       const res = await fetch(`/api/users/${editingUser.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
       })
-  
+
       if (!res.ok) {
         const errorText = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not update user",
-          description: errorText || "Request failed",
+          title: t("couldNotUpdateUser"),
+          description: errorText || t("requestFailed"),
         })
         return
       }
-  
-  
+
+
       const updated = await res.json()
-  
+
       setUsers((prev) =>
           prev.map((u) => (u.id === updated.id ? updated : u))
       )
-  
+
       setIsEditDialogOpen(false)
       setEditingUser(null)
       setFeedback({
         tone: "success",
-        title: "User updated",
-        description: `${updated.fullname}'s details were saved.`,
+        title: t("userUpdated"),
+        description: t("userUpdatedDescription", { name: updated.fullname }),
       })
     } finally {
       setIsLoading(false);
@@ -282,8 +285,8 @@ export default function UsersPage() {
         const errorText = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not delete user",
-          description: errorText || "Request failed",
+          title: t("couldNotDeleteUser"),
+          description: errorText || t("requestFailed"),
         })
         return
       }
@@ -297,8 +300,8 @@ export default function UsersPage() {
       setUserToDelete(null)
       setFeedback({
         tone: "success",
-        title: "User deleted",
-        description: `${name} has been removed.`,
+        title: t("userDeleted"),
+        description: t("userDeletedDescription", { name }),
       })
     } finally {
       setIsLoading(false);
@@ -325,33 +328,36 @@ export default function UsersPage() {
             />
           </div>
         ) : null}
+        <p className="mb-4 text-sm text-muted-foreground">
+          {t("firstPasswordNote")}
+        </p>
         <DataTable
           data={users}
           columns={columns}
-          title="Users"
-          searchPlaceholder="Search users..."
+          title={t("table.title")}
+          searchPlaceholder={t("table.searchPlaceholder")}
           searchFields={["fullname", "email", "role"]}
           onAdd={handleAdd}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
           isLoading={isLoading}
-          addButtonText="Add User"
+          addButtonText={t("table.addButton")}
         />
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add User</DialogTitle>
+            <DialogTitle>{t("addDialog.title")}</DialogTitle>
             <DialogDescription>
-              Add a new user to the system.
+              {t("addDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="fullname" className="text-right">
-                Full Name
+                {t("form.fullName")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -367,7 +373,7 @@ export default function UsersPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
-                Email
+                {t("form.email")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -384,7 +390,7 @@ export default function UsersPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="role" className="text-right">
-                Role
+                {t("form.role")}
               </Label>
               <div className="col-span-3">
                 <Select
@@ -397,9 +403,9 @@ export default function UsersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="agent">Agent</SelectItem>
-                    <SelectItem value="viewer">Viewer</SelectItem>
+                    <SelectItem value="admin">{t("roles.admin")}</SelectItem>
+                    <SelectItem value="agent">{t("roles.agent")}</SelectItem>
+                    <SelectItem value="viewer">{t("roles.viewer")}</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
@@ -408,7 +414,7 @@ export default function UsersPage() {
           </div>
           <DialogFooter>
             <Button onClick={confirmAdd} disabled={isLoading}>
-              { isLoading ? "Adding..." : "Add User" }
+              { isLoading ? t("addDialog.adding") : t("addDialog.addUser") }
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -418,15 +424,15 @@ export default function UsersPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>{t("editDialog.title")}</DialogTitle>
             <DialogDescription>
-              Update user information.
+              {t("editDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-fullname" className="text-right">
-                Full Name
+                {t("form.fullName")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -442,7 +448,7 @@ export default function UsersPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-email" className="text-right">
-                Email
+                {t("form.email")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -459,7 +465,7 @@ export default function UsersPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-role" className="text-right">
-                Role
+                {t("form.role")}
               </Label>
               <div className="col-span-3">
                 <Select
@@ -472,9 +478,9 @@ export default function UsersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="agent">Agent</SelectItem>
-                    <SelectItem value="viewer">Viewer</SelectItem>
+                    <SelectItem value="admin">{t("roles.admin")}</SelectItem>
+                    <SelectItem value="agent">{t("roles.agent")}</SelectItem>
+                    <SelectItem value="viewer">{t("roles.viewer")}</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
@@ -483,7 +489,7 @@ export default function UsersPage() {
           </div>
           <DialogFooter>
             <Button onClick={confirmEdit} disabled={isLoading}>
-              { isLoading ? "Saving Changes..." : "Save Changes" }
+              { isLoading ? t("editDialog.saving") : t("editDialog.saveChanges") }
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -493,16 +499,15 @@ export default function UsersPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {userToDelete?.fullname}? This action
-              cannot be undone.
+              {t("deleteDialog.description", { name: userToDelete?.fullname ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
-              { isLoading ? "Deleting..." : "Delete" }
+              { isLoading ? t("deleteDialog.deleting") : t("deleteDialog.delete") }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

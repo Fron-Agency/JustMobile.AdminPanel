@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Star, Plus, Trash2, Link, LinkIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -54,15 +55,24 @@ type ZoneEntry = {
   data_it?: string
 }
 
-const emptyZone = (): ZoneEntry => ({ 
-  country_id: "", 
+const emptyZone = (): ZoneEntry => ({
+  country_id: "",
   rawData: "",
   data_de: "",
   data_fr: "",
   data_it: ""
 })
 
+const ZONE_LANGUAGE_FIELDS = [
+  { lang: 'en', flag: '🇬🇧', labelKey: 'en', key: 'rawData' as const },
+  { lang: 'de', flag: '🇩🇪', labelKey: 'de', key: 'data_de' as const },
+  { lang: 'fr', flag: '🇫🇷', labelKey: 'fr', key: 'data_fr' as const },
+  { lang: 'it', flag: '🇮🇹', labelKey: 'it', key: 'data_it' as const },
+] as const
+
 export default function PlansPage() {
+  const t = useTranslations("PlansMobile")
+
   const [plans, setPlans] = useState<PlanMobile[]>([])
   const [providers, setProviders] = useState<any[]>([])
   const [countryZones, setCountryZones] = useState<Country[]>([])
@@ -102,9 +112,9 @@ export default function PlansPage() {
 
   const validateForm = () => {
     const e: Record<string, string> = {}
-    if (!formData.name.trim()) e.name = "Name is required"
-    if (!formData.provider_id) e.provider_id = "Provider is required"
-    if (formData.price <= 0) e.price = "Price must be greater than 0"
+    if (!formData.name.trim()) e.name = t("nameRequired")
+    if (!formData.provider_id) e.provider_id = t("providerRequired")
+    if (formData.price <= 0) e.price = t("priceGreaterThanZero")
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -158,12 +168,12 @@ export default function PlansPage() {
         body: JSON.stringify(buildPayload()),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message ?? "Failed to add plan")
+      if (!res.ok) throw new Error(data.message ?? t("failedToAddPlan"))
       setPlans((prev) => [...prev, data])
       setIsAddDialogOpen(false)
-      setFeedback({ tone: "success", title: "Plan added", description: `${data.name} has been created.` })
+      setFeedback({ tone: "success", title: t("planAdded"), description: t("planCreatedDescription", { name: data.name }) })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Could not add plan", description: e instanceof Error ? e.message : undefined })
+      setFeedback({ tone: "destructive", title: t("couldNotAddPlan"), description: e instanceof Error ? e.message : undefined })
     } finally {
       setIsLoading(false)
     }
@@ -232,13 +242,13 @@ export default function PlansPage() {
         body: JSON.stringify(buildPayload()),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message ?? "Failed to update plan")
+      if (!res.ok) throw new Error(data.message ?? t("failedToUpdatePlan"))
       setPlans((prev) => prev.map((p) => (p.id === data.id ? data : p)))
       setIsEditDialogOpen(false)
       setEditingPlan(null)
-      setFeedback({ tone: "success", title: "Plan updated", description: `${data.name}'s details were saved.` })
+      setFeedback({ tone: "success", title: t("planUpdated"), description: t("planUpdatedDescription", { name: data.name }) })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Could not update plan", description: e instanceof Error ? e.message : undefined })
+      setFeedback({ tone: "destructive", title: t("couldNotUpdatePlan"), description: e instanceof Error ? e.message : undefined })
     } finally {
       setIsLoading(false)
     }
@@ -257,9 +267,9 @@ export default function PlansPage() {
       setPlans((prev) => prev.filter((p) => p.id !== planToDelete.id))
       setIsDeleteDialogOpen(false)
       setPlanToDelete(null)
-      setFeedback({ tone: "success", title: "Plan deleted", description: `${planToDelete.name} has been removed.` })
+      setFeedback({ tone: "success", title: t("planDeleted"), description: t("planDeletedDescription", { name: planToDelete.name }) })
     } catch {
-      setFeedback({ tone: "destructive", title: "Could not delete plan" })
+      setFeedback({ tone: "destructive", title: t("couldNotDeletePlan") })
     } finally {
       setIsLoading(false)
     }
@@ -277,11 +287,13 @@ export default function PlansPage() {
       setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
       setFeedback({
         tone: "success",
-        title: updated.is_favorite ? "Plan favorited" : "Plan unfavorited",
-        description: `${plan.name} has been ${updated.is_favorite ? "added to" : "removed from"} favorites.`,
+        title: updated.is_favorite ? t("planFavorited") : t("planUnfavorited"),
+        description: updated.is_favorite
+          ? t("favoriteAddedDescription", { name: plan.name })
+          : t("favoriteRemovedDescription", { name: plan.name }),
       })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Could not update favorite", description: e instanceof Error ? e.message : undefined })
+      setFeedback({ tone: "destructive", title: t("couldNotUpdateFavorite"), description: e instanceof Error ? e.message : undefined })
     }
   }
 
@@ -297,7 +309,7 @@ export default function PlansPage() {
   const columns: Column<PlanMobile>[] = [
     {
       key: "name",
-      label: "Name",
+      label: t("columns.name"),
       render: (value, item) => (
         <div className="flex items-center gap-2">
           <button onClick={() => handleToggleFavorite(item)} className="text-yellow-400 hover:text-yellow-500">
@@ -309,62 +321,62 @@ export default function PlansPage() {
     },
     {
       key: "provider_name",
-      label: "Provider",
+      label: t("columns.provider"),
       render: (v) => <span className="text-muted-foreground text-sm">{v ?? "—"}</span>,
     },
     {
       key: "category_name",
-      label: "Category",
+      label: t("columns.category"),
       render: (v) => <span className="text-muted-foreground text-sm">{v ?? "—"}</span>,
     },
     {
       key: "price",
-      label: "Price",
+      label: t("columns.price"),
       render: (v) => <span className="text-muted-foreground text-sm">CHF {v}/mo</span>,
     },
     {
       key: "product_price",
-      label: "Product Price",
+      label: t("columns.productPrice"),
       render: (v) => <span className="text-muted-foreground text-sm">CHF {v ?? "—"}/mo</span>,
     },
     {
       key: "data_gb",
-      label: "Data",
-      render: (v) => <span className="text-muted-foreground text-sm">{v === null ? "Unlimited" : `${v}GB`}</span>,
+      label: t("columns.data"),
+      render: (v) => <span className="text-muted-foreground text-sm">{v === null ? t("unlimited") : `${v}GB`}</span>,
     },
     {
       key: "data_gb_europe",
-      label: "Data Europe",
-      render: (v) => <span className="text-muted-foreground text-sm">{v === null ? "Unlimited" : `${v}GB`}</span>,
+      label: t("columns.dataEurope"),
+      render: (v) => <span className="text-muted-foreground text-sm">{v === null ? t("unlimited") : `${v}GB`}</span>,
     },
     {
       key: "network_technology",
-      label: "Network",
+      label: t("columns.network"),
       render: (v) => <span className="text-muted-foreground text-sm">{v}</span>,
     },
     {
       key: "contract_length",
-      label: "Contract",
+      label: t("columns.contract"),
       render: (v) => <span className="text-muted-foreground text-sm">{v > 0 ? `${v}mo` : "—"}</span>,
     },
     {
       key: "discount",
-      label: "Discount",
+      label: t("columns.discount"),
       render: (v) => v > 0
-        ? <span className="text-green-600 text-sm">{v}% off</span>
+        ? <span className="text-green-600 text-sm">{v}% {t("off")}</span>
         : <span className="text-muted-foreground text-sm">—</span>,
     },
     {
       key: "country_zones",
-      label: "Zones",
+      label: t("columns.zones"),
       render: (v) => {
         const count = Array.isArray(v) ? v.length : 0
-        return <span className="text-muted-foreground text-sm">{count > 0 ? `${count} zone${count !== 1 ? "s" : ""}` : "—"}</span>
+        return <span className="text-muted-foreground text-sm">{count > 0 ? t("zonesCount", { count }) : "—"}</span>
       },
     },
     {
       key: "link",
-      label: "Link",
+      label: t("columns.link"),
       render: (_, item) => {
         const url = `https://justmobile.ch/form/${item.provider_name}/${item.name}`
 
@@ -372,7 +384,7 @@ export default function PlansPage() {
           <button
             onClick={() => {
               navigator.clipboard.writeText(url)
-              toast.success("Link copied!")
+              toast.success(t("linkCopied"))
             }}
             className="text-muted-foreground hover:text-primary transition-colors"
           >
@@ -407,7 +419,7 @@ export default function PlansPage() {
     <div className="flex flex-col gap-4 py-2 max-h-[80vh] overflow-y-auto pr-1">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <Label>Name</Label>
+          <Label>{t("form.name")}</Label>
           <Input
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -417,15 +429,15 @@ export default function PlansPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Provider</Label>
+          <Label>{t("form.provider")}</Label>
           <Select value={formData.provider_id} onValueChange={(v) => setFormData({ ...formData, provider_id: v })}>
             <SelectTrigger className={errors.provider_id ? "border-red-500" : ""}>
-              <SelectValue placeholder="Select provider" />
+              <SelectValue placeholder={t("form.selectProvider")} />
             </SelectTrigger>
             <SelectContent>
               {providers.map((p) => (
-                <SelectItem 
-                  key={p.id} 
+                <SelectItem
+                  key={p.id}
                   value={p.id}
                 >
                     {p.name} — {p.category_name}
@@ -439,7 +451,7 @@ export default function PlansPage() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <Label>Price (CHF)</Label>
+          <Label>{t("form.priceChf")}</Label>
           <Input
             type="number"
             value={formData.price}
@@ -450,7 +462,7 @@ export default function PlansPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Product Price (CHF)</Label>
+          <Label>{t("form.productPriceChf")}</Label>
           <Input
             type="number"
             value={formData.product_price}
@@ -460,7 +472,7 @@ export default function PlansPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Discount (%)</Label>
+          <Label>{t("form.discountPercent")}</Label>
           <Input
             type="number"
             value={formData.discount}
@@ -471,7 +483,7 @@ export default function PlansPage() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <Label>Data (GB)</Label>
+          <Label>{t("form.dataGb")}</Label>
           <Input
             type="number"
             disabled={isUnlimited}
@@ -481,7 +493,7 @@ export default function PlansPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Unlimited Data</Label>
+          <Label>{t("form.unlimitedData")}</Label>
           <div className="flex items-center h-10">
             <Switch
               checked={isUnlimited}
@@ -496,7 +508,7 @@ export default function PlansPage() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <Label>Data (GB) Europe</Label>
+          <Label>{t("form.dataGbEurope")}</Label>
           <Input
             type="number"
             disabled={isUnlimitedEurope}
@@ -506,7 +518,7 @@ export default function PlansPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Unlimited Data Europe</Label>
+          <Label>{t("form.unlimitedDataEurope")}</Label>
           <div className="flex items-center h-10">
             <Switch
               checked={isUnlimitedEurope}
@@ -521,16 +533,16 @@ export default function PlansPage() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <Label>Network Technology</Label>
+          <Label>{t("form.networkTechnology")}</Label>
           <Input
-            placeholder="e.g. 4G, 5G"
+            placeholder={t("form.networkTechnologyPlaceholder")}
             value={formData.network_technology}
             onChange={(e) => setFormData({ ...formData, network_technology: e.target.value })}
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Contract (months)</Label>
+          <Label>{t("form.contractMonths")}</Label>
           <Input
             type="number"
             value={formData.contract_length}
@@ -540,7 +552,7 @@ export default function PlansPage() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label>Favorite</Label>
+        <Label>{t("form.favorite")}</Label>
         <div className="flex items-center h-10">
           <Switch
             checked={formData.is_favorite}
@@ -552,33 +564,33 @@ export default function PlansPage() {
       {/* Country zones section */}
       <div className="flex flex-col gap-3 border-t pt-4">
         <div className="flex items-center justify-between">
-          <Label className="text-base font-semibold">Country Zone Details</Label>
+          <Label className="text-base font-semibold">{t("form.countryZoneDetails")}</Label>
           <Button type="button" variant="outline" size="sm" onClick={addZone} className="h-7 gap-1 text-xs">
-            <Plus className="w-3 h-3" /> Add Zone
+            <Plus className="w-3 h-3" /> {t("form.addZone")}
           </Button>
         </div>
 
         {zones.length === 0 && (
-          <p className="text-muted-foreground text-xs">No zone details added.</p>
+          <p className="text-muted-foreground text-xs">{t("form.noZonesAdded")}</p>
         )}
 
         {zones.map((zone, i) => (
           <div key={i} className="border rounded-lg p-4 flex flex-col gap-3 bg-muted/20">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-foreground">Zone {i + 1}</span>
+              <span className="text-sm font-semibold text-foreground">{t("form.zoneLabel", { index: i + 1 })}</span>
               <button type="button" onClick={() => removeZone(i)} className="text-red-400 hover:text-red-600">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
 
             <div className="flex flex-col gap-1">
-              <Label className="text-sm">Country</Label>
+              <Label className="text-sm">{t("form.country")}</Label>
               <Select value={zone.country_id || "none"} onValueChange={(v) => updateZoneCountry(i, v === "none" ? "" : v)}>
                 <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select country" />
+                  <SelectValue placeholder={t("form.selectCountry")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Select country</SelectItem>
+                  <SelectItem value="none">{t("form.selectCountry")}</SelectItem>
                   {countryZones.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
@@ -588,25 +600,22 @@ export default function PlansPage() {
 
             {/* Language fields for data */}
             <div className="grid grid-cols-4 gap-2">
-              {[
-                { lang: 'en', label: '🇬🇧 English', key: 'rawData' as const },
-                { lang: 'de', label: '🇩🇪 German', key: 'data_de' as const },
-                { lang: 'fr', label: '🇫🇷 French', key: 'data_fr' as const },
-                { lang: 'it', label: '🇮🇹 Italian', key: 'data_it' as const },
-              ].map(({ lang, label, key }) => (
-                <div key={lang} className="flex flex-col gap-1">
-                  <Label className="text-xs font-medium">{label}</Label>
-                  <textarea
-                    className="w-full rounded-md border bg-background px-2 py-2 text-xs font-mono min-h-[120px] resize-y focus:outline-none focus:ring-1 focus:ring-ring"
-                    placeholder={`${label} description...`}
-                    value={zone[key] || ""}
-                    onChange={(e) => {
-                      const newZone = { ...zone, [key]: e.target.value }
-                      updateZoneDataByKey(i, key, e.target.value)
-                    }}
-                  />
-                </div>
-              ))}
+              {ZONE_LANGUAGE_FIELDS.map(({ lang, flag, labelKey, key }) => {
+                const label = `${flag} ${t(`form.languages.${labelKey}`)}`
+                return (
+                  <div key={lang} className="flex flex-col gap-1">
+                    <Label className="text-xs font-medium">{label}</Label>
+                    <textarea
+                      className="w-full rounded-md border bg-background px-2 py-2 text-xs font-mono min-h-[120px] resize-y focus:outline-none focus:ring-1 focus:ring-ring"
+                      placeholder={t("form.descriptionPlaceholder", { language: label })}
+                      value={zone[key] || ""}
+                      onChange={(e) => {
+                        updateZoneDataByKey(i, key, e.target.value)
+                      }}
+                    />
+                  </div>
+                )
+              })}
             </div>
           </div>
         ))}
@@ -623,7 +632,7 @@ export default function PlansPage() {
             title={feedback.title}
             description={feedback.description}
             onAutoDismiss={() => setFeedback(null)}
-          />x
+          />
         </div>
       )}
 
@@ -633,11 +642,11 @@ export default function PlansPage() {
           onValueChange={setSelectedCategory}
         >
           <SelectTrigger className="w-[220px]">
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder={t("categoryPlaceholder")} />
           </SelectTrigger>
 
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">{t("allCategories")}</SelectItem>
 
             {categories.map((category) => (
               <SelectItem key={category} value={category}>
@@ -653,11 +662,11 @@ export default function PlansPage() {
           onValueChange={setSelectedProvider}
         >
           <SelectTrigger className="w-[220px]">
-            <SelectValue placeholder="Provider" />
+            <SelectValue placeholder={t("providerPlaceholder")} />
           </SelectTrigger>
 
           <SelectContent>
-            <SelectItem value="all">All Providers</SelectItem>
+            <SelectItem value="all">{t("allProviders")}</SelectItem>
 
             {providerNames.map((provider) => (
               <SelectItem key={provider} value={provider}>
@@ -671,26 +680,26 @@ export default function PlansPage() {
       <DataTable
         data={filteredPlans}
         columns={columns}
-        title="Mobile Plans"
-        searchPlaceholder="Search plans..."
+        title={t("table.title")}
+        searchPlaceholder={t("table.searchPlaceholder")}
         searchFields={["name", "provider_name"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
         isLoading={isLoading}
-        addButtonText="Add Plan"
+        addButtonText={t("table.addButton")}
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Add Mobile Plan</DialogTitle>
-            <DialogDescription>Add a new mobile plan to the system.</DialogDescription>
+            <DialogTitle>{t("addDialog.title")}</DialogTitle>
+            <DialogDescription>{t("addDialog.description")}</DialogDescription>
           </DialogHeader>
           {formFields}
           <DialogFooter>
             <Button onClick={confirmAdd} disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Plan"}
+              {isLoading ? t("addDialog.adding") : t("addDialog.addPlan")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -699,13 +708,13 @@ export default function PlansPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Edit Mobile Plan</DialogTitle>
-            <DialogDescription>Update plan information.</DialogDescription>
+            <DialogTitle>{t("editDialog.title")}</DialogTitle>
+            <DialogDescription>{t("editDialog.description")}</DialogDescription>
           </DialogHeader>
           {formFields}
           <DialogFooter>
             <Button onClick={confirmEdit} disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
+              {isLoading ? t("editDialog.saving") : t("editDialog.saveChanges")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -714,15 +723,18 @@ export default function PlansPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Plan</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{planToDelete?.name}</strong>? This action cannot be undone.
+              {t.rich("deleteDialog.description", {
+                name: planToDelete?.name ?? "",
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
-              {isLoading ? "Deleting..." : "Delete"}
+              {isLoading ? t("deleteDialog.deleting") : t("deleteDialog.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -68,6 +69,8 @@ const emptyProduct = {
 }
 
 export default function ProductsPage() {
+  const t = useTranslations("Products")
+
   const [products, setProducts] = useState<Product[]>([])
   const [mobilePlans, setMobilePlans] = useState<MobilePlan[]>([])
   const [homePlans, setHomePlans] = useState<HomePlan[]>([])
@@ -102,10 +105,10 @@ export default function ProductsPage() {
 
   const validateProductForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.name.trim()) newErrors.name = "Name is required"
-    if (!formData.brand.trim()) newErrors.brand = "Brand is required"
-    if (!formData.model.trim()) newErrors.model = "Model is required"
-    if (formData.base_price < 0) newErrors.base_price = "Base price must be >= 0"
+    if (!formData.name.trim()) newErrors.name = t("nameRequired")
+    if (!formData.brand.trim()) newErrors.brand = t("brandRequired")
+    if (!formData.model.trim()) newErrors.model = t("modelRequired")
+    if (formData.base_price < 0) newErrors.base_price = t("basePriceNonNegative")
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -114,8 +117,8 @@ export default function ProductsPage() {
     const newErrors: Record<number, Record<string, string>> = {}
     cols.forEach((c, i) => {
       const errs: Record<string, string> = {}
-      if (!c.name.trim()) errs.name = "Color name is required"
-      if (!c.hex_code.trim()) errs.hex_code = "Hex code is required"
+      if (!c.name.trim()) errs.name = t("colorNameRequired")
+      if (!c.hex_code.trim()) errs.hex_code = t("hexCodeRequired")
       if (Object.keys(errs).length) newErrors[i] = errs
     })
     setErr(newErrors)
@@ -125,47 +128,47 @@ export default function ProductsPage() {
   const columns: Column<Product>[] = [
     {
       key: "name",
-      label: "Name",
+      label: t("columns.name"),
       render: (value) => <span className="font-medium text-foreground">{value}</span>,
     },
     {
       key: "brand",
-      label: "Brand",
+      label: t("columns.brand"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
       key: "model",
-      label: "Model",
+      label: t("columns.model"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
       key: "plan_mobile_name",
-      label: "Mobile Plan",
+      label: t("columns.mobilePlan"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "plan_home_name",
-      label: "Home Plan",
+      label: t("columns.homePlan"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "base_price",
-      label: "Base Price",
+      label: t("columns.basePrice"),
       render: (value) => <span className="text-muted-foreground text-sm">CHF {value}</span>,
     },
     {
       key: "colors",
-      label: "Colors",
+      label: t("columns.colors"),
       render: (value: ProductColor[]) => (
-        <span className="text-muted-foreground text-sm">{value?.length ?? 0} color(s)</span>
+        <span className="text-muted-foreground text-sm">{t("colorsCount", { count: value?.length ?? 0 })}</span>
       ),
     },
     {
       key: "is_active",
-      label: "Active",
+      label: t("columns.active"),
       render: (value) => (
         <span className={`text-sm ${value ? "text-green-600" : "text-muted-foreground"}`}>
-          {value ? "Yes" : "No"}
+          {value ? t("yes") : t("no")}
         </span>
       ),
     },
@@ -240,7 +243,7 @@ export default function ProductsPage() {
     const fd = new FormData()
     fd.append("file", file)
     const res = await fetch(`/api/products/${productId}/photos/upload`, { method: "POST", body: fd })
-    if (!res.ok) throw new Error("Photo upload failed")
+    if (!res.ok) throw new Error(t("photoUploadFailed"))
     const { file_url } = await res.json()
     return file_url
   }
@@ -301,7 +304,7 @@ export default function ProductsPage() {
       })
       const created = await res.json()
       if (!res.ok) {
-        setFeedback({ tone: "destructive", title: "Could not add product", description: created.message || "Request failed" })
+        setFeedback({ tone: "destructive", title: t("couldNotAddProduct"), description: created.message || t("requestFailed") })
         return
       }
 
@@ -327,9 +330,9 @@ export default function ProductsPage() {
       }
       setProducts((prev) => [...prev, full])
       setIsAddDialogOpen(false)
-      setFeedback({ tone: "success", title: "Product added", description: `${full.name} has been created.` })
+      setFeedback({ tone: "success", title: t("productAdded"), description: t("productCreatedDescription", { name: full.name }) })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Could not add product", description: e instanceof Error ? e.message : "Request failed" })
+      setFeedback({ tone: "destructive", title: t("couldNotAddProduct"), description: e instanceof Error ? e.message : t("requestFailed") })
     } finally {
       setIsLoading(false)
     }
@@ -352,15 +355,15 @@ export default function ProductsPage() {
       })
       const updated = await res.json()
       if (!res.ok) {
-        setFeedback({ tone: "destructive", title: "Could not update product", description: updated.message || "Request failed" })
+        setFeedback({ tone: "destructive", title: t("couldNotUpdateProduct"), description: updated.message || t("requestFailed") })
         return
       }
       setProducts((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)))
       setIsEditDialogOpen(false)
       setEditingProduct(null)
-      setFeedback({ tone: "success", title: "Product updated", description: `${updated.name}'s details were saved.` })
+      setFeedback({ tone: "success", title: t("productUpdated"), description: t("productUpdatedDescription", { name: updated.name }) })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Could not update product", description: e instanceof Error ? e.message : "Request failed" })
+      setFeedback({ tone: "destructive", title: t("couldNotUpdateProduct"), description: e instanceof Error ? e.message : t("requestFailed") })
     } finally {
       setIsLoading(false)
     }
@@ -373,16 +376,16 @@ export default function ProductsPage() {
       const res = await fetch(`/api/products/${productToDelete.id}`, { method: "DELETE" })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        setFeedback({ tone: "destructive", title: "Could not delete product", description: err.message || "Request failed" })
+        setFeedback({ tone: "destructive", title: t("couldNotDeleteProduct"), description: err.message || t("requestFailed") })
         return
       }
       const name = productToDelete.name
       setProducts((prev) => prev.filter((p) => p.id !== productToDelete.id))
       setIsDeleteDialogOpen(false)
       setProductToDelete(null)
-      setFeedback({ tone: "success", title: "Product deleted", description: `${name} has been removed.` })
+      setFeedback({ tone: "success", title: t("productDeleted"), description: t("productDeletedDescription", { name }) })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Could not delete product", description: e instanceof Error ? e.message : "Request failed" })
+      setFeedback({ tone: "destructive", title: t("couldNotDeleteProduct"), description: e instanceof Error ? e.message : t("requestFailed") })
     } finally {
       setIsLoading(false)
     }
@@ -409,7 +412,7 @@ export default function ProductsPage() {
       setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
       setIsColorsDialogOpen(false)
       setManagingColorsFor(null)
-      setFeedback({ tone: "success", title: "Colors saved", description: `Colors for ${updated.name} have been updated.` })
+      setFeedback({ tone: "success", title: t("colorsSaved"), description: t("colorsSavedDescription", { name: updated.name }) })
     } finally {
       setIsLoading(false)
     }
@@ -433,17 +436,17 @@ export default function ProductsPage() {
   const productFormFields = (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Mobile Plan</Label>
+        <Label className="text-right">{t("form.mobilePlan")}</Label>
         <div className="col-span-3">
           <Select
             value={formData.plan_mobile_id ?? "none"}
             onValueChange={(v) => setFormData({ ...formData, plan_mobile_id: v === "none" ? null : v })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="None" />
+              <SelectValue placeholder={t("form.none")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="none">{t("form.none")}</SelectItem>
               {mobilePlans.map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.name} - {p.provider_name} - {p.category_name}</SelectItem>
               ))}
@@ -452,17 +455,17 @@ export default function ProductsPage() {
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Home Plan</Label>
+        <Label className="text-right">{t("form.homePlan")}</Label>
         <div className="col-span-3">
           <Select
             value={formData.plan_home_id ?? "none"}
             onValueChange={(v) => setFormData({ ...formData, plan_home_id: v === "none" ? null : v })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="None" />
+              <SelectValue placeholder={t("form.none")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="none">{t("form.none")}</SelectItem>
               {homePlans.map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
               ))}
@@ -471,7 +474,7 @@ export default function ProductsPage() {
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Name</Label>
+        <Label className="text-right">{t("form.name")}</Label>
         <div className="col-span-3">
           <Input
             value={formData.name}
@@ -482,7 +485,7 @@ export default function ProductsPage() {
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Brand</Label>
+        <Label className="text-right">{t("form.brand")}</Label>
         <div className="col-span-3">
           <Input
             value={formData.brand}
@@ -493,7 +496,7 @@ export default function ProductsPage() {
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Model</Label>
+        <Label className="text-right">{t("form.model")}</Label>
         <div className="col-span-3">
           <Input
             value={formData.model}
@@ -504,7 +507,7 @@ export default function ProductsPage() {
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Description</Label>
+        <Label className="text-right">{t("form.description")}</Label>
         <div className="col-span-3">
           <Input
             value={formData.description}
@@ -513,7 +516,7 @@ export default function ProductsPage() {
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Base Price</Label>
+        <Label className="text-right">{t("form.basePrice")}</Label>
         <div className="col-span-3">
           <Input
             type="number"
@@ -525,7 +528,7 @@ export default function ProductsPage() {
         </div>
       </div>
       <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Active</Label>
+        <Label className="text-right">{t("form.active")}</Label>
         <div className="col-span-3">
           <Switch
             checked={formData.is_active}
@@ -546,7 +549,7 @@ export default function ProductsPage() {
       {colorList.map((color, ci) => (
         <div key={ci} className="border rounded-md p-3 space-y-2 bg-muted/30">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">{color.name || `Color ${ci + 1}`}</span>
+            <span className="text-sm font-medium">{color.name || t("colorEditor.colorLabel", { index: ci + 1 })}</span>
             <button
               type="button"
               onClick={() => setColorList(colorList.filter((_, idx) => idx !== ci))}
@@ -558,7 +561,7 @@ export default function ProductsPage() {
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Color Name</Label>
+              <Label className="text-xs">{t("colorEditor.colorName")}</Label>
               <Input
                 value={color.name}
                 onChange={(e) => {
@@ -571,7 +574,7 @@ export default function ProductsPage() {
               {errs[ci]?.name && <p className="text-red-500 text-xs mt-0.5">{errs[ci].name}</p>}
             </div>
             <div>
-              <Label className="text-xs">Hex Code</Label>
+              <Label className="text-xs">{t("colorEditor.hexCode")}</Label>
               <div className="flex gap-1.5 items-center">
                 <input
                   type="color"
@@ -606,11 +609,11 @@ export default function ProductsPage() {
                 setColorList(next)
               }}
             />
-            <Label className="text-xs">Active</Label>
+            <Label className="text-xs">{t("colorEditor.active")}</Label>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Photos</Label>
+            <Label className="text-xs text-muted-foreground">{t("colorEditor.photos")}</Label>
             <div className="flex flex-wrap gap-2">
               {color.photos.map((photo, pi) => (
                 <div key={pi} className="relative group w-16 h-16">
@@ -625,7 +628,7 @@ export default function ProductsPage() {
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 rounded flex items-center justify-center gap-1 transition-opacity">
                     <button
                       type="button"
-                      title="Set primary"
+                      title={t("colorEditor.setPrimary")}
                       onClick={() => {
                         const next = [...colorList]
                         next[ci] = {
@@ -640,7 +643,7 @@ export default function ProductsPage() {
                     </button>
                     <button
                       type="button"
-                      title="Remove"
+                      title={t("colorEditor.remove")}
                       onClick={() => {
                         const next = [...colorList]
                         next[ci] = {
@@ -698,7 +701,7 @@ export default function ProductsPage() {
         onClick={() => setColorList([...colorList, { name: "", hex_code: "#000000", is_active: true, photos: [] }])}
         className="w-full"
       >
-        <Plus className="w-4 h-4 mr-1" /> Add Color
+        <Plus className="w-4 h-4 mr-1" /> {t("colorEditor.addColor")}
       </Button>
     </div>
   )
@@ -719,35 +722,35 @@ export default function ProductsPage() {
       <DataTable
         data={products}
         columns={columns}
-        title="Products"
-        searchPlaceholder="Search products..."
+        title={t("table.title")}
+        searchPlaceholder={t("table.searchPlaceholder")}
         searchFields={["name", "brand", "model"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onView={handleView}
         isLoading={isLoading}
-        addButtonText="Add Product"
+        addButtonText={t("table.addButton")}
       />
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Product</DialogTitle>
-            <DialogDescription>Add a new product with colors and photos.</DialogDescription>
+            <DialogTitle>{t("addDialog.title")}</DialogTitle>
+            <DialogDescription>{t("addDialog.description")}</DialogDescription>
           </DialogHeader>
 
           {productFormFields}
 
           <div className="border-t pt-4">
-            <p className="text-sm font-medium mb-3">Colors & Photos</p>
+            <p className="text-sm font-medium mb-3">{t("addDialog.colorsAndPhotos")}</p>
             {renderColorEditor(addColors, setAddColors, addColorErrors, "add")}
           </div>
 
           <DialogFooter className="pt-2">
             <Button onClick={confirmAdd} disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Product"}
+              {isLoading ? t("addDialog.adding") : t("addDialog.addProduct")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -757,13 +760,13 @@ export default function ProductsPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-            <DialogDescription>Update product information. To edit colors, use the View action.</DialogDescription>
+            <DialogTitle>{t("editDialog.title")}</DialogTitle>
+            <DialogDescription>{t("editDialog.description")}</DialogDescription>
           </DialogHeader>
           {productFormFields}
           <DialogFooter>
             <Button onClick={confirmEdit} disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
+              {isLoading ? t("editDialog.saving") : t("editDialog.saveChanges")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -773,15 +776,15 @@ export default function ProductsPage() {
       <Dialog open={isColorsDialogOpen} onOpenChange={setIsColorsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Manage Colors — {managingColorsFor?.name}</DialogTitle>
-            <DialogDescription>Add, edit, or remove colors and photos for this product.</DialogDescription>
+            <DialogTitle>{t("colorsDialog.title", { name: managingColorsFor?.name ?? "" })}</DialogTitle>
+            <DialogDescription>{t("colorsDialog.description")}</DialogDescription>
           </DialogHeader>
           <div className="py-2">
             {renderColorEditor(colors, setColors, colorErrors, "manage")}
           </div>
           <DialogFooter>
             <Button onClick={saveColors} disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Colors"}
+              {isLoading ? t("colorsDialog.saving") : t("colorsDialog.saveColors")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -791,16 +794,15 @@ export default function ProductsPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {productToDelete?.name}? This will also remove all
-              its colors and photos. This action cannot be undone.
+              {t("deleteDialog.description", { name: productToDelete?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
-              {isLoading ? "Deleting..." : "Delete"}
+              {isLoading ? t("deleteDialog.deleting") : t("deleteDialog.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

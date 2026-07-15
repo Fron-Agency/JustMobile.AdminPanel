@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -34,21 +35,23 @@ function getLogoUrl(fileUrl: string | null): string | null {
   return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${fileUrl}`
 }
 
-async function uploadLogo(file: File): Promise<string> {
-  const fd = new FormData()
-  fd.append("file", file)
-  const res = await fetch("/api/partners/logo", { method: "POST", body: fd })
-  if (!res.ok) throw new Error("Logo upload failed")
-  const { file_url } = await res.json()
-  return file_url
-}
-
 const emptyPartner: Omit<Partners, "id" | "created_at"> = {
   name: "",
   file_url: null,
 }
 
 export default function PartnersPage() {
+  const t = useTranslations("Partners")
+
+  async function uploadLogo(file: File): Promise<string> {
+    const fd = new FormData()
+    fd.append("file", file)
+    const res = await fetch("/api/partners/logo", { method: "POST", body: fd })
+    if (!res.ok) throw new Error(t("logoUploadFailed"))
+    const { file_url } = await res.json()
+    return file_url
+  }
+
   const [partners, setPartners] = useState<Partners[]>([])
   const [editing, setEditing] = useState<Partners | null>(null)
   const [partnerToDelete, setPartnerToDelete] = useState<Partners | null>(null)
@@ -68,7 +71,7 @@ export default function PartnersPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.name.trim()) newErrors.name = "Name is required"
+    if (!formData.name.trim()) newErrors.name = t("nameRequired")
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -99,7 +102,7 @@ export default function PartnersPage() {
   const columns: Column<Partners>[] = [
     {
       key: "file_url",
-      label: "Logo",
+      label: t("columns.logo"),
       render: (value) => {
         const url = getLogoUrl(value)
         return url
@@ -109,12 +112,12 @@ export default function PartnersPage() {
     },
     {
       key: "name",
-      label: "Name",
+      label: t("columns.name"),
       render: (value) => <span className="font-medium text-foreground">{value}</span>,
     },
     {
       key: "created_at",
-      label: "Created",
+      label: t("columns.created"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
       hidden: true,
     },
@@ -130,34 +133,34 @@ export default function PartnersPage() {
         try {
           file_url = await uploadLogo(logoFile)
         } catch {
-          setFeedback({ tone: "destructive", title: "Logo upload failed" })
+          setFeedback({ tone: "destructive", title: t("logoUploadFailed") })
           return
         }
       }
-  
+
       const res = await fetch("/api/partners", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: formData.name, file_url }),
       })
-  
+
       if (!res.ok) {
         const errorText = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not add partner",
-          description: errorText || "Request failed",
+          title: t("couldNotAddPartner"),
+          description: errorText || t("requestFailed"),
         })
         return
       }
-  
+
       const created = await res.json()
       setPartners((prev) => [created, ...prev])
       setIsAddDialogOpen(false)
       setFeedback({
         tone: "success",
-        title: "Partner added",
-        description: `${created.name} has been created.`,
+        title: t("partnerAdded"),
+        description: t("partnerCreatedDescription", { name: created.name }),
       })
     } finally {
       setIsLoading(false);
@@ -175,40 +178,40 @@ export default function PartnersPage() {
         try {
           newFileUrl = await uploadLogo(logoFile)
         } catch {
-          setFeedback({ tone: "destructive", title: "Logo upload failed" })
+          setFeedback({ tone: "destructive", title: t("logoUploadFailed") })
           return
         }
       }
-  
+
       const payload = {
         name: formData.name,
         ...(newFileUrl !== undefined && { file_url: newFileUrl }),
       }
-  
+
       const res = await fetch(`/api/partners/${editing.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
-  
+
       if (!res.ok) {
         const text = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not update partner",
-          description: text || "Request failed",
+          title: t("couldNotUpdatePartner"),
+          description: text || t("requestFailed"),
         })
         return
       }
-  
+
       const updated = await res.json()
       setPartners((prev) => prev.map((p) => (p.id === editing.id ? updated : p)))
       setIsEditDialogOpen(false)
       setEditing(null)
       setFeedback({
         tone: "success",
-        title: "Partner updated",
-        description: `${updated.name} has been updated.`,
+        title: t("partnerUpdated"),
+        description: t("partnerUpdatedDescription", { name: updated.name }),
       })
     } finally{
       setIsLoading(false);
@@ -218,30 +221,30 @@ export default function PartnersPage() {
   const confirmDelete = async () => {
     if (!partnerToDelete) return
     setIsLoading(true);
-    
+
     try{
       const res = await fetch(`/api/partners/${partnerToDelete.id}`, {
         method: "DELETE",
       })
-  
+
       if (!res.ok) {
         const errorText = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not delete partner",
-          description: errorText || "Request failed",
+          title: t("couldNotDeletePartner"),
+          description: errorText || t("requestFailed"),
         })
         return
       }
-  
+
       const name = partnerToDelete.name
       setPartners((prev) => prev.filter((p) => p.id !== partnerToDelete.id))
       setIsDeleteDialogOpen(false)
       setPartnerToDelete(null)
       setFeedback({
         tone: "success",
-        title: "Partner deleted",
-        description: `${name} has been deleted.`,
+        title: t("partnerDeleted"),
+        description: t("partnerDeletedDescription", { name }),
       })
     } finally {
       setIsLoading(false)
@@ -271,26 +274,26 @@ export default function PartnersPage() {
       <DataTable
         data={partners}
         columns={columns}
-        title="Partners"
-        searchPlaceholder="Search partners..."
+        title={t("table.title")}
+        searchPlaceholder={t("table.searchPlaceholder")}
         searchFields={["name"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
         isLoading={isLoading}
-        addButtonText="Add Partner"
+        addButtonText={t("table.addButton")}
       />
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Partner</DialogTitle>
-            <DialogDescription>Add a new partner to the system.</DialogDescription>
+            <DialogTitle>{t("addDialog.title")}</DialogTitle>
+            <DialogDescription>{t("addDialog.description")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">Name</Label>
+              <Label htmlFor="name" className="text-right">{t("form.name")}</Label>
               <div className="col-span-3">
                 <Input
                   id="name"
@@ -302,7 +305,7 @@ export default function PartnersPage() {
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Logo</Label>
+              <Label className="text-right">{t("form.logo")}</Label>
               <div className="col-span-3">
                 <Input
                   type="file"
@@ -314,14 +317,14 @@ export default function PartnersPage() {
                   }}
                 />
                 {logoPreview && (
-                  <img src={logoPreview} alt="Preview" className="mt-2 h-12 w-12 object-contain rounded border" />
+                  <img src={logoPreview} alt={t("form.preview")} className="mt-2 h-12 w-12 object-contain rounded border" />
                 )}
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button onClick={confirmAdd} disabled={isLoading}>
-              { isLoading ? "Adding..." : "Add User"}
+              { isLoading ? t("addDialog.adding") : t("addDialog.addPartner")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -331,12 +334,12 @@ export default function PartnersPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Partner</DialogTitle>
-            <DialogDescription>Update partner information.</DialogDescription>
+            <DialogTitle>{t("editDialog.title")}</DialogTitle>
+            <DialogDescription>{t("editDialog.description")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-name" className="text-right">Name</Label>
+              <Label htmlFor="edit-name" className="text-right">{t("form.name")}</Label>
               <div className="col-span-3">
                 <Input
                   id="edit-name"
@@ -348,7 +351,7 @@ export default function PartnersPage() {
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Logo</Label>
+              <Label className="text-right">{t("form.logo")}</Label>
               <div className="col-span-3">
                 <Input
                   type="file"
@@ -360,14 +363,14 @@ export default function PartnersPage() {
                   }}
                 />
                 {logoPreview && (
-                  <img src={logoPreview} alt="Preview" className="mt-2 h-12 w-12 object-contain rounded border" />
+                  <img src={logoPreview} alt={t("form.preview")} className="mt-2 h-12 w-12 object-contain rounded border" />
                 )}
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button onClick={confirmEdit} disabled={isLoading}>
-              { isLoading ? "Saving Changes..." : "Save Changes" }
+              { isLoading ? t("editDialog.saving") : t("editDialog.saveChanges") }
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -377,15 +380,15 @@ export default function PartnersPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Partner</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {partnerToDelete?.name}? This action cannot be undone.
+              {t("deleteDialog.description", { name: partnerToDelete?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
-              { isLoading ? "Deleting..." : "Delete" }
+              { isLoading ? t("deleteDialog.deleting") : t("deleteDialog.delete") }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useTranslations } from "next-intl"
 import { createClient } from "@/utils/supabase/client"
 import type { SupportConversation, SupportMessage } from "@/app/api/modules/support/support.type"
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,8 @@ import { Send, MessageSquare } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function SupportPage() {
+  const t = useTranslations("Support")
+
   const [conversations, setConversations] = useState<SupportConversation[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [messages, setMessages] = useState<SupportMessage[]>([])
@@ -139,7 +142,7 @@ export default function SupportPage() {
       {/* Conversation list */}
       <aside className="w-72 flex-shrink-0 border-r border-border flex flex-col bg-card">
         <div className="px-4 py-3 border-b border-border">
-          <p className="font-semibold text-sm">Support Conversations</p>
+          <p className="font-semibold text-sm">{t("conversations")}</p>
         </div>
         <div className="flex-1 overflow-y-auto">
           {isLoadingConvs ? (
@@ -151,7 +154,7 @@ export default function SupportPage() {
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm gap-2 p-6">
               <MessageSquare className="w-8 h-8 opacity-30" />
-              <p>No conversations yet</p>
+              <p>{t("noConversationsYet")}</p>
             </div>
           ) : (
             conversations.map((conv) => (
@@ -165,17 +168,17 @@ export default function SupportPage() {
               >
                 <div className="flex items-center justify-between mb-0.5">
                   <span className="text-sm font-medium truncate">
-                    {conv.visitor_name ?? "Anonymous"}
+                    {conv.visitor_name ?? t("anonymous")}
                   </span>
                   <Badge
                     variant={conv.status === "open" ? "default" : "secondary"}
                     className="text-[10px] h-4 px-1.5"
                   >
-                    {conv.status}
+                    {t(`status.${conv.status}`)}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">
-                  {conv.visitor_email ?? "No email"}
+                  {conv.visitor_email ?? t("noEmail")}
                 </p>
               </button>
             ))
@@ -187,22 +190,22 @@ export default function SupportPage() {
       <div className="flex-1 flex flex-col bg-background">
         {!selectedConv ? (
           <div className="flex flex-1 items-center justify-center text-muted-foreground text-sm">
-            Select a conversation to start
+            {t("selectConversation")}
           </div>
         ) : (
           <>
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-card">
               <div>
-                <p className="font-semibold text-sm">{selectedConv.visitor_name ?? "Anonymous"}</p>
-                <p className="text-xs text-muted-foreground">{selectedConv.visitor_email ?? "No email"}</p>
+                <p className="font-semibold text-sm">{selectedConv.visitor_name ?? t("anonymous")}</p>
+                <p className="text-xs text-muted-foreground">{selectedConv.visitor_email ?? t("noEmail")}</p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleToggleStatus}
               >
-                {selectedConv.status === "open" ? "Close conversation" : "Reopen"}
+                {selectedConv.status === "open" ? t("closeConversation") : t("reopen")}
               </Button>
             </div>
 
@@ -215,7 +218,7 @@ export default function SupportPage() {
                   ))}
                 </div>
               ) : messages.length === 0 ? (
-                <p className="text-center text-muted-foreground text-xs mt-10">No messages yet</p>
+                <p className="text-center text-muted-foreground text-xs mt-10">{t("noMessagesYet")}</p>
               ) : (
                 messages.map((msg) => (
                   <div
@@ -256,7 +259,7 @@ export default function SupportPage() {
                 <Input
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder={selectedConv.status === "closed" ? "Conversation is closed" : "Type a message…"}
+                  placeholder={selectedConv.status === "closed" ? t("conversationClosed") : t("typeMessage")}
                   disabled={selectedConv.status === "closed" || isSending}
                   className="flex-1"
                 />

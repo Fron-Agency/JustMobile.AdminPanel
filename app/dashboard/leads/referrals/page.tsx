@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { DataTable, type Column } from "@/components/ui/data-table"
 
 type ReferralLead = {
@@ -18,28 +19,29 @@ type ReferralLead = {
 }
 
 export default function ReferralsPage() {
+  const t = useTranslations("Referrals")
   const [referrals, setReferrals] = useState<ReferralLead[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   const columns: Column<ReferralLead>[] = [
     {
       key: "fullname",
-      label: "Lead Name",
+      label: t("leadName"),
       render: (value) => <span className="font-medium text-foreground">{value}</span>,
     },
     {
       key: "email",
-      label: "Lead Email",
+      label: t("leadEmail"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
       key: "phone",
-      label: "Lead Phone",
+      label: t("leadPhone"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "referrer",
-      label: "Referred By",
+      label: t("referredBy"),
       render: (_value, item) => (
         <div className="flex flex-col">
           <span className="text-sm font-medium text-foreground">{item.referrer?.fullname ?? "—"}</span>
@@ -63,8 +65,8 @@ export default function ReferralsPage() {
     <DataTable
       data={referrals}
       columns={columns}
-      title="Referrals"
-      searchPlaceholder="Search referrals..."
+      title={t("title")}
+      searchPlaceholder={t("searchPlaceholder")}
       searchFields={["fullname", "email"]}
       isLoading={isLoading}
     />

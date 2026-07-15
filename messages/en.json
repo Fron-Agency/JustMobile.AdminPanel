@@ -1,0 +1,831 @@
+{
+  "Sidebar": {
+    "navigation": "Navigation",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "openMenu": "Open navigation menu",
+    "dashboard": "Dashboard",
+    "leads": "Leads",
+    "referrals": "Referrals",
+    "plans": "Plans",
+    "mobilePlans": "Mobile Plans",
+    "homePlans": "Home Plans",
+    "limitedOffers": "Limited offers",
+    "products": "Products",
+    "providers": "Providers",
+    "categories": "Categories",
+    "countryZones": "Country Zones",
+    "users": "Users",
+    "partners": "Partners",
+    "support": "Support",
+    "candidates": "Candidates",
+    "calendar": "Calendar"
+  },
+  "Topbar": {
+    "subtitle": "JustMobile Admin Panel",
+    "notifications": "Notifications",
+    "adminUser": "Admin User",
+    "logOut": "Log out",
+    "language": "Language",
+    "dashboard": "Dashboard",
+    "leads": "Leads",
+    "plans": "Plans",
+    "providers": "Providers",
+    "categories": "Categories",
+    "partners": "Partners",
+    "users": "Users",
+    "settings": "Settings"
+  },
+  "ColosSidebar": {
+    "navigation": "Navigation",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "leads": "Leads",
+    "pdfs": "PDFs",
+    "users": "Users"
+  },
+  "ColosTopbar": {
+    "title": "Colos Admin",
+    "logOut": "Log out"
+  },
+  "Dashboard": {
+    "totalLeads": "Total Leads",
+    "newCount": "{count} new",
+    "activePlans": "Active Plans",
+    "acrossProviders": "across {count} providers",
+    "providers": "Providers",
+    "inactiveCount": "{count} inactive",
+    "recentLeads": "Recent Leads",
+    "recentLeadsDescription": "Latest 5 leads by date",
+    "noLeadsYet": "No leads yet.",
+    "leadPipeline": "Lead Pipeline",
+    "leadStatus": {
+      "new": "New",
+      "sent": "Sent",
+      "contacted": "Contacted",
+      "converted": "Converted",
+      "lost": "Lost"
+    }
+  },
+  "Leads": {
+    "selectedCount": "{count, plural, =0 {} one {# selected} other {# selected}}",
+    "changeStatus": "Change Status",
+    "sendEmail": "Send Email",
+    "leadsMarkedAsStatus": "{count, plural, one {# lead} other {# leads}} marked as {status}",
+    "homeLeadsMarkedAsStatus": "{count, plural, one {# home lead} other {# home leads}} marked as {status}",
+    "failedToUpdateStatus": "Failed to update status",
+    "emailsSent": "Emails sent",
+    "emailsSentDescription": "{leadCount, plural, one {# lead} other {# leads}} sent to {recipientCount, plural, one {# recipient} other {# recipients}}.",
+    "failedToSendEmail": "Failed to send email",
+    "somethingWentWrong": "Something went wrong",
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "mobile": "Mobile",
+      "status": "Status",
+      "plan": "Plan",
+      "product": "Product",
+      "address": "Address",
+      "dateOfBirth": "Date of Birth",
+      "swissNumber": "Swiss No.",
+      "roaming": "Roaming",
+      "childOrder": "Child Order",
+      "description": "Description",
+      "documents": "Documents",
+      "nationality": "Nationality",
+      "docType": "Doc Type",
+      "docNumber": "Doc No.",
+      "arriving": "Arriving",
+      "otoProvider": "OTO Provider",
+      "otoNumber": "OTO Number",
+      "otoExpiry": "OTO Expiry",
+      "landlineNumber": "Landline number",
+      "comment": "Comment",
+      "created": "Created"
+    },
+    "yes": "Yes",
+    "no": "No",
+    "filesCount": "{count, plural, one {# file} other {# files}}",
+    "leadsTable": {
+      "title": "Leads",
+      "searchPlaceholder": "Search leads..."
+    },
+    "leadsHomeTable": {
+      "title": "Home Leads",
+      "searchPlaceholder": "Search home leads..."
+    },
+    "documentsDialog": {
+      "title": "Documents",
+      "description": "{name}'s uploaded documents",
+      "documentLabel": "Document {index}",
+      "openInNewTab": "Open in new tab",
+      "previewUnavailable": "Preview unavailable",
+      "close": "Close"
+    },
+    "emailDialog": {
+      "title": "Send Lead by Email",
+      "descriptionSingle": "Send {name}'s lead info to selected users.",
+      "descriptionMultiple": "Send {count} leads info to selected users.",
+      "recipients": "Recipients",
+      "noUsersFound": "No users found.",
+      "message": "Message",
+      "optional": "(optional)",
+      "messagePlaceholder": "Add a note to include with the lead info...",
+      "cancel": "Cancel",
+      "sending": "Sending...",
+      "sendTo": "Send to {count, plural, =0 {} other {# }}{count, plural, one {recipient} other {recipients}}"
+    }
+  },
+  "Referrals": {
+    "leadName": "Lead Name",
+    "leadEmail": "Lead Email",
+    "leadPhone": "Lead Phone",
+    "referredBy": "Referred By",
+    "title": "Referrals",
+    "searchPlaceholder": "Search referrals..."
+  },
+  "PlansMobile": {
+    "nameRequired": "Name is required",
+    "providerRequired": "Provider is required",
+    "priceGreaterThanZero": "Price must be greater than 0",
+    "failedToAddPlan": "Failed to add plan",
+    "planAdded": "Plan added",
+    "planCreatedDescription": "{name} has been created.",
+    "couldNotAddPlan": "Could not add plan",
+    "failedToUpdatePlan": "Failed to update plan",
+    "planUpdated": "Plan updated",
+    "planUpdatedDescription": "{name}'s details were saved.",
+    "couldNotUpdatePlan": "Could not update plan",
+    "planDeleted": "Plan deleted",
+    "planDeletedDescription": "{name} has been removed.",
+    "couldNotDeletePlan": "Could not delete plan",
+    "planFavorited": "Plan favorited",
+    "planUnfavorited": "Plan unfavorited",
+    "favoriteAddedDescription": "{name} has been added to favorites.",
+    "favoriteRemovedDescription": "{name} has been removed from favorites.",
+    "couldNotUpdateFavorite": "Could not update favorite",
+    "linkCopied": "Link copied!",
+    "columns": {
+      "name": "Name",
+      "provider": "Provider",
+      "category": "Category",
+      "price": "Price",
+      "productPrice": "Product Price",
+      "data": "Data",
+      "dataEurope": "Data Europe",
+      "network": "Network",
+      "contract": "Contract",
+      "discount": "Discount",
+      "zones": "Zones",
+      "link": "Link"
+    },
+    "unlimited": "Unlimited",
+    "off": "off",
+    "zonesCount": "{count, plural, one {# zone} other {# zones}}",
+    "allCategories": "All Categories",
+    "allProviders": "All Providers",
+    "categoryPlaceholder": "Category",
+    "providerPlaceholder": "Provider",
+    "table": {
+      "title": "Mobile Plans",
+      "searchPlaceholder": "Search plans...",
+      "addButton": "Add Plan"
+    },
+    "form": {
+      "name": "Name",
+      "provider": "Provider",
+      "selectProvider": "Select provider",
+      "priceChf": "Price (CHF)",
+      "productPriceChf": "Product Price (CHF)",
+      "discountPercent": "Discount (%)",
+      "dataGb": "Data (GB)",
+      "unlimitedData": "Unlimited Data",
+      "dataGbEurope": "Data (GB) Europe",
+      "unlimitedDataEurope": "Unlimited Data Europe",
+      "networkTechnology": "Network Technology",
+      "networkTechnologyPlaceholder": "e.g. 4G, 5G",
+      "contractMonths": "Contract (months)",
+      "favorite": "Favorite",
+      "countryZoneDetails": "Country Zone Details",
+      "addZone": "Add Zone",
+      "noZonesAdded": "No zone details added.",
+      "zoneLabel": "Zone {index}",
+      "country": "Country",
+      "selectCountry": "Select country",
+      "descriptionPlaceholder": "{language} description...",
+      "languages": {
+        "en": "English",
+        "de": "German",
+        "fr": "French",
+        "it": "Italian"
+      }
+    },
+    "addDialog": {
+      "title": "Add Mobile Plan",
+      "description": "Add a new mobile plan to the system.",
+      "adding": "Adding...",
+      "addPlan": "Add Plan"
+    },
+    "editDialog": {
+      "title": "Edit Mobile Plan",
+      "description": "Update plan information.",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete Plan",
+      "description": "Are you sure you want to delete <strong>{name}</strong>? This action cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    }
+  },
+  "PlansHome": {
+    "failedToLoadPlans": "Failed to load plans",
+    "nameRequired": "Name is required",
+    "providerRequired": "Provider is required",
+    "priceGreaterThanZero": "Price must be greater than 0",
+    "failedToCreatePlan": "Failed to create plan",
+    "planCreated": "Plan created",
+    "planUpdated": "Plan updated",
+    "planDeleted": "Plan deleted",
+    "failedToUpdatePlan": "Failed to update plan",
+    "failedToDeletePlan": "Failed to delete plan",
+    "columns": {
+      "name": "Name",
+      "provider": "Provider",
+      "price": "Price",
+      "discounted": "Discounted",
+      "withoutMobile": "Without Mobile",
+      "contract": "Contract",
+      "internet": "Internet",
+      "tv": "TV",
+      "telephony": "Telephony",
+      "other": "Other"
+    },
+    "featuresCount": "{count, plural, one {# feature} other {# features}}",
+    "table": {
+      "title": "Home Plans",
+      "searchPlaceholder": "Search plans...",
+      "addButton": "Add Home Plan"
+    },
+    "form": {
+      "name": "Name",
+      "provider": "Provider",
+      "selectProvider": "Select provider",
+      "priceChf": "Price (CHF)",
+      "discountedPrice": "Discounted Price",
+      "withoutMobilePrice": "Without Mobile Price",
+      "optional": "(optional)",
+      "contractDuration": "Contract Duration",
+      "contractDurationPlaceholder": "e.g. 24 months",
+      "contentSections": "Content Sections",
+      "internet": "Internet",
+      "tv": "TV",
+      "telephony": "Telephony",
+      "other": "Other",
+      "sectionTitle": "Section Title",
+      "sectionTitlePlaceholder": "e.g. {label}",
+      "label": "Label",
+      "value": "Value",
+      "addFeature": "Add feature",
+      "languages": {
+        "en": "English",
+        "de": "German",
+        "fr": "French",
+        "it": "Italian"
+      }
+    },
+    "addDialog": {
+      "title": "Add Home Plan",
+      "description": "Create a new home internet / TV / telephony plan.",
+      "adding": "Adding...",
+      "addPlan": "Add Plan"
+    },
+    "editDialog": {
+      "title": "Edit Home Plan",
+      "description": "Update plan details and content sections.",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete Home Plan",
+      "description": "Are you sure you want to delete <strong>{name}</strong>? This cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    }
+  },
+  "LimitedOffers": {
+    "columns": {
+      "email": "Email",
+      "created": "Created",
+      "plan": "Plan"
+    },
+    "from": "From",
+    "to": "To",
+    "title": "Limited Offers",
+    "searchPlaceholder": "Search limited offers..."
+  },
+  "Products": {
+    "nameRequired": "Name is required",
+    "brandRequired": "Brand is required",
+    "modelRequired": "Model is required",
+    "basePriceNonNegative": "Base price must be >= 0",
+    "colorNameRequired": "Color name is required",
+    "hexCodeRequired": "Hex code is required",
+    "columns": {
+      "name": "Name",
+      "brand": "Brand",
+      "model": "Model",
+      "mobilePlan": "Mobile Plan",
+      "homePlan": "Home Plan",
+      "basePrice": "Base Price",
+      "colors": "Colors",
+      "active": "Active"
+    },
+    "colorsCount": "{count, plural, one {# color} other {# colors}}",
+    "yes": "Yes",
+    "no": "No",
+    "photoUploadFailed": "Photo upload failed",
+    "couldNotAddProduct": "Could not add product",
+    "requestFailed": "Request failed",
+    "productAdded": "Product added",
+    "productCreatedDescription": "{name} has been created.",
+    "couldNotUpdateProduct": "Could not update product",
+    "productUpdated": "Product updated",
+    "productUpdatedDescription": "{name}'s details were saved.",
+    "couldNotDeleteProduct": "Could not delete product",
+    "productDeleted": "Product deleted",
+    "productDeletedDescription": "{name} has been removed.",
+    "colorsSaved": "Colors saved",
+    "colorsSavedDescription": "Colors for {name} have been updated.",
+    "table": {
+      "title": "Products",
+      "searchPlaceholder": "Search products...",
+      "addButton": "Add Product"
+    },
+    "form": {
+      "mobilePlan": "Mobile Plan",
+      "homePlan": "Home Plan",
+      "none": "None",
+      "name": "Name",
+      "brand": "Brand",
+      "model": "Model",
+      "description": "Description",
+      "basePrice": "Base Price",
+      "active": "Active"
+    },
+    "colorEditor": {
+      "colorLabel": "Color {index}",
+      "colorName": "Color Name",
+      "hexCode": "Hex Code",
+      "active": "Active",
+      "photos": "Photos",
+      "setPrimary": "Set primary",
+      "remove": "Remove",
+      "addColor": "Add Color"
+    },
+    "addDialog": {
+      "title": "Add Product",
+      "description": "Add a new product with colors and photos.",
+      "colorsAndPhotos": "Colors & Photos",
+      "adding": "Adding...",
+      "addProduct": "Add Product"
+    },
+    "editDialog": {
+      "title": "Edit Product",
+      "description": "Update product information. To edit colors, use the View action.",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes"
+    },
+    "colorsDialog": {
+      "title": "Manage Colors — {name}",
+      "description": "Add, edit, or remove colors and photos for this product.",
+      "saving": "Saving...",
+      "saveColors": "Save Colors"
+    },
+    "deleteDialog": {
+      "title": "Delete Product",
+      "description": "Are you sure you want to delete {name}? This will also remove all its colors and photos. This action cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    }
+  },
+  "Providers": {
+    "nameRequired": "Name is required",
+    "categoryRequired": "Category is required",
+    "logoUploadFailed": "Logo upload failed",
+    "providerActivated": "Provider activated",
+    "providerDeactivated": "Provider deactivated",
+    "statusChangedDescription": "{name} is now {status}.",
+    "active": "active",
+    "inactive": "inactive",
+    "failedToUpdateStatus": "Failed to update provider status",
+    "couldNotUpdateStatus": "Could not update provider status",
+    "somethingWentWrong": "Something went wrong",
+    "requestFailed": "Request failed",
+    "couldNotAddProvider": "Could not add provider",
+    "providerAdded": "Provider added",
+    "providerCreatedDescription": "{name} has been created.",
+    "couldNotUpdateProvider": "Could not update provider",
+    "providerUpdated": "Provider updated",
+    "providerUpdatedDescription": "{name} has been updated.",
+    "couldNotDeleteProvider": "Could not delete provider",
+    "providerDeleted": "Provider deleted",
+    "providerDeletedDescription": "{name} has been deleted.",
+    "viewingProvider": "Viewing provider: {name}",
+    "columns": {
+      "logo": "Logo",
+      "name": "Name",
+      "category": "Category",
+      "created": "Created",
+      "active": "Active"
+    },
+    "on": "On",
+    "off": "Off",
+    "table": {
+      "title": "Providers",
+      "searchPlaceholder": "Search providers...",
+      "addButton": "Add Provider"
+    },
+    "form": {
+      "name": "Name",
+      "category": "Category",
+      "selectCategory": "Select category",
+      "logo": "Logo",
+      "preview": "Preview"
+    },
+    "addDialog": {
+      "title": "Add Provider",
+      "description": "Add a new provider to the system.",
+      "adding": "Adding...",
+      "addProvider": "Add Provider"
+    },
+    "editDialog": {
+      "title": "Edit Provider",
+      "description": "Update provider information.",
+      "saving": "Saving Changes...",
+      "saveChanges": "Save Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete Provider",
+      "description": "Are you sure you want to delete {name}? This action cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    }
+  },
+  "Categories": {
+    "nameRequired": "Name is required",
+    "failedToUpdateStatus": "Failed to update category status",
+    "categoryUpdated": "Category updated",
+    "statusChangedDescription": "{name} is now {status}.",
+    "active": "active",
+    "inactive": "inactive",
+    "somethingWentWrong": "Something went wrong",
+    "couldNotUpdateStatus": "Could not update category status",
+    "requestFailed": "Request failed",
+    "couldNotAddCategory": "Could not add category",
+    "categoryAdded": "Category added",
+    "categoryCreatedDescription": "{name} has been created.",
+    "categoryUpdatedDescription": "{name} has been updated.",
+    "viewingCategory": "Viewing category: {name}",
+    "columns": {
+      "name": "Name",
+      "badge": "Badge",
+      "active": "Active"
+    },
+    "noBadge": "No badge",
+    "on": "On",
+    "off": "Off",
+    "table": {
+      "title": "Categories",
+      "searchPlaceholder": "Search categories...",
+      "addButton": "Add Category"
+    },
+    "form": {
+      "name": "Name",
+      "badge": "Badge"
+    },
+    "addDialog": {
+      "title": "Add Category",
+      "description": "Add a new category to the system.",
+      "adding": "Adding...",
+      "addCategory": "Add Category"
+    },
+    "editDialog": {
+      "title": "Edit Category",
+      "description": "Update category information.",
+      "saving": "Saving Changes...",
+      "saveChanges": "Save Changes"
+    }
+  },
+  "Countries": {
+    "failedToLoad": "Failed to load",
+    "zoneNameRequired": "Zone name is required",
+    "failedToCreate": "Failed to create",
+    "zoneCreated": "Zone created",
+    "failedToCreateZone": "Failed to create zone",
+    "failedToUpdate": "Failed to update",
+    "zoneUpdated": "Zone updated",
+    "failedToUpdateZone": "Failed to update zone",
+    "zoneDeleted": "Zone deleted",
+    "failedToDeleteZone": "Failed to delete zone",
+    "columns": {
+      "zoneName": "Zone Name",
+      "countries": "Countries"
+    },
+    "form": {
+      "zoneName": "Zone Name",
+      "zoneNamePlaceholder": "e.g. Europe Zone A",
+      "countries": "Countries",
+      "countryInputPlaceholder": "Type a country and press Enter or Add"
+    },
+    "table": {
+      "title": "Country Zones",
+      "searchPlaceholder": "Search zones...",
+      "addButton": "Add Zone"
+    },
+    "addDialog": {
+      "title": "Add Country Zone",
+      "description": "Create a zone like \"Europe Zone A\" and list the countries in it.",
+      "adding": "Adding...",
+      "addZone": "Add Zone"
+    },
+    "editDialog": {
+      "title": "Edit Country Zone",
+      "description": "Update zone name and countries.",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete Zone",
+      "description": "Delete <strong>{name}</strong>? Plans using this zone will have their country zone cleared.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    }
+  },
+  "Users": {
+    "fullNameRequired": "Full name is required",
+    "emailRequired": "Email is required",
+    "invalidEmail": "Invalid email address",
+    "roleRequired": "Role is required",
+    "failedToUpdateStatus": "Failed to update user status",
+    "userActivated": "User activated",
+    "userDeactivated": "User deactivated",
+    "accountStatusDescription": "{name}'s account is now {status}.",
+    "active": "active",
+    "inactive": "inactive",
+    "somethingWentWrong": "Something went wrong",
+    "couldNotUpdateStatus": "Could not update status",
+    "requestFailed": "Request failed",
+    "couldNotAddUser": "Could not add user",
+    "userAdded": "User added",
+    "userCreatedDescription": "{name} has been created.",
+    "couldNotUpdateUser": "Could not update user",
+    "userUpdated": "User updated",
+    "userUpdatedDescription": "{name}'s details were saved.",
+    "couldNotDeleteUser": "Could not delete user",
+    "userDeleted": "User deleted",
+    "userDeletedDescription": "{name} has been removed.",
+    "roles": {
+      "admin": "Admin",
+      "agent": "Agent",
+      "viewer": "Viewer"
+    },
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "active": "Active",
+      "created": "Created"
+    },
+    "on": "On",
+    "off": "Off",
+    "firstPasswordNote": "When you create a user, their first password will be FirstnameLastname, e.g.: Altin Musahu (password: AltinMusahu)",
+    "table": {
+      "title": "Users",
+      "searchPlaceholder": "Search users...",
+      "addButton": "Add User"
+    },
+    "form": {
+      "fullName": "Full Name",
+      "email": "Email",
+      "role": "Role"
+    },
+    "addDialog": {
+      "title": "Add User",
+      "description": "Add a new user to the system.",
+      "adding": "Adding...",
+      "addUser": "Add User"
+    },
+    "editDialog": {
+      "title": "Edit User",
+      "description": "Update user information.",
+      "saving": "Saving Changes...",
+      "saveChanges": "Save Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete User",
+      "description": "Are you sure you want to delete {name}? This action cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    }
+  },
+  "Partners": {
+    "nameRequired": "Name is required",
+    "logoUploadFailed": "Logo upload failed",
+    "requestFailed": "Request failed",
+    "couldNotAddPartner": "Could not add partner",
+    "partnerAdded": "Partner added",
+    "partnerCreatedDescription": "{name} has been created.",
+    "couldNotUpdatePartner": "Could not update partner",
+    "partnerUpdated": "Partner updated",
+    "partnerUpdatedDescription": "{name} has been updated.",
+    "couldNotDeletePartner": "Could not delete partner",
+    "partnerDeleted": "Partner deleted",
+    "partnerDeletedDescription": "{name} has been deleted.",
+    "columns": {
+      "logo": "Logo",
+      "name": "Name",
+      "created": "Created"
+    },
+    "table": {
+      "title": "Partners",
+      "searchPlaceholder": "Search partners...",
+      "addButton": "Add Partner"
+    },
+    "form": {
+      "name": "Name",
+      "logo": "Logo",
+      "preview": "Preview"
+    },
+    "addDialog": {
+      "title": "Add Partner",
+      "description": "Add a new partner to the system.",
+      "adding": "Adding...",
+      "addPartner": "Add Partner"
+    },
+    "editDialog": {
+      "title": "Edit Partner",
+      "description": "Update partner information.",
+      "saving": "Saving Changes...",
+      "saveChanges": "Save Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete Partner",
+      "description": "Are you sure you want to delete {name}? This action cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    }
+  },
+  "Support": {
+    "conversations": "Support Conversations",
+    "noConversationsYet": "No conversations yet",
+    "anonymous": "Anonymous",
+    "noEmail": "No email",
+    "status": {
+      "open": "open",
+      "closed": "closed"
+    },
+    "selectConversation": "Select a conversation to start",
+    "closeConversation": "Close conversation",
+    "reopen": "Reopen",
+    "noMessagesYet": "No messages yet",
+    "conversationClosed": "Conversation is closed",
+    "typeMessage": "Type a message…"
+  },
+  "Quotes": {
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "town": "Town",
+      "currentInsurer": "Current insurer",
+      "selectedTariff": "Selected tariff",
+      "submitted": "Submitted"
+    },
+    "title": "JustCompare Quotes",
+    "searchPlaceholder": "Search quotes..."
+  },
+  "Candidates": {
+    "status": {
+      "new": "New",
+      "reviewed": "Reviewing",
+      "accepted": "Accepted",
+      "rejected": "Rejected"
+    },
+    "languages": {
+      "german": "German",
+      "french": "French",
+      "italian": "Italian",
+      "serboCroatian": "Serbian/Croatian",
+      "turkish": "Turkish",
+      "spanish": "Spanish",
+      "english": "English"
+    },
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "city": "City",
+      "dateOfBirth": "Date of birth",
+      "languages": "Languages",
+      "previousRole": "Previous role",
+      "whyUs": "Why us",
+      "notes": "Notes",
+      "status": "Status",
+      "applied": "Applied",
+      "interview": "Interview"
+    },
+    "couldNotUpdateStatus": "Could not update status",
+    "requestFailed": "Request failed",
+    "statusUpdated": "Status updated",
+    "couldNotSaveNotes": "Could not save notes",
+    "notesSaved": "Notes saved",
+    "couldNotSaveInterviewDate": "Could not save interview date",
+    "interviewDateSaved": "Interview date saved",
+    "couldNotDeleteCandidate": "Could not delete candidate",
+    "candidateDeleted": "Candidate deleted",
+    "noImportableRows": "No importable rows found — every row was missing a valid email or name.",
+    "couldNotReadFile": "Could not read this file. Make sure it's a valid CSV export.",
+    "importFailed": "Import failed.",
+    "importFailedRetry": "Import failed. Check your connection and try again.",
+    "all": "All",
+    "language": "Language",
+    "allLanguages": "All languages",
+    "importCsv": "Import CSV",
+    "table": {
+      "title": "Candidates",
+      "searchPlaceholder": "Search candidates..."
+    },
+    "viewDialog": {
+      "defaultTitle": "Candidate",
+      "description": "Candidate application details.",
+      "email": "Email",
+      "phone": "Phone",
+      "city": "City",
+      "dateOfBirth": "Date of birth",
+      "languages": "Languages",
+      "previousRole": "Previous role",
+      "whyUs": "Why us",
+      "status": "Status",
+      "interview": "Interview",
+      "pickDate": "Pick a date",
+      "saving": "Saving…",
+      "save": "Save",
+      "notes": "Notes",
+      "notesPlaceholder": "Add internal notes about this candidate…",
+      "saveNotes": "Save notes",
+      "close": "Close"
+    },
+    "deleteDialog": {
+      "title": "Delete Candidate",
+      "description": "Are you sure you want to delete {name}? This action cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    },
+    "importDialog": {
+      "title": "Import candidates from CSV",
+      "description": "Upload a CSV export (e.g. from Google Forms). Columns are matched by name, so header order or wording doesn't need to match exactly.",
+      "importedCount": "{count, plural, one {Imported # candidate} other {Imported # candidates}}",
+      "rowsCouldNotBeInserted": "{count, plural, one {# row could not be inserted.} other {# rows could not be inserted.}}",
+      "importProblem": "Import problem",
+      "clickToChoose": "Click to choose a .csv file",
+      "readingFile": "Reading file…",
+      "readyToImport": "Ready to import",
+      "candidatesCount": "{count, plural, one {# candidate} other {# candidates}}",
+      "mergedDuplicates": "Merged duplicates",
+      "duplicatesDescription": "{count, plural, one {# repeat application by email} other {# repeat applications by email}}",
+      "skippedRows": "Skipped rows",
+      "skippedRowsDescription": "{count, plural, one {# row missing a valid email or name} other {# rows missing a valid email or name}}",
+      "rowLine": "Row {line}: {reason}",
+      "chooseDifferentFile": "Choose a different file",
+      "close": "Close",
+      "cancel": "Cancel",
+      "importing": "Importing…",
+      "importButton": "{count, plural, one {Import # candidate} other {Import # candidates}}"
+    }
+  },
+  "Calendar": {
+    "title": "Interview Calendar",
+    "description": "All scheduled candidate interviews across Optimus Marketing.",
+    "loadingSchedule": "Loading schedule…",
+    "eventDialog": {
+      "description": "Scheduled interview details.",
+      "when": "When",
+      "email": "Email",
+      "phone": "Phone",
+      "status": "Status",
+      "close": "Close",
+      "goToCandidates": "Go to candidates"
+    }
+  }
+}

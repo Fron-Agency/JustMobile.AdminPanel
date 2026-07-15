@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
@@ -22,6 +23,8 @@ const emptyForm = { name: "", countries: [] as string[] }
 type FormState = typeof emptyForm
 
 export default function CountriesPage() {
+  const t = useTranslations("Countries")
+
   const [zones, setZones] = useState<Country[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [feedback, setFeedback] = useState<{ tone: FeedbackAlertTone; title: string; description?: string } | null>(null)
@@ -43,13 +46,13 @@ export default function CountriesPage() {
         return r.json()
       })
       .then(setZones)
-      .catch((e) => setFeedback({ tone: "destructive", title: "Failed to load", description: e.message }))
+      .catch((e) => setFeedback({ tone: "destructive", title: t("failedToLoad"), description: e.message }))
       .finally(() => setIsLoading(false))
   }, [])
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!formData.name.trim()) e.name = "Zone name is required"
+    if (!formData.name.trim()) e.name = t("zoneNameRequired")
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -81,12 +84,12 @@ export default function CountriesPage() {
         body: JSON.stringify({ name: formData.name, countries: formData.countries }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message ?? "Failed to create")
+      if (!res.ok) throw new Error(data.message ?? t("failedToCreate"))
       setZones((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
       setIsAddDialogOpen(false)
-      setFeedback({ tone: "success", title: "Zone created", description: data.name })
+      setFeedback({ tone: "success", title: t("zoneCreated"), description: data.name })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Failed to create zone", description: e instanceof Error ? e.message : undefined })
+      setFeedback({ tone: "destructive", title: t("failedToCreateZone"), description: e instanceof Error ? e.message : undefined })
     } finally {
       setIsLoading(false)
     }
@@ -110,12 +113,12 @@ export default function CountriesPage() {
         body: JSON.stringify({ name: formData.name, countries: formData.countries }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message ?? "Failed to update")
+      if (!res.ok) throw new Error(data.message ?? t("failedToUpdate"))
       setZones((prev) => prev.map((z) => (z.id === data.id ? data : z)))
       setIsEditDialogOpen(false)
-      setFeedback({ tone: "success", title: "Zone updated", description: data.name })
+      setFeedback({ tone: "success", title: t("zoneUpdated"), description: data.name })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Failed to update zone", description: e instanceof Error ? e.message : undefined })
+      setFeedback({ tone: "destructive", title: t("failedToUpdateZone"), description: e instanceof Error ? e.message : undefined })
     } finally {
       setIsLoading(false)
     }
@@ -133,9 +136,9 @@ export default function CountriesPage() {
       await fetch(`/api/countries/${zoneToDelete.id}`, { method: "DELETE" })
       setZones((prev) => prev.filter((z) => z.id !== zoneToDelete.id))
       setIsDeleteDialogOpen(false)
-      setFeedback({ tone: "success", title: "Zone deleted", description: zoneToDelete.name })
+      setFeedback({ tone: "success", title: t("zoneDeleted"), description: zoneToDelete.name })
     } catch {
-      setFeedback({ tone: "destructive", title: "Failed to delete zone" })
+      setFeedback({ tone: "destructive", title: t("failedToDeleteZone") })
     } finally {
       setIsLoading(false)
     }
@@ -144,12 +147,12 @@ export default function CountriesPage() {
   const columns: Column<Country>[] = [
     {
       key: "name",
-      label: "Zone Name",
+      label: t("columns.zoneName"),
       render: (v) => <span className="font-medium text-foreground">{v}</span>,
     },
     {
       key: "countries",
-      label: "Countries",
+      label: t("columns.countries"),
       render: (v: Country["countries"]) => {
         const list = v ?? []
         if (list.length === 0) return <span className="text-muted-foreground text-sm">—</span>
@@ -169,9 +172,9 @@ export default function CountriesPage() {
   const formFields = (
     <div className="flex flex-col gap-4 py-2">
       <div className="flex flex-col gap-1">
-        <Label>Zone Name</Label>
+        <Label>{t("form.zoneName")}</Label>
         <Input
-          placeholder="e.g. Europe Zone A"
+          placeholder={t("form.zoneNamePlaceholder")}
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           className={errors.name ? "border-red-500" : ""}
@@ -180,10 +183,10 @@ export default function CountriesPage() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label>Countries</Label>
+        <Label>{t("form.countries")}</Label>
         <div className="flex gap-2">
           <Input
-            placeholder="Type a country and press Enter or Add"
+            placeholder={t("form.countryInputPlaceholder")}
             value={countryInput}
             onChange={(e) => setCountryInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCountryTag() } }}
@@ -227,26 +230,26 @@ export default function CountriesPage() {
       <DataTable
         data={zones}
         columns={columns}
-        title="Country Zones"
-        searchPlaceholder="Search zones..."
+        title={t("table.title")}
+        searchPlaceholder={t("table.searchPlaceholder")}
         searchFields={["name"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
         isLoading={isLoading}
-        addButtonText="Add Zone"
+        addButtonText={t("table.addButton")}
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add Country Zone</DialogTitle>
-            <DialogDescription>Create a zone like "Europe Zone A" and list the countries in it.</DialogDescription>
+            <DialogTitle>{t("addDialog.title")}</DialogTitle>
+            <DialogDescription>{t("addDialog.description")}</DialogDescription>
           </DialogHeader>
           {formFields}
           <DialogFooter>
             <Button onClick={confirmAdd} disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Zone"}
+              {isLoading ? t("addDialog.adding") : t("addDialog.addZone")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -255,13 +258,13 @@ export default function CountriesPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Country Zone</DialogTitle>
-            <DialogDescription>Update zone name and countries.</DialogDescription>
+            <DialogTitle>{t("editDialog.title")}</DialogTitle>
+            <DialogDescription>{t("editDialog.description")}</DialogDescription>
           </DialogHeader>
           {formFields}
           <DialogFooter>
             <Button onClick={confirmEdit} disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
+              {isLoading ? t("editDialog.saving") : t("editDialog.saveChanges")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -270,15 +273,18 @@ export default function CountriesPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Zone</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete <strong>{zoneToDelete?.name}</strong>? Plans using this zone will have their country zone cleared.
+              {t.rich("deleteDialog.description", {
+                name: zoneToDelete?.name ?? "",
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
-              {isLoading ? "Deleting..." : "Delete"}
+              {isLoading ? t("deleteDialog.deleting") : t("deleteDialog.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,19 +1,22 @@
 import { PhoneCall, Package, Building2, TrendingUp, AlertCircle, CheckCircle2, Clock, Send } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { LeadService } from "@/app/api/modules/leads/leads.service"
 import { PlanService } from "@/app/api/modules/plans_mobile/plans_mobile.service"
 import { ProviderService } from "@/app/api/modules/providers/providers.service"
 
-const leadStatusConfig = {
-  new: { label: "New", color: "bg-primary/10 text-primary border-primary/20" },
-  sent: { label: "Sent", color: "bg-primary/80 text-white border-primary/90" },
-  contacted: { label: "Contacted", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-  converted: { label: "Converted", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-  lost: { label: "Lost", color: "bg-destructive/10 text-destructive border-destructive/20" },
+const leadStatusColors = {
+  new: "bg-primary/10 text-primary border-primary/20",
+  sent: "bg-primary/80 text-white border-primary/90",
+  contacted: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  converted: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  lost: "bg-destructive/10 text-destructive border-destructive/20",
 }
 
 export default async function DashboardPage() {
+  const t = await getTranslations("Dashboard")
+
   const [leads, plans, providers] = await Promise.all([
     LeadService.getAll(),
     PlanService.getPlansCounter(),
@@ -34,24 +37,24 @@ export default async function DashboardPage() {
 
   const statCards = [
     {
-      label: "Total Leads",
+      label: t("totalLeads"),
       value: leads.length,
       icon: PhoneCall,
-      sub: `${leadsByStatus.new} new`,
+      sub: t("newCount", { count: leadsByStatus.new }),
       positive: leadsByStatus.new > 0,
     },
     {
-      label: "Active Plans",
+      label: t("activePlans"),
       value: plans,
       icon: Package,
-      sub: `across ${providers.filter((p) => p.is_active).length} providers`,
+      sub: t("acrossProviders", { count: providers.filter((p) => p.is_active).length }),
       positive: true,
     },
     {
-      label: "Providers",
+      label: t("providers"),
       value: providers.filter((p) => p.is_active).length,
       icon: Building2,
-      sub: `${providers.filter((p) => !p.is_active).length} inactive`,
+      sub: t("inactiveCount", { count: providers.filter((p) => !p.is_active).length }),
       positive: providers.filter((p) => !p.is_active).length === 0,
     },
   ]
@@ -85,16 +88,16 @@ export default async function DashboardPage() {
         {/* Recent leads */}
         <Card className="lg:col-span-2 bg-card border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-foreground">Recent Leads</CardTitle>
-            <CardDescription className="text-muted-foreground">Latest 5 leads by date</CardDescription>
+            <CardTitle className="text-base font-semibold text-foreground">{t("recentLeads")}</CardTitle>
+            <CardDescription className="text-muted-foreground">{t("recentLeadsDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {recentLeads.length === 0 ? (
-              <p className="px-6 py-4 text-sm text-muted-foreground">No leads yet.</p>
+              <p className="px-6 py-4 text-sm text-muted-foreground">{t("noLeadsYet")}</p>
             ) : (
               <div className="divide-y divide-border">
                 {recentLeads.map((lead) => {
-                  const status = leadStatusConfig[lead.status]
+                  const color = leadStatusColors[lead.status]
                   return (
                     <div key={lead.id} className="flex items-center justify-between px-6 py-3">
                       <div className="flex items-center gap-3">
@@ -106,7 +109,7 @@ export default async function DashboardPage() {
                           <p className="text-xs text-muted-foreground">{lead.email}</p>
                         </div>
                       </div>
-                      <Badge className={status.color}>{status.label}</Badge>
+                      <Badge className={color}>{t(`leadStatus.${lead.status}`)}</Badge>
                     </div>
                   )
                 })}
@@ -120,23 +123,23 @@ export default async function DashboardPage() {
           {/* Lead pipeline */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-foreground">Lead Pipeline</CardTitle>
+              <CardTitle className="text-base font-semibold text-foreground">{t("leadPipeline")}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               {leads.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No leads yet.</p>
+                <p className="text-sm text-muted-foreground">{t("noLeadsYet")}</p>
               ) : (
                 [
-                  { label: "New", count: leadsByStatus.new, icon: Clock, color: "text-primary" },
-                  { label: "Sent", count: leadsByStatus.sent, icon: Send, color: "text-primary" },
-                  { label: "Contacted", count: leadsByStatus.contacted, icon: AlertCircle, color: "text-amber-500" },
-                  { label: "Converted", count: leadsByStatus.converted, icon: CheckCircle2, color: "text-emerald-500" },
-                  { label: "Lost", count: leadsByStatus.lost, icon: AlertCircle, color: "text-destructive" },
-                ].map(({ label, count, icon: Icon, color }) => (
-                  <div key={label} className="flex items-center justify-between">
+                  { key: "new" as const, count: leadsByStatus.new, icon: Clock, color: "text-primary" },
+                  { key: "sent" as const, count: leadsByStatus.sent, icon: Send, color: "text-primary" },
+                  { key: "contacted" as const, count: leadsByStatus.contacted, icon: AlertCircle, color: "text-amber-500" },
+                  { key: "converted" as const, count: leadsByStatus.converted, icon: CheckCircle2, color: "text-emerald-500" },
+                  { key: "lost" as const, count: leadsByStatus.lost, icon: AlertCircle, color: "text-destructive" },
+                ].map(({ key, count, icon: Icon, color }) => (
+                  <div key={key} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Icon className={`w-4 h-4 ${color}`} />
-                      <span className="text-sm text-muted-foreground">{label}</span>
+                      <span className="text-sm text-muted-foreground">{t(`leadStatus.${key}`)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">

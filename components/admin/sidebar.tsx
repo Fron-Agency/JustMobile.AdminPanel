@@ -14,7 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Settings,
   GitBranch,
   Headphones,
   Home,
@@ -26,7 +25,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useTranslations } from "next-intl"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,47 +35,48 @@ import {
 import { usePlatform } from "@/components/providers/platform-provider"
 import { PLATFORMS, PLATFORM_LABELS, type Platform } from "@/lib/platform"
 
-type NavChild = { href: string; label: string; icon: React.ElementType }
+// labelKey references the "Sidebar" message namespace (messages/en.json, messages/de.json).
+type NavChild = { href: string; labelKey: string; icon: React.ElementType }
 type NavItem = {
   href: string
-  label: string
+  labelKey: string
   icon: React.ElementType
   children?: NavChild[]
   platforms?: Platform[]
 }
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, platforms: ["justmobile"] },
+  { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard, platforms: ["justmobile"] },
   {
     href: "/dashboard/leads",
-    label: "Leads",
+    labelKey: "leads",
     icon: PhoneCall,
     platforms: ["justmobile"],
     children: [
-      { href: "/dashboard/leads/referrals", label: "Referrals", icon: GitBranch },
+      { href: "/dashboard/leads/referrals", labelKey: "referrals", icon: GitBranch },
     ],
   },
   {
     href: "/dashboard/plans_mobile",
-    label: "Plans",
+    labelKey: "plans",
     icon: Package,
     platforms: ["justmobile"],
     children: [
-      { href: "/dashboard/plans_mobile", label: "Mobile Plans", icon: Smartphone },
-      { href: "/dashboard/plans_home", label: "Home Plans", icon: Home },
+      { href: "/dashboard/plans_mobile", labelKey: "mobilePlans", icon: Smartphone },
+      { href: "/dashboard/plans_home", labelKey: "homePlans", icon: Home },
     ],
   },
-  { href: "/dashboard/limited_offers", label: "Limited offers", icon: Users, platforms: ["justmobile"] },
-  { href: "/dashboard/products", label: "Products", icon: Smartphone, platforms: ["justmobile"] },
-  { href: "/dashboard/providers", label: "Providers", icon: Building2, platforms: ["justmobile"] },
-  { href: "/dashboard/categories", label: "Categories", icon: Tag, platforms: ["justmobile"] },
-  { href: "/dashboard/countries", label: "Country Zones", icon: Globe, platforms: ["justmobile"] },
-  { href: "/dashboard/users", label: "Users", icon: Users, platforms: ["justmobile"] },
-  { href: "/dashboard/partners", label: "Partners", icon: Users, platforms: ["justmobile"] },
-  { href: "/dashboard/support", label: "Support", icon: Headphones, platforms: ["justmobile"] },
-  { href: "/dashboard/quotes", label: "Leads", icon: FileText, platforms: ["justcompare"] },
-  { href: "/dashboard/candidates", label: "Candidates", icon: Contact, platforms: ["optimusmarketing"] },
-  { href: "/dashboard/calendar", label: "Calendar", icon: CalendarDays, platforms: ["optimusmarketing"] },
+  { href: "/dashboard/limited_offers", labelKey: "limitedOffers", icon: Users, platforms: ["justmobile"] },
+  { href: "/dashboard/products", labelKey: "products", icon: Smartphone, platforms: ["justmobile"] },
+  { href: "/dashboard/providers", labelKey: "providers", icon: Building2, platforms: ["justmobile"] },
+  { href: "/dashboard/categories", labelKey: "categories", icon: Tag, platforms: ["justmobile"] },
+  { href: "/dashboard/countries", labelKey: "countryZones", icon: Globe, platforms: ["justmobile"] },
+  { href: "/dashboard/users", labelKey: "users", icon: Users, platforms: ["justmobile"] },
+  { href: "/dashboard/partners", labelKey: "partners", icon: Users, platforms: ["justmobile"] },
+  { href: "/dashboard/support", labelKey: "support", icon: Headphones, platforms: ["justmobile"] },
+  { href: "/dashboard/quotes", labelKey: "leads", icon: FileText, platforms: ["justcompare"] },
+  { href: "/dashboard/candidates", labelKey: "candidates", icon: Contact, platforms: ["optimusmarketing"] },
+  { href: "/dashboard/calendar", labelKey: "calendar", icon: CalendarDays, platforms: ["optimusmarketing"] },
 ]
 
 type SidebarNavProps = {
@@ -89,6 +89,7 @@ type SidebarNavProps = {
 function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
   const pathname = usePathname()
   const { platform } = usePlatform()
+  const t = useTranslations("Sidebar")
   const [openGroups, setOpenGroups] = useState<string[]>(["/dashboard/leads"])
 
   const visibleNavItems = navItems.filter(
@@ -105,12 +106,13 @@ function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
     <nav className="flex-1 flex flex-col gap-1 px-2 py-4 overflow-y-auto">
       {!collapsed && (
         <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
-          Navigation
+          {t("navigation")}
         </p>
       )}
-      {visibleNavItems.map(({ href, label, icon: Icon, children }) => {
+      {visibleNavItems.map(({ href, labelKey, icon: Icon, children }) => {
         const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
         const isOpen = openGroups.includes(href)
+        const label = t(labelKey)
 
         return (
           <div key={href}>
@@ -147,7 +149,7 @@ function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
 
             {children && !collapsed && isOpen && (
               <div className="ml-3 mt-0.5 flex flex-col gap-0.5 border-l border-sidebar-border pl-3">
-                {children.map(({ href: childHref, label: childLabel, icon: ChildIcon }) => {
+                {children.map(({ href: childHref, labelKey: childLabelKey, icon: ChildIcon }) => {
                   const childActive = pathname === childHref || pathname.startsWith(childHref)
                   return (
                     <Link
@@ -162,7 +164,7 @@ function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
                       )}
                     >
                       <ChildIcon className="w-3.5 h-3.5 flex-shrink-0" />
-                      {childLabel}
+                      {t(childLabelKey)}
                     </Link>
                   )
                 })}
@@ -235,6 +237,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const t = useTranslations("Sidebar")
 
   return (
     <aside
@@ -249,7 +252,7 @@ export default function Sidebar() {
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="absolute -right-3 top-[72px] w-6 h-6 rounded-full bg-sidebar-accent border border-sidebar-border flex items-center justify-center text-sidebar-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground transition-colors z-10"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
       >
         {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>

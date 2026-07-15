@@ -5,17 +5,19 @@ import { usePathname } from "next/navigation"
 import { Building2, FileText, Users, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
-type NavItem = { href: string; label: string; icon: React.ElementType }
+type NavItem = { href: string; labelKey: string; icon: React.ElementType }
 
 const navItems: NavItem[] = [
-  { href: "/colos", label: "Leads", icon: FileText },
-  { href: "/colos/pdfs", label: "PDFs", icon: FileText },
-  { href: "/colos/users", label: "Users", icon: Users },
+  { href: "/colos", labelKey: "leads", icon: FileText },
+  { href: "/colos/pdfs", labelKey: "pdfs", icon: FileText },
+  { href: "/colos/users", labelKey: "users", icon: Users },
 ]
 
 export default function ColosSidebar() {
   const pathname = usePathname()
+  const t = useTranslations("ColosSidebar")
   const [collapsed, setCollapsed] = useState(false)
 
   return (
@@ -39,7 +41,7 @@ export default function ColosSidebar() {
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="absolute -right-3 top-[72px] w-6 h-6 rounded-full bg-sidebar-accent border border-sidebar-border flex items-center justify-center text-sidebar-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground transition-colors z-10"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
       >
         {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>
@@ -47,11 +49,12 @@ export default function ColosSidebar() {
       <nav className="flex-1 flex flex-col gap-1 px-2 py-4 overflow-y-auto">
         {!collapsed && (
           <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
-            Navigation
+            {t("navigation")}
           </p>
         )}
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, labelKey, icon: Icon }) => {
           const isActive = pathname === href || (href !== "/colos" && pathname.startsWith(href))
+          const label = t(labelKey)
 
           return (
             <Link

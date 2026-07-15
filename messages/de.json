@@ -1,0 +1,831 @@
+{
+  "Sidebar": {
+    "navigation": "Navigation",
+    "expandSidebar": "Seitenleiste ausklappen",
+    "collapseSidebar": "Seitenleiste einklappen",
+    "openMenu": "Navigationsmenü öffnen",
+    "dashboard": "Übersicht",
+    "leads": "Leads",
+    "referrals": "Empfehlungen",
+    "plans": "Tarife",
+    "mobilePlans": "Mobilfunktarife",
+    "homePlans": "Festnetztarife",
+    "limitedOffers": "Zeitlich begrenzte Angebote",
+    "products": "Produkte",
+    "providers": "Anbieter",
+    "categories": "Kategorien",
+    "countryZones": "Länderzonen",
+    "users": "Benutzer",
+    "partners": "Partner",
+    "support": "Support",
+    "candidates": "Kandidaten",
+    "calendar": "Kalender"
+  },
+  "Topbar": {
+    "subtitle": "JustMobile Admin-Panel",
+    "notifications": "Benachrichtigungen",
+    "adminUser": "Administrator",
+    "logOut": "Abmelden",
+    "language": "Sprache",
+    "dashboard": "Übersicht",
+    "leads": "Leads",
+    "plans": "Tarife",
+    "providers": "Anbieter",
+    "categories": "Kategorien",
+    "partners": "Partner",
+    "users": "Benutzer",
+    "settings": "Einstellungen"
+  },
+  "ColosSidebar": {
+    "navigation": "Navigation",
+    "expandSidebar": "Seitenleiste ausklappen",
+    "collapseSidebar": "Seitenleiste einklappen",
+    "leads": "Leads",
+    "pdfs": "PDFs",
+    "users": "Benutzer"
+  },
+  "ColosTopbar": {
+    "title": "Colos Admin",
+    "logOut": "Abmelden"
+  },
+  "Dashboard": {
+    "totalLeads": "Leads gesamt",
+    "newCount": "{count} neu",
+    "activePlans": "Aktive Tarife",
+    "acrossProviders": "bei {count} Anbietern",
+    "providers": "Anbieter",
+    "inactiveCount": "{count} inaktiv",
+    "recentLeads": "Neueste Leads",
+    "recentLeadsDescription": "Die letzten 5 Leads nach Datum",
+    "noLeadsYet": "Noch keine Leads.",
+    "leadPipeline": "Lead-Pipeline",
+    "leadStatus": {
+      "new": "Neu",
+      "sent": "Gesendet",
+      "contacted": "Kontaktiert",
+      "converted": "Konvertiert",
+      "lost": "Verloren"
+    }
+  },
+  "Leads": {
+    "selectedCount": "{count, plural, =0 {} one {# ausgewählt} other {# ausgewählt}}",
+    "changeStatus": "Status ändern",
+    "sendEmail": "E-Mail senden",
+    "leadsMarkedAsStatus": "{count, plural, one {# Lead} other {# Leads}} als {status} markiert",
+    "homeLeadsMarkedAsStatus": "{count, plural, one {# Home-Lead} other {# Home-Leads}} als {status} markiert",
+    "failedToUpdateStatus": "Status konnte nicht aktualisiert werden",
+    "emailsSent": "E-Mails gesendet",
+    "emailsSentDescription": "{leadCount, plural, one {# Lead} other {# Leads}} an {recipientCount, plural, one {# Empfänger} other {# Empfänger}} gesendet.",
+    "failedToSendEmail": "E-Mail konnte nicht gesendet werden",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "columns": {
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "mobile": "Mobil",
+      "status": "Status",
+      "plan": "Tarif",
+      "product": "Produkt",
+      "address": "Adresse",
+      "dateOfBirth": "Geburtsdatum",
+      "swissNumber": "CH-Nummer",
+      "roaming": "Roaming",
+      "childOrder": "Kinderbestellung",
+      "description": "Beschreibung",
+      "documents": "Dokumente",
+      "nationality": "Nationalität",
+      "docType": "Dokumenttyp",
+      "docNumber": "Dokumentnummer",
+      "arriving": "Ankunft",
+      "otoProvider": "OTO-Anbieter",
+      "otoNumber": "OTO-Nummer",
+      "otoExpiry": "OTO-Ablauf",
+      "landlineNumber": "Festnetznummer",
+      "comment": "Kommentar",
+      "created": "Erstellt"
+    },
+    "yes": "Ja",
+    "no": "Nein",
+    "filesCount": "{count, plural, one {# Datei} other {# Dateien}}",
+    "leadsTable": {
+      "title": "Leads",
+      "searchPlaceholder": "Leads durchsuchen..."
+    },
+    "leadsHomeTable": {
+      "title": "Home-Leads",
+      "searchPlaceholder": "Home-Leads durchsuchen..."
+    },
+    "documentsDialog": {
+      "title": "Dokumente",
+      "description": "Von {name} hochgeladene Dokumente",
+      "documentLabel": "Dokument {index}",
+      "openInNewTab": "In neuem Tab öffnen",
+      "previewUnavailable": "Vorschau nicht verfügbar",
+      "close": "Schließen"
+    },
+    "emailDialog": {
+      "title": "Lead per E-Mail senden",
+      "descriptionSingle": "Lead-Informationen von {name} an ausgewählte Benutzer senden.",
+      "descriptionMultiple": "Informationen zu {count} Leads an ausgewählte Benutzer senden.",
+      "recipients": "Empfänger",
+      "noUsersFound": "Keine Benutzer gefunden.",
+      "message": "Nachricht",
+      "optional": "(optional)",
+      "messagePlaceholder": "Fügen Sie eine Notiz zu den Lead-Informationen hinzu...",
+      "cancel": "Abbrechen",
+      "sending": "Wird gesendet...",
+      "sendTo": "An {count, plural, =0 {} other {# }}{count, plural, one {Empfänger} other {Empfänger}} senden"
+    }
+  },
+  "Referrals": {
+    "leadName": "Lead-Name",
+    "leadEmail": "Lead-E-Mail",
+    "leadPhone": "Lead-Telefon",
+    "referredBy": "Empfohlen von",
+    "title": "Empfehlungen",
+    "searchPlaceholder": "Empfehlungen durchsuchen..."
+  },
+  "PlansMobile": {
+    "nameRequired": "Name ist erforderlich",
+    "providerRequired": "Anbieter ist erforderlich",
+    "priceGreaterThanZero": "Preis muss größer als 0 sein",
+    "failedToAddPlan": "Tarif konnte nicht hinzugefügt werden",
+    "planAdded": "Tarif hinzugefügt",
+    "planCreatedDescription": "{name} wurde erstellt.",
+    "couldNotAddPlan": "Tarif konnte nicht hinzugefügt werden",
+    "failedToUpdatePlan": "Tarif konnte nicht aktualisiert werden",
+    "planUpdated": "Tarif aktualisiert",
+    "planUpdatedDescription": "Die Details von {name} wurden gespeichert.",
+    "couldNotUpdatePlan": "Tarif konnte nicht aktualisiert werden",
+    "planDeleted": "Tarif gelöscht",
+    "planDeletedDescription": "{name} wurde entfernt.",
+    "couldNotDeletePlan": "Tarif konnte nicht gelöscht werden",
+    "planFavorited": "Zu Favoriten hinzugefügt",
+    "planUnfavorited": "Aus Favoriten entfernt",
+    "favoriteAddedDescription": "{name} wurde zu den Favoriten hinzugefügt.",
+    "favoriteRemovedDescription": "{name} wurde aus den Favoriten entfernt.",
+    "couldNotUpdateFavorite": "Favorit konnte nicht aktualisiert werden",
+    "linkCopied": "Link kopiert!",
+    "columns": {
+      "name": "Name",
+      "provider": "Anbieter",
+      "category": "Kategorie",
+      "price": "Preis",
+      "productPrice": "Produktpreis",
+      "data": "Daten",
+      "dataEurope": "Daten Europa",
+      "network": "Netzwerk",
+      "contract": "Vertrag",
+      "discount": "Rabatt",
+      "zones": "Zonen",
+      "link": "Link"
+    },
+    "unlimited": "Unbegrenzt",
+    "off": "Rabatt",
+    "zonesCount": "{count, plural, one {# Zone} other {# Zonen}}",
+    "allCategories": "Alle Kategorien",
+    "allProviders": "Alle Anbieter",
+    "categoryPlaceholder": "Kategorie",
+    "providerPlaceholder": "Anbieter",
+    "table": {
+      "title": "Mobilfunktarife",
+      "searchPlaceholder": "Tarife durchsuchen...",
+      "addButton": "Tarif hinzufügen"
+    },
+    "form": {
+      "name": "Name",
+      "provider": "Anbieter",
+      "selectProvider": "Anbieter auswählen",
+      "priceChf": "Preis (CHF)",
+      "productPriceChf": "Produktpreis (CHF)",
+      "discountPercent": "Rabatt (%)",
+      "dataGb": "Daten (GB)",
+      "unlimitedData": "Unbegrenzte Daten",
+      "dataGbEurope": "Daten (GB) Europa",
+      "unlimitedDataEurope": "Unbegrenzte Daten Europa",
+      "networkTechnology": "Netzwerktechnologie",
+      "networkTechnologyPlaceholder": "z. B. 4G, 5G",
+      "contractMonths": "Vertrag (Monate)",
+      "favorite": "Favorit",
+      "countryZoneDetails": "Länderzonen-Details",
+      "addZone": "Zone hinzufügen",
+      "noZonesAdded": "Keine Zonendetails hinzugefügt.",
+      "zoneLabel": "Zone {index}",
+      "country": "Land",
+      "selectCountry": "Land auswählen",
+      "descriptionPlaceholder": "{language} Beschreibung...",
+      "languages": {
+        "en": "Englisch",
+        "de": "Deutsch",
+        "fr": "Französisch",
+        "it": "Italienisch"
+      }
+    },
+    "addDialog": {
+      "title": "Mobilfunktarif hinzufügen",
+      "description": "Einen neuen Mobilfunktarif zum System hinzufügen.",
+      "adding": "Wird hinzugefügt...",
+      "addPlan": "Tarif hinzufügen"
+    },
+    "editDialog": {
+      "title": "Mobilfunktarif bearbeiten",
+      "description": "Tarifinformationen aktualisieren.",
+      "saving": "Wird gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    },
+    "deleteDialog": {
+      "title": "Tarif löschen",
+      "description": "Sind Sie sicher, dass Sie <strong>{name}</strong> löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    }
+  },
+  "PlansHome": {
+    "failedToLoadPlans": "Tarife konnten nicht geladen werden",
+    "nameRequired": "Name ist erforderlich",
+    "providerRequired": "Anbieter ist erforderlich",
+    "priceGreaterThanZero": "Preis muss größer als 0 sein",
+    "failedToCreatePlan": "Tarif konnte nicht erstellt werden",
+    "planCreated": "Tarif erstellt",
+    "planUpdated": "Tarif aktualisiert",
+    "planDeleted": "Tarif gelöscht",
+    "failedToUpdatePlan": "Tarif konnte nicht aktualisiert werden",
+    "failedToDeletePlan": "Tarif konnte nicht gelöscht werden",
+    "columns": {
+      "name": "Name",
+      "provider": "Anbieter",
+      "price": "Preis",
+      "discounted": "Rabattiert",
+      "withoutMobile": "Ohne Mobil",
+      "contract": "Vertrag",
+      "internet": "Internet",
+      "tv": "TV",
+      "telephony": "Telefonie",
+      "other": "Sonstiges"
+    },
+    "featuresCount": "{count, plural, one {# Funktion} other {# Funktionen}}",
+    "table": {
+      "title": "Festnetztarife",
+      "searchPlaceholder": "Tarife durchsuchen...",
+      "addButton": "Festnetztarif hinzufügen"
+    },
+    "form": {
+      "name": "Name",
+      "provider": "Anbieter",
+      "selectProvider": "Anbieter auswählen",
+      "priceChf": "Preis (CHF)",
+      "discountedPrice": "Rabattierter Preis",
+      "withoutMobilePrice": "Preis ohne Mobil",
+      "optional": "(optional)",
+      "contractDuration": "Vertragsdauer",
+      "contractDurationPlaceholder": "z. B. 24 Monate",
+      "contentSections": "Inhaltsabschnitte",
+      "internet": "Internet",
+      "tv": "TV",
+      "telephony": "Telefonie",
+      "other": "Sonstiges",
+      "sectionTitle": "Abschnittstitel",
+      "sectionTitlePlaceholder": "z. B. {label}",
+      "label": "Bezeichnung",
+      "value": "Wert",
+      "addFeature": "Funktion hinzufügen",
+      "languages": {
+        "en": "Englisch",
+        "de": "Deutsch",
+        "fr": "Französisch",
+        "it": "Italienisch"
+      }
+    },
+    "addDialog": {
+      "title": "Festnetztarif hinzufügen",
+      "description": "Einen neuen Internet-/TV-/Telefonie-Tarif erstellen.",
+      "adding": "Wird hinzugefügt...",
+      "addPlan": "Tarif hinzufügen"
+    },
+    "editDialog": {
+      "title": "Festnetztarif bearbeiten",
+      "description": "Tarifdetails und Inhaltsabschnitte aktualisieren.",
+      "saving": "Wird gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    },
+    "deleteDialog": {
+      "title": "Festnetztarif löschen",
+      "description": "Sind Sie sicher, dass Sie <strong>{name}</strong> löschen möchten? Dies kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    }
+  },
+  "LimitedOffers": {
+    "columns": {
+      "email": "E-Mail",
+      "created": "Erstellt",
+      "plan": "Tarif"
+    },
+    "from": "Von",
+    "to": "Bis",
+    "title": "Zeitlich begrenzte Angebote",
+    "searchPlaceholder": "Angebote durchsuchen..."
+  },
+  "Products": {
+    "nameRequired": "Name ist erforderlich",
+    "brandRequired": "Marke ist erforderlich",
+    "modelRequired": "Modell ist erforderlich",
+    "basePriceNonNegative": "Grundpreis muss >= 0 sein",
+    "colorNameRequired": "Farbname ist erforderlich",
+    "hexCodeRequired": "Hex-Code ist erforderlich",
+    "columns": {
+      "name": "Name",
+      "brand": "Marke",
+      "model": "Modell",
+      "mobilePlan": "Mobilfunktarif",
+      "homePlan": "Festnetztarif",
+      "basePrice": "Grundpreis",
+      "colors": "Farben",
+      "active": "Aktiv"
+    },
+    "colorsCount": "{count, plural, one {# Farbe} other {# Farben}}",
+    "yes": "Ja",
+    "no": "Nein",
+    "photoUploadFailed": "Foto-Upload fehlgeschlagen",
+    "couldNotAddProduct": "Produkt konnte nicht hinzugefügt werden",
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "productAdded": "Produkt hinzugefügt",
+    "productCreatedDescription": "{name} wurde erstellt.",
+    "couldNotUpdateProduct": "Produkt konnte nicht aktualisiert werden",
+    "productUpdated": "Produkt aktualisiert",
+    "productUpdatedDescription": "Die Details von {name} wurden gespeichert.",
+    "couldNotDeleteProduct": "Produkt konnte nicht gelöscht werden",
+    "productDeleted": "Produkt gelöscht",
+    "productDeletedDescription": "{name} wurde entfernt.",
+    "colorsSaved": "Farben gespeichert",
+    "colorsSavedDescription": "Die Farben für {name} wurden aktualisiert.",
+    "table": {
+      "title": "Produkte",
+      "searchPlaceholder": "Produkte durchsuchen...",
+      "addButton": "Produkt hinzufügen"
+    },
+    "form": {
+      "mobilePlan": "Mobilfunktarif",
+      "homePlan": "Festnetztarif",
+      "none": "Keine",
+      "name": "Name",
+      "brand": "Marke",
+      "model": "Modell",
+      "description": "Beschreibung",
+      "basePrice": "Grundpreis",
+      "active": "Aktiv"
+    },
+    "colorEditor": {
+      "colorLabel": "Farbe {index}",
+      "colorName": "Farbname",
+      "hexCode": "Hex-Code",
+      "active": "Aktiv",
+      "photos": "Fotos",
+      "setPrimary": "Als primär festlegen",
+      "remove": "Entfernen",
+      "addColor": "Farbe hinzufügen"
+    },
+    "addDialog": {
+      "title": "Produkt hinzufügen",
+      "description": "Ein neues Produkt mit Farben und Fotos hinzufügen.",
+      "colorsAndPhotos": "Farben & Fotos",
+      "adding": "Wird hinzugefügt...",
+      "addProduct": "Produkt hinzufügen"
+    },
+    "editDialog": {
+      "title": "Produkt bearbeiten",
+      "description": "Produktinformationen aktualisieren. Um Farben zu bearbeiten, nutzen Sie die Ansicht-Aktion.",
+      "saving": "Wird gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    },
+    "colorsDialog": {
+      "title": "Farben verwalten — {name}",
+      "description": "Farben und Fotos für dieses Produkt hinzufügen, bearbeiten oder entfernen.",
+      "saving": "Wird gespeichert...",
+      "saveColors": "Farben speichern"
+    },
+    "deleteDialog": {
+      "title": "Produkt löschen",
+      "description": "Sind Sie sicher, dass Sie {name} löschen möchten? Dadurch werden auch alle Farben und Fotos entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    }
+  },
+  "Providers": {
+    "nameRequired": "Name ist erforderlich",
+    "categoryRequired": "Kategorie ist erforderlich",
+    "logoUploadFailed": "Logo-Upload fehlgeschlagen",
+    "providerActivated": "Anbieter aktiviert",
+    "providerDeactivated": "Anbieter deaktiviert",
+    "statusChangedDescription": "{name} ist jetzt {status}.",
+    "active": "aktiv",
+    "inactive": "inaktiv",
+    "failedToUpdateStatus": "Anbieterstatus konnte nicht aktualisiert werden",
+    "couldNotUpdateStatus": "Anbieterstatus konnte nicht aktualisiert werden",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "couldNotAddProvider": "Anbieter konnte nicht hinzugefügt werden",
+    "providerAdded": "Anbieter hinzugefügt",
+    "providerCreatedDescription": "{name} wurde erstellt.",
+    "couldNotUpdateProvider": "Anbieter konnte nicht aktualisiert werden",
+    "providerUpdated": "Anbieter aktualisiert",
+    "providerUpdatedDescription": "{name} wurde aktualisiert.",
+    "couldNotDeleteProvider": "Anbieter konnte nicht gelöscht werden",
+    "providerDeleted": "Anbieter gelöscht",
+    "providerDeletedDescription": "{name} wurde gelöscht.",
+    "viewingProvider": "Anbieter wird angezeigt: {name}",
+    "columns": {
+      "logo": "Logo",
+      "name": "Name",
+      "category": "Kategorie",
+      "created": "Erstellt",
+      "active": "Aktiv"
+    },
+    "on": "Ein",
+    "off": "Aus",
+    "table": {
+      "title": "Anbieter",
+      "searchPlaceholder": "Anbieter durchsuchen...",
+      "addButton": "Anbieter hinzufügen"
+    },
+    "form": {
+      "name": "Name",
+      "category": "Kategorie",
+      "selectCategory": "Kategorie auswählen",
+      "logo": "Logo",
+      "preview": "Vorschau"
+    },
+    "addDialog": {
+      "title": "Anbieter hinzufügen",
+      "description": "Einen neuen Anbieter zum System hinzufügen.",
+      "adding": "Wird hinzugefügt...",
+      "addProvider": "Anbieter hinzufügen"
+    },
+    "editDialog": {
+      "title": "Anbieter bearbeiten",
+      "description": "Anbieterinformationen aktualisieren.",
+      "saving": "Änderungen werden gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    },
+    "deleteDialog": {
+      "title": "Anbieter löschen",
+      "description": "Sind Sie sicher, dass Sie {name} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    }
+  },
+  "Categories": {
+    "nameRequired": "Name ist erforderlich",
+    "failedToUpdateStatus": "Kategoriestatus konnte nicht aktualisiert werden",
+    "categoryUpdated": "Kategorie aktualisiert",
+    "statusChangedDescription": "{name} ist jetzt {status}.",
+    "active": "aktiv",
+    "inactive": "inaktiv",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "couldNotUpdateStatus": "Kategoriestatus konnte nicht aktualisiert werden",
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "couldNotAddCategory": "Kategorie konnte nicht hinzugefügt werden",
+    "categoryAdded": "Kategorie hinzugefügt",
+    "categoryCreatedDescription": "{name} wurde erstellt.",
+    "categoryUpdatedDescription": "{name} wurde aktualisiert.",
+    "viewingCategory": "Kategorie wird angezeigt: {name}",
+    "columns": {
+      "name": "Name",
+      "badge": "Abzeichen",
+      "active": "Aktiv"
+    },
+    "noBadge": "Kein Abzeichen",
+    "on": "Ein",
+    "off": "Aus",
+    "table": {
+      "title": "Kategorien",
+      "searchPlaceholder": "Kategorien durchsuchen...",
+      "addButton": "Kategorie hinzufügen"
+    },
+    "form": {
+      "name": "Name",
+      "badge": "Abzeichen"
+    },
+    "addDialog": {
+      "title": "Kategorie hinzufügen",
+      "description": "Eine neue Kategorie zum System hinzufügen.",
+      "adding": "Wird hinzugefügt...",
+      "addCategory": "Kategorie hinzufügen"
+    },
+    "editDialog": {
+      "title": "Kategorie bearbeiten",
+      "description": "Kategorieinformationen aktualisieren.",
+      "saving": "Änderungen werden gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    }
+  },
+  "Countries": {
+    "failedToLoad": "Laden fehlgeschlagen",
+    "zoneNameRequired": "Zonenname ist erforderlich",
+    "failedToCreate": "Erstellen fehlgeschlagen",
+    "zoneCreated": "Zone erstellt",
+    "failedToCreateZone": "Zone konnte nicht erstellt werden",
+    "failedToUpdate": "Aktualisieren fehlgeschlagen",
+    "zoneUpdated": "Zone aktualisiert",
+    "failedToUpdateZone": "Zone konnte nicht aktualisiert werden",
+    "zoneDeleted": "Zone gelöscht",
+    "failedToDeleteZone": "Zone konnte nicht gelöscht werden",
+    "columns": {
+      "zoneName": "Zonenname",
+      "countries": "Länder"
+    },
+    "form": {
+      "zoneName": "Zonenname",
+      "zoneNamePlaceholder": "z. B. Europa Zone A",
+      "countries": "Länder",
+      "countryInputPlaceholder": "Land eingeben und Enter oder Hinzufügen drücken"
+    },
+    "table": {
+      "title": "Länderzonen",
+      "searchPlaceholder": "Zonen durchsuchen...",
+      "addButton": "Zone hinzufügen"
+    },
+    "addDialog": {
+      "title": "Länderzone hinzufügen",
+      "description": "Erstellen Sie eine Zone wie \"Europa Zone A\" und listen Sie die zugehörigen Länder auf.",
+      "adding": "Wird hinzugefügt...",
+      "addZone": "Zone hinzufügen"
+    },
+    "editDialog": {
+      "title": "Länderzone bearbeiten",
+      "description": "Zonenname und Länder aktualisieren.",
+      "saving": "Wird gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    },
+    "deleteDialog": {
+      "title": "Zone löschen",
+      "description": "<strong>{name}</strong> löschen? Bei Tarifen, die diese Zone verwenden, wird die Länderzone entfernt.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    }
+  },
+  "Users": {
+    "fullNameRequired": "Vollständiger Name ist erforderlich",
+    "emailRequired": "E-Mail ist erforderlich",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "roleRequired": "Rolle ist erforderlich",
+    "failedToUpdateStatus": "Benutzerstatus konnte nicht aktualisiert werden",
+    "userActivated": "Benutzer aktiviert",
+    "userDeactivated": "Benutzer deaktiviert",
+    "accountStatusDescription": "Das Konto von {name} ist jetzt {status}.",
+    "active": "aktiv",
+    "inactive": "inaktiv",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "couldNotUpdateStatus": "Status konnte nicht aktualisiert werden",
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "couldNotAddUser": "Benutzer konnte nicht hinzugefügt werden",
+    "userAdded": "Benutzer hinzugefügt",
+    "userCreatedDescription": "{name} wurde erstellt.",
+    "couldNotUpdateUser": "Benutzer konnte nicht aktualisiert werden",
+    "userUpdated": "Benutzer aktualisiert",
+    "userUpdatedDescription": "Die Details von {name} wurden gespeichert.",
+    "couldNotDeleteUser": "Benutzer konnte nicht gelöscht werden",
+    "userDeleted": "Benutzer gelöscht",
+    "userDeletedDescription": "{name} wurde entfernt.",
+    "roles": {
+      "admin": "Administrator",
+      "agent": "Agent",
+      "viewer": "Betrachter"
+    },
+    "columns": {
+      "name": "Name",
+      "email": "E-Mail",
+      "role": "Rolle",
+      "active": "Aktiv",
+      "created": "Erstellt"
+    },
+    "on": "Ein",
+    "off": "Aus",
+    "firstPasswordNote": "Wenn Sie einen Benutzer erstellen, lautet dessen erstes Passwort VornameNachname, z. B.: Altin Musahu (Passwort: AltinMusahu)",
+    "table": {
+      "title": "Benutzer",
+      "searchPlaceholder": "Benutzer durchsuchen...",
+      "addButton": "Benutzer hinzufügen"
+    },
+    "form": {
+      "fullName": "Vollständiger Name",
+      "email": "E-Mail",
+      "role": "Rolle"
+    },
+    "addDialog": {
+      "title": "Benutzer hinzufügen",
+      "description": "Einen neuen Benutzer zum System hinzufügen.",
+      "adding": "Wird hinzugefügt...",
+      "addUser": "Benutzer hinzufügen"
+    },
+    "editDialog": {
+      "title": "Benutzer bearbeiten",
+      "description": "Benutzerinformationen aktualisieren.",
+      "saving": "Änderungen werden gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    },
+    "deleteDialog": {
+      "title": "Benutzer löschen",
+      "description": "Sind Sie sicher, dass Sie {name} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    }
+  },
+  "Partners": {
+    "nameRequired": "Name ist erforderlich",
+    "logoUploadFailed": "Logo-Upload fehlgeschlagen",
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "couldNotAddPartner": "Partner konnte nicht hinzugefügt werden",
+    "partnerAdded": "Partner hinzugefügt",
+    "partnerCreatedDescription": "{name} wurde erstellt.",
+    "couldNotUpdatePartner": "Partner konnte nicht aktualisiert werden",
+    "partnerUpdated": "Partner aktualisiert",
+    "partnerUpdatedDescription": "{name} wurde aktualisiert.",
+    "couldNotDeletePartner": "Partner konnte nicht gelöscht werden",
+    "partnerDeleted": "Partner gelöscht",
+    "partnerDeletedDescription": "{name} wurde gelöscht.",
+    "columns": {
+      "logo": "Logo",
+      "name": "Name",
+      "created": "Erstellt"
+    },
+    "table": {
+      "title": "Partner",
+      "searchPlaceholder": "Partner durchsuchen...",
+      "addButton": "Partner hinzufügen"
+    },
+    "form": {
+      "name": "Name",
+      "logo": "Logo",
+      "preview": "Vorschau"
+    },
+    "addDialog": {
+      "title": "Partner hinzufügen",
+      "description": "Einen neuen Partner zum System hinzufügen.",
+      "adding": "Wird hinzugefügt...",
+      "addPartner": "Partner hinzufügen"
+    },
+    "editDialog": {
+      "title": "Partner bearbeiten",
+      "description": "Partnerinformationen aktualisieren.",
+      "saving": "Änderungen werden gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    },
+    "deleteDialog": {
+      "title": "Partner löschen",
+      "description": "Sind Sie sicher, dass Sie {name} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    }
+  },
+  "Support": {
+    "conversations": "Support-Unterhaltungen",
+    "noConversationsYet": "Noch keine Unterhaltungen",
+    "anonymous": "Anonym",
+    "noEmail": "Keine E-Mail",
+    "status": {
+      "open": "offen",
+      "closed": "geschlossen"
+    },
+    "selectConversation": "Wählen Sie eine Unterhaltung aus, um zu beginnen",
+    "closeConversation": "Unterhaltung schließen",
+    "reopen": "Wieder öffnen",
+    "noMessagesYet": "Noch keine Nachrichten",
+    "conversationClosed": "Unterhaltung ist geschlossen",
+    "typeMessage": "Nachricht eingeben…"
+  },
+  "Quotes": {
+    "columns": {
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "town": "Ort",
+      "currentInsurer": "Aktueller Versicherer",
+      "selectedTariff": "Gewählter Tarif",
+      "submitted": "Eingereicht"
+    },
+    "title": "JustCompare-Angebote",
+    "searchPlaceholder": "Angebote durchsuchen..."
+  },
+  "Candidates": {
+    "status": {
+      "new": "Neu",
+      "reviewed": "In Prüfung",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt"
+    },
+    "languages": {
+      "german": "Deutsch",
+      "french": "Französisch",
+      "italian": "Italienisch",
+      "serboCroatian": "Serbisch/Kroatisch",
+      "turkish": "Türkisch",
+      "spanish": "Spanisch",
+      "english": "Englisch"
+    },
+    "columns": {
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "city": "Stadt",
+      "dateOfBirth": "Geburtsdatum",
+      "languages": "Sprachen",
+      "previousRole": "Vorherige Position",
+      "whyUs": "Warum wir",
+      "notes": "Notizen",
+      "status": "Status",
+      "applied": "Beworben",
+      "interview": "Vorstellungsgespräch"
+    },
+    "couldNotUpdateStatus": "Status konnte nicht aktualisiert werden",
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "statusUpdated": "Status aktualisiert",
+    "couldNotSaveNotes": "Notizen konnten nicht gespeichert werden",
+    "notesSaved": "Notizen gespeichert",
+    "couldNotSaveInterviewDate": "Termin konnte nicht gespeichert werden",
+    "interviewDateSaved": "Termin gespeichert",
+    "couldNotDeleteCandidate": "Kandidat konnte nicht gelöscht werden",
+    "candidateDeleted": "Kandidat gelöscht",
+    "noImportableRows": "Keine importierbaren Zeilen gefunden — bei jeder Zeile fehlte eine gültige E-Mail oder ein Name.",
+    "couldNotReadFile": "Diese Datei konnte nicht gelesen werden. Stellen Sie sicher, dass es sich um einen gültigen CSV-Export handelt.",
+    "importFailed": "Import fehlgeschlagen.",
+    "importFailedRetry": "Import fehlgeschlagen. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "all": "Alle",
+    "language": "Sprache",
+    "allLanguages": "Alle Sprachen",
+    "importCsv": "CSV importieren",
+    "table": {
+      "title": "Kandidaten",
+      "searchPlaceholder": "Kandidaten durchsuchen..."
+    },
+    "viewDialog": {
+      "defaultTitle": "Kandidat",
+      "description": "Details der Bewerbung des Kandidaten.",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "city": "Stadt",
+      "dateOfBirth": "Geburtsdatum",
+      "languages": "Sprachen",
+      "previousRole": "Vorherige Position",
+      "whyUs": "Warum wir",
+      "status": "Status",
+      "interview": "Vorstellungsgespräch",
+      "pickDate": "Datum auswählen",
+      "saving": "Wird gespeichert…",
+      "save": "Speichern",
+      "notes": "Notizen",
+      "notesPlaceholder": "Interne Notizen zu diesem Kandidaten hinzufügen…",
+      "saveNotes": "Notizen speichern",
+      "close": "Schließen"
+    },
+    "deleteDialog": {
+      "title": "Kandidat löschen",
+      "description": "Sind Sie sicher, dass Sie {name} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    },
+    "importDialog": {
+      "title": "Kandidaten aus CSV importieren",
+      "description": "Laden Sie einen CSV-Export hoch (z. B. von Google Forms). Spalten werden anhand ihres Namens zugeordnet, daher müssen Reihenfolge oder Formulierung der Kopfzeile nicht exakt übereinstimmen.",
+      "importedCount": "{count, plural, one {# Kandidat importiert} other {# Kandidaten importiert}}",
+      "rowsCouldNotBeInserted": "{count, plural, one {# Zeile konnte nicht eingefügt werden.} other {# Zeilen konnten nicht eingefügt werden.}}",
+      "importProblem": "Importproblem",
+      "clickToChoose": "Klicken, um eine .csv-Datei auszuwählen",
+      "readingFile": "Datei wird gelesen…",
+      "readyToImport": "Bereit zum Import",
+      "candidatesCount": "{count, plural, one {# Kandidat} other {# Kandidaten}}",
+      "mergedDuplicates": "Zusammengeführte Duplikate",
+      "duplicatesDescription": "{count, plural, one {# wiederholte Bewerbung per E-Mail} other {# wiederholte Bewerbungen per E-Mail}}",
+      "skippedRows": "Übersprungene Zeilen",
+      "skippedRowsDescription": "{count, plural, one {# Zeile ohne gültige E-Mail oder Namen} other {# Zeilen ohne gültige E-Mail oder Namen}}",
+      "rowLine": "Zeile {line}: {reason}",
+      "chooseDifferentFile": "Andere Datei auswählen",
+      "close": "Schließen",
+      "cancel": "Abbrechen",
+      "importing": "Wird importiert…",
+      "importButton": "{count, plural, one {# Kandidat importieren} other {# Kandidaten importieren}}"
+    }
+  },
+  "Calendar": {
+    "title": "Vorstellungsgespräch-Kalender",
+    "description": "Alle geplanten Vorstellungsgespräche bei Optimus Marketing.",
+    "loadingSchedule": "Zeitplan wird geladen…",
+    "eventDialog": {
+      "description": "Details des geplanten Vorstellungsgesprächs.",
+      "when": "Wann",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "status": "Status",
+      "close": "Schließen",
+      "goToCandidates": "Zu den Kandidaten"
+    }
+  }
+}

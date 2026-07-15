@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -27,10 +28,12 @@ const emptyCategory: Omit<Category, "id"> = {
 }
 
 export default function CategoriesPage() {
+  const t = useTranslations("Categories")
+
   const [categories, setCategories] = useState<Category[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [editing, setEditing] = useState<Category | null>(null)
-  const [formData, setFormData] = useState(emptyCategory) 
+  const [formData, setFormData] = useState(emptyCategory)
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -46,7 +49,7 @@ export default function CategoriesPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.name.trim()) newErrors.name = "Name is required"
+    if (!formData.name.trim()) newErrors.name = t("nameRequired")
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -82,21 +85,21 @@ export default function CategoriesPage() {
 
       if (!res.ok) {
         const errorText = await res.text()
-        throw new Error(errorText || "Failed to update category status")
+        throw new Error(errorText || t("failedToUpdateStatus"))
       }
 
       const updated = await res.json()
       setCategories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
       setFeedback({
         tone: "success",
-        title: "Category updated",
-        description: `${cat.name} is now ${isActive ? "active" : "inactive"}.`,
+        title: t("categoryUpdated"),
+        description: t("statusChangedDescription", { name: cat.name, status: isActive ? t("active") : t("inactive") }),
       })
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Something went wrong"
+      const message = e instanceof Error ? e.message : t("somethingWentWrong")
       setFeedback({
         tone: "destructive",
-        title: "Could not update category status",
+        title: t("couldNotUpdateStatus"),
         description: message,
       })
     }
@@ -114,21 +117,21 @@ export default function CategoriesPage() {
     setIsEditDialogOpen(false)
   }
 
-  
+
     const columns: Column<Category>[] = [
     {
       key: "name",
-      label: "Name",
+      label: t("columns.name"),
       render: (value) => <span className="font-medium text-foreground">{value}</span>,
     },
     {
       key: "badge",
-      label: "Badge",
-      render: (value) => value ? <span className="px-2 py-1 text-xs rounded bg-secondary text-secondary-foreground">{value}</span> : <span className="text-muted-foreground">No badge</span>,
+      label: t("columns.badge"),
+      render: (value) => value ? <span className="px-2 py-1 text-xs rounded bg-secondary text-secondary-foreground">{value}</span> : <span className="text-muted-foreground">{t("noBadge")}</span>,
     },
     {
       key: "is_active",
-      label: "Active",
+      label: t("columns.active"),
       render: (value, item) => {
         const isToggling = toggleLoading[item.id]
         return (
@@ -141,7 +144,7 @@ export default function CategoriesPage() {
             {isToggling ? (
               <Spinner className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <FieldLabel>{value ? "On" : "Off"}</FieldLabel>
+              <FieldLabel>{value ? t("on") : t("off")}</FieldLabel>
             )}
           </Field>
         )
@@ -159,24 +162,24 @@ export default function CategoriesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
-  
+
       if (!res.ok) {
         const errorText = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not add category",
-          description: errorText || "Request failed",
+          title: t("couldNotAddCategory"),
+          description: errorText || t("requestFailed"),
         })
         return
       }
-  
+
       const created = await res.json()
       setCategories((prev) => [created, ...prev])
       setIsAddDialogOpen(false)
       setFeedback({
         tone: "success",
-        title: "Category added",
-        description: `${formData.name} has been created.`,
+        title: t("categoryAdded"),
+        description: t("categoryCreatedDescription", { name: formData.name }),
       })
     } finally {
       setIsLoading(false)
@@ -194,33 +197,33 @@ export default function CategoriesPage() {
         badge: formData.badge,
         is_active: formData.is_active,
       }
-  
+
       const res = await fetch(`/api/categories/${editing.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
-  
+
       if (!res.ok) {
         const errorText = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not add category",
-          description: errorText || "Request failed",
+          title: t("couldNotAddCategory"),
+          description: errorText || t("requestFailed"),
         })
         return
       }
-  
+
       const updated = await res.json()
-  
+
       setCategories((prev) => prev.map((c) => (c.id === editing.id ? updated : c)))
-  
+
       setIsEditDialogOpen(false)
       setEditing(null)
       setFeedback({
         tone: "success",
-        title: "Category updated",
-        description: `${updated.name} has been updated.`,
+        title: t("categoryUpdated"),
+        description: t("categoryUpdatedDescription", { name: updated.name }),
       })
     } finally {
       setIsLoading(false);
@@ -244,7 +247,7 @@ export default function CategoriesPage() {
 
   const handleView = (category: Category) => {
     // For future expansion - maybe show category details or associated providers?
-    alert(`Viewing category: ${category.name}`)
+    alert(t("viewingCategory", { name: category.name }))
   }
 
   useEffect(() => {
@@ -270,30 +273,30 @@ export default function CategoriesPage() {
       <DataTable
         data={categories}
         columns={columns}
-        title="Categories"
-        searchPlaceholder="Search categories..."
+        title={t("table.title")}
+        searchPlaceholder={t("table.searchPlaceholder")}
         searchFields={["name"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
         // onDelete={handleDelete}
         onView={handleView}
         isLoading={isLoading}
-        addButtonText="Add Category"
+        addButtonText={t("table.addButton")}
       />
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Category</DialogTitle>
+            <DialogTitle>{t("addDialog.title")}</DialogTitle>
             <DialogDescription>
-              Add a new category to the system.
+              {t("addDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
-                Name
+                {t("form.name")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -309,7 +312,7 @@ export default function CategoriesPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="badge" className="text-right">
-                Badge
+                {t("form.badge")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -326,7 +329,7 @@ export default function CategoriesPage() {
           </div>
           <DialogFooter>
             <Button onClick={confirmAdd} disabled={isLoading}>
-              { isLoading ? "Adding..." : "Add Category" }
+              { isLoading ? t("addDialog.adding") : t("addDialog.addCategory") }
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -336,15 +339,15 @@ export default function CategoriesPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Category</DialogTitle>
+            <DialogTitle>{t("editDialog.title")}</DialogTitle>
             <DialogDescription>
-              Update category information.
+              {t("editDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-name" className="text-right">
-                Name
+                {t("form.name")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -360,7 +363,7 @@ export default function CategoriesPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-badge" className="text-right">
-                Badge
+                {t("form.badge")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -377,11 +380,11 @@ export default function CategoriesPage() {
           </div>
           <DialogFooter>
             <Button onClick={confirmEdit} disabled={isLoading}>
-              { isLoading ? "Saving Changes..." : "Save Changes" }
+              { isLoading ? t("editDialog.saving") : t("editDialog.saveChanges") }
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  ) 
+  )
 }

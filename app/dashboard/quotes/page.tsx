@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import type { Quote } from "@/app/api/modules/quotes/quotes.type"
 
@@ -12,23 +13,25 @@ type QuoteJson = Omit<Quote, "id" | "createdAt" | "updatedAt"> & {
 
 type QuoteRow = Omit<QuoteJson, "id"> & { id: string }
 
-const columns: Column<QuoteRow>[] = [
-  { key: "name", label: "Name", render: (value) => <span className="font-medium text-foreground">{value}</span> },
-  { key: "email", label: "Email", render: (value) => <span className="text-muted-foreground text-sm">{value}</span> },
-  { key: "phone", label: "Phone", render: (value) => <span className="text-muted-foreground text-sm">{value}</span> },
-  { key: "town", label: "Town" },
-  { key: "currentInsurer", label: "Current insurer" },
-  { key: "selectedTariff", label: "Selected tariff" },
-  {
-    key: "createdAt",
-    label: "Submitted",
-    render: (value: string) => <span className="text-muted-foreground text-sm">{new Date(value).toLocaleString()}</span>,
-  },
-]
-
 export default function QuotesPage() {
+  const t = useTranslations("Quotes")
+
   const [quotes, setQuotes] = useState<QuoteRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const columns: Column<QuoteRow>[] = [
+    { key: "name", label: t("columns.name"), render: (value) => <span className="font-medium text-foreground">{value}</span> },
+    { key: "email", label: t("columns.email"), render: (value) => <span className="text-muted-foreground text-sm">{value}</span> },
+    { key: "phone", label: t("columns.phone"), render: (value) => <span className="text-muted-foreground text-sm">{value}</span> },
+    { key: "town", label: t("columns.town") },
+    { key: "currentInsurer", label: t("columns.currentInsurer") },
+    { key: "selectedTariff", label: t("columns.selectedTariff") },
+    {
+      key: "createdAt",
+      label: t("columns.submitted"),
+      render: (value: string) => <span className="text-muted-foreground text-sm">{new Date(value).toLocaleString()}</span>,
+    },
+  ]
 
   useEffect(() => {
     setIsLoading(true)
@@ -42,8 +45,8 @@ export default function QuotesPage() {
     <DataTable
       data={quotes}
       columns={columns}
-      title="JustCompare Quotes"
-      searchPlaceholder="Search quotes..."
+      title={t("title")}
+      searchPlaceholder={t("searchPlaceholder")}
       searchFields={["name", "email", "town", "currentInsurer"]}
       isLoading={isLoading}
     />

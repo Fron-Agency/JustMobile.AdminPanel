@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -38,15 +39,18 @@ function photoUrl(fileUrl: string) {
   return `${SUPABASE_URL}/storage/v1/object/public/product-photos/${fileUrl}`
 }
 
-const statusConfig: Record<LeadWithRelations["status"], { label: string; className: string }> = {
-  new: { label: "New", className: "bg-primary/10 text-primary border-primary/20" },
-  sent: { label: "Sent", className: "bg-primary/80 text-white border-primary/90" },
-  contacted: { label: "Contacted", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-  converted: { label: "Converted", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-  lost: { label: "Lost", className: "bg-destructive/10 text-destructive border-destructive/20" },
+const statusClassNames: Record<LeadWithRelations["status"], string> = {
+  new: "bg-primary/10 text-primary border-primary/20",
+  sent: "bg-primary/80 text-white border-primary/90",
+  contacted: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  converted: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  lost: "bg-destructive/10 text-destructive border-destructive/20",
 }
 
 export default function LeadsPage() {
+  const t = useTranslations("Leads")
+  const tStatus = useTranslations("Dashboard.leadStatus")
+
   const [leads, setLeads] = useState<LeadWithRelations[]>([])
   const [leadsHome, setLeadsHome] = useState<LeadHome[]>([])
   const [isLoadingHome, setIsLoadingHome] = useState(true)
@@ -88,9 +92,12 @@ export default function LeadsPage() {
         return u ? { ...l, status: u.status } : l
       }))
       setSelectedLeadIds([])
-      setFeedback({ tone: "success", title: `${selectedLeadIds.length} lead${selectedLeadIds.length > 1 ? "s" : ""} marked as ${status}` })
+      setFeedback({
+        tone: "success",
+        title: t("leadsMarkedAsStatus", { count: selectedLeadIds.length, status: tStatus(status) }),
+      })
     } catch {
-      setFeedback({ tone: "destructive", title: "Failed to update status" })
+      setFeedback({ tone: "destructive", title: t("failedToUpdateStatus") })
     } finally {
       setIsUpdatingStatus(false)
     }
@@ -108,31 +115,31 @@ export default function LeadsPage() {
   const columns: Column<LeadWithRelations>[] = [
     {
       key: "fullname",
-      label: "Name",
+      label: t("columns.name"),
       render: (value) => <span className="font-medium text-foreground">{value}</span>,
     },
     {
       key: "email",
-      label: "Email",
+      label: t("columns.email"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
       key: "phone",
-      label: "Phone",
+      label: t("columns.phone"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "status",
-      label: "Status",
+      label: t("columns.status"),
       render: (value) => {
         const status = String(value ?? "").toLowerCase() as LeadWithRelations["status"]
-        const config = statusConfig[status] ?? statusConfig.new
-        return <Badge className={config.className}>{config.label}</Badge>
+        const className = statusClassNames[status] ?? statusClassNames.new
+        return <Badge className={className}>{tStatus(status)}</Badge>
       },
     },
     {
       key: "plan_mobile_name",
-      label: "Plan",
+      label: t("columns.plan"),
       render: (_value, item) => {
         return (
           <div className="flex items-center gap-2">
@@ -148,7 +155,7 @@ export default function LeadsPage() {
     },
     {
       key: "product_color_id",
-      label: "Product",
+      label: t("columns.product"),
       render: (_value, item) => {
 
         const primaryPhoto = item.product_photo_file_url
@@ -179,7 +186,7 @@ export default function LeadsPage() {
     },
     {
       key: "address",
-      label: "Address",
+      label: t("columns.address"),
       render: (_value, item) => {
         const address = Array.isArray(item.address) ? item.address[0] : item.address
         if (!address) return <span className="text-muted-foreground text-sm">—</span>
@@ -192,39 +199,39 @@ export default function LeadsPage() {
     },
     {
       key: "date_of_birth",
-      label: "Date of Birth",
+      label: t("columns.dateOfBirth"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "swiss_number",
-      label: "Swiss No.",
-      render: (value) => <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>,
+      label: t("columns.swissNumber"),
+      render: (value) => <span className="text-muted-foreground text-sm">{value ? t("yes") : t("no")}</span>,
     },
     {
       key: "roaming_control",
-      label: "Roaming",
-      render: (value) => <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>,
+      label: t("columns.roaming"),
+      render: (value) => <span className="text-muted-foreground text-sm">{value ? t("yes") : t("no")}</span>,
     },
     {
       key: "is_child_order",
-      label: "Child Order",
-      render: (value) => <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>,
+      label: t("columns.childOrder"),
+      render: (value) => <span className="text-muted-foreground text-sm">{value ? t("yes") : t("no")}</span>,
     },
     {
       key: "description",
-      label: "Description",
+      label: t("columns.description"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "documents",
-      label: "Documents",
+      label: t("columns.documents"),
       render: (_value, item) => {
         const count = item.documents?.length ?? 0
         if (count === 0) return <span className="text-muted-foreground text-sm">—</span>
         return (
           <Button size="sm" variant="outline" onClick={() => handleViewDocs(item)} className="gap-1">
             <FileText className="w-4 h-4" />
-            {count} {count === 1 ? "file" : "files"}
+            {t("filesCount", { count })}
           </Button>
         )
       },
@@ -278,7 +285,7 @@ export default function LeadsPage() {
           const plan = (lead as any).plans
 
           console.log(lead);
-          
+
           return fetch("/api/leads/email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -311,14 +318,17 @@ export default function LeadsPage() {
       setSelectedLeadIds([])
       setFeedback({
         tone: "success",
-        title: "Emails sent",
-        description: `${emailLeads.length} lead${emailLeads.length > 1 ? "s" : ""} sent to ${recipients.length} recipient${recipients.length > 1 ? "s" : ""}.`,
+        title: t("emailsSent"),
+        description: t("emailsSentDescription", {
+          leadCount: emailLeads.length,
+          recipientCount: recipients.length,
+        }),
       })
     } catch (error) {
       setFeedback({
         tone: "destructive",
-        title: "Failed to send email",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        title: t("failedToSendEmail"),
+        description: error instanceof Error ? error.message : t("somethingWentWrong"),
       })
     } finally {
       setIsSending(false)
@@ -339,9 +349,12 @@ export default function LeadsPage() {
         return u ? { ...l, status: u.status } : l
       }))
       setSelectedLeadHomeIds([])
-      setFeedback({ tone: "success", title: `${selectedLeadHomeIds.length} home lead${selectedLeadHomeIds.length > 1 ? "s" : ""} marked as ${status}` })
+      setFeedback({
+        tone: "success",
+        title: t("homeLeadsMarkedAsStatus", { count: selectedLeadHomeIds.length, status: tStatus(status) }),
+      })
     } catch {
-      setFeedback({ tone: "destructive", title: "Failed to update status" })
+      setFeedback({ tone: "destructive", title: t("failedToUpdateStatus") })
     } finally {
       setIsUpdatingHomeStatus(false)
     }
@@ -350,83 +363,83 @@ export default function LeadsPage() {
   const leadsHomeColumns: Column<LeadHome>[] = [
     {
       key: "name",
-      label: "Name",
+      label: t("columns.name"),
       render: (_value, item) => (
         <span className="font-medium text-foreground">{item.name} {item.lastname}</span>
       ),
     },
     {
       key: "email",
-      label: "Email",
+      label: t("columns.email"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
       key: "mobile_number",
-      label: "Mobile",
+      label: t("columns.mobile"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "status",
-      label: "Status",
+      label: t("columns.status"),
       render: (value) => {
         const status = String(value ?? "").toLowerCase() as LeadHome["status"]
-        const config = statusConfig[status] ?? statusConfig.new
-        return <Badge className={config.className}>{config.label}</Badge>
+        const className = statusClassNames[status] ?? statusClassNames.new
+        return <Badge className={className}>{tStatus(status)}</Badge>
       },
     },
     {
       key: "date_of_birth",
-      label: "Date of Birth",
+      label: t("columns.dateOfBirth"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "nationality",
-      label: "Nationality",
+      label: t("columns.nationality"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
       key: "document_type",
-      label: "Doc Type",
+      label: t("columns.docType"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
       key: "document_number",
-      label: "Doc No.",
+      label: t("columns.docNumber"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
     },
     {
       key: "swiss_number",
-      label: "Swiss No.",
-      render: (value) => <span className="text-muted-foreground text-sm">{value ? "Yes" : "No"}</span>,
+      label: t("columns.swissNumber"),
+      render: (value) => <span className="text-muted-foreground text-sm">{value ? t("yes") : t("no")}</span>,
     },
     {
       key: "arriving_date",
-      label: "Arriving",
+      label: t("columns.arriving"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "oto_provider",
-      label: "OTO Provider",
+      label: t("columns.otoProvider"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "oto_number",
-      label: "OTO Number",
+      label: t("columns.otoNumber"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "oto_expiry_date",
-      label: "OTO Expiry",
+      label: t("columns.otoExpiry"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "landline_number",
-      label: "Landline number",
+      label: t("columns.landlineNumber"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "address",
-      label: "Address",
+      label: t("columns.address"),
       render: (_value, item) => {
         const address = Array.isArray(item.address) ? item.address[0] : item.address
         if (!address) return <span className="text-muted-foreground text-sm">—</span>
@@ -439,12 +452,12 @@ export default function LeadsPage() {
     },
     {
       key: "comment",
-      label: "Comment",
+      label: t("columns.comment"),
       render: (value) => <span className="text-muted-foreground text-sm">{value ?? "—"}</span>,
     },
     {
       key: "created_at",
-      label: "Created",
+      label: t("columns.created"),
       render: (value) => <span className="text-muted-foreground text-sm">{new Date(value).toLocaleString()}</span>,
     }
   ]
@@ -495,7 +508,7 @@ export default function LeadsPage() {
 
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-muted-foreground">
-          {selectedLeadIds.length > 0 ? `${selectedLeadIds.length} selected` : ""}
+          {t("selectedCount", { count: selectedLeadIds.length })}
         </span>
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -507,15 +520,15 @@ export default function LeadsPage() {
                 className="gap-2"
               >
                 {isUpdatingStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
-                Change Status
+                {t("changeStatus")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleBulkStatus("contacted")}>Contacted</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleBulkStatus("converted")}>Converted</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleBulkStatus("lost")}>Lost</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleBulkStatus("sent")}>Sent</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleBulkStatus("new")}>New</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkStatus("contacted")}>{tStatus("contacted")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkStatus("converted")}>{tStatus("converted")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkStatus("lost")}>{tStatus("lost")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkStatus("sent")}>{tStatus("sent")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkStatus("new")}>{tStatus("new")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button
@@ -526,7 +539,7 @@ export default function LeadsPage() {
             className="gap-2"
           >
             <Mail className="w-4 h-4" />
-            Send Email
+            {t("sendEmail")}
           </Button>
         </div>
       </div>
@@ -534,8 +547,8 @@ export default function LeadsPage() {
       <DataTable
         data={leads}
         columns={columns}
-        title="Leads"
-        searchPlaceholder="Search leads..."
+        title={t("leadsTable.title")}
+        searchPlaceholder={t("leadsTable.searchPlaceholder")}
         searchFields={["fullname", "email", "phone"]}
         isLoading={isLoading}
         selectable
@@ -545,7 +558,7 @@ export default function LeadsPage() {
 
       <div className="flex items-center justify-between mt-8 mb-2">
         <span className="text-sm text-muted-foreground">
-          {selectedLeadHomeIds.length > 0 ? `${selectedLeadHomeIds.length} selected` : ""}
+          {t("selectedCount", { count: selectedLeadHomeIds.length })}
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -556,15 +569,15 @@ export default function LeadsPage() {
               className="gap-2"
             >
               {isUpdatingHomeStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
-              Change Status
+              {t("changeStatus")}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleBulkHomeStatus("contacted")}>Contacted</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleBulkHomeStatus("converted")}>Converted</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleBulkHomeStatus("lost")}>Lost</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleBulkHomeStatus("sent")}>Sent</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleBulkHomeStatus("new")}>New</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("contacted")}>{tStatus("contacted")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("converted")}>{tStatus("converted")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("lost")}>{tStatus("lost")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("sent")}>{tStatus("sent")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleBulkHomeStatus("new")}>{tStatus("new")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -572,8 +585,8 @@ export default function LeadsPage() {
       <DataTable
         data={leadsHome}
         columns={leadsHomeColumns}
-        title="Home Leads"
-        searchPlaceholder="Search home leads..."
+        title={t("leadsHomeTable.title")}
+        searchPlaceholder={t("leadsHomeTable.searchPlaceholder")}
         searchFields={["name", "lastname", "email", "mobile_number"]}
         isLoading={isLoadingHome}
         selectable
@@ -585,8 +598,10 @@ export default function LeadsPage() {
       <Dialog open={isDocsDialogOpen} onOpenChange={setIsDocsDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Documents</DialogTitle>
-            <DialogDescription>{docsLead?.fullname}'s uploaded documents</DialogDescription>
+            <DialogTitle>{t("documentsDialog.title")}</DialogTitle>
+            <DialogDescription>
+              {t("documentsDialog.description", { name: docsLead?.fullname ?? "" })}
+            </DialogDescription>
           </DialogHeader>
 
           {isLoadingDocs ? (
@@ -602,11 +617,11 @@ export default function LeadsPage() {
                   <div key={doc.id} className="border rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 bg-muted/40 border-b">
                       <span className="text-sm font-medium text-muted-foreground">
-                        Document {index + 1}
+                        {t("documentsDialog.documentLabel", { index: index + 1 })}
                       </span>
                       {url && (
                         <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
-                          Open in new tab
+                          {t("documentsDialog.openInNewTab")}
                         </a>
                       )}
                     </div>
@@ -614,11 +629,11 @@ export default function LeadsPage() {
                       isPdf ? (
                         <iframe src={url} className="w-full h-64" />
                       ) : (
-                        <img src={url} alt={`Document ${index + 1}`} className="w-full object-contain max-h-64" />
+                        <img src={url} alt={t("documentsDialog.documentLabel", { index: index + 1 })} className="w-full object-contain max-h-64" />
                       )
                     ) : (
                       <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
-                        Preview unavailable
+                        {t("documentsDialog.previewUnavailable")}
                       </div>
                     )}
                   </div>
@@ -628,7 +643,7 @@ export default function LeadsPage() {
           )}
 
           <DialogFooter>
-            <Button onClick={() => setIsDocsDialogOpen(false)}>Close</Button>
+            <Button onClick={() => setIsDocsDialogOpen(false)}>{t("documentsDialog.close")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -637,20 +652,20 @@ export default function LeadsPage() {
       <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Send Lead by Email</DialogTitle>
+            <DialogTitle>{t("emailDialog.title")}</DialogTitle>
             <DialogDescription>
               {emailLeads.length === 1
-                ? <>Send <span className="font-medium text-foreground">{emailLeads[0].fullname}</span>'s lead info to selected users.</>
-                : <>Send <span className="font-medium text-foreground">{emailLeads.length} leads</span> info to selected users.</>
+                ? t("emailDialog.descriptionSingle", { name: emailLeads[0].fullname ?? "" })
+                : t("emailDialog.descriptionMultiple", { count: emailLeads.length })
               }
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium mb-2 block">Recipients</Label>
+              <Label className="text-sm font-medium mb-2 block">{t("emailDialog.recipients")}</Label>
               {users.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No users found.</p>
+                <p className="text-sm text-muted-foreground">{t("emailDialog.noUsersFound")}</p>
               ) : (
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {users.map((user) => (
@@ -675,11 +690,11 @@ export default function LeadsPage() {
 
             <div>
               <Label htmlFor="email-message" className="text-sm font-medium mb-2 block">
-                Message <span className="text-muted-foreground font-normal">(optional)</span>
+                {t("emailDialog.message")} <span className="text-muted-foreground font-normal">{t("emailDialog.optional")}</span>
               </Label>
               <Textarea
                 id="email-message"
-                placeholder="Add a note to include with the lead info..."
+                placeholder={t("emailDialog.messagePlaceholder")}
                 value={emailMessage}
                 onChange={(e) => setEmailMessage(e.target.value)}
                 rows={3}
@@ -689,7 +704,7 @@ export default function LeadsPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
-              Cancel
+              {t("emailDialog.cancel")}
             </Button>
             <Button
               onClick={handleSendEmail}
@@ -699,13 +714,12 @@ export default function LeadsPage() {
               {isSending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Sending...
+                  {t("emailDialog.sending")}
                 </>
               ) : (
                 <>
                   <Mail className="w-4 h-4" />
-                  Send to {selectedUserIds.length > 0 ? `${selectedUserIds.length} ` : ""}
-                  {selectedUserIds.length === 1 ? "recipient" : "recipients"}
+                  {t("emailDialog.sendTo", { count: selectedUserIds.length })}
                 </>
               )}
             </Button>

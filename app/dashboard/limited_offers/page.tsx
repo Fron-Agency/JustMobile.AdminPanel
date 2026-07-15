@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import type { User } from "@/app/api/modules/users/users.type"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 import { LimitedOffersDto } from "@/app/api/modules/limited_offers/limited_offers.type"
 
 export default function UsersPage() {
+  const t = useTranslations("LimitedOffers")
   const [limitedOffers, setLimitedOffers] = useState<LimitedOffersDto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [feedback, setFeedback] = useState<{
@@ -16,17 +18,17 @@ export default function UsersPage() {
   } | null>(null)
 
   const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")  
+  const [endDate, setEndDate] = useState("")
 
   const columns: Column<LimitedOffersDto>[] = [
     {
       key: "email",
-      label: "Email",
+      label: t("columns.email"),
       render: (value) => <span className="font-medium text-foreground">{value}</span>,
     },
     {
     key: "created_at",
-    label: "Created",
+    label: t("columns.created"),
     render: (value) => (
         <span className="text-muted-foreground text-sm">
         {new Date(value).toLocaleString()}
@@ -35,7 +37,7 @@ export default function UsersPage() {
     },
     {
         key: "plan_mobile_name",
-        label: "Plan",
+        label: t("columns.plan"),
         render: (value) => <span className="text-muted-foreground text-sm">{value}</span>
     }
   ]
@@ -83,7 +85,7 @@ export default function UsersPage() {
         <div className="mb-4 flex gap-4">
           <div>
             <label className="block text-sm mb-1">
-              From
+              {t("from")}
             </label>
 
             <input
@@ -96,7 +98,7 @@ export default function UsersPage() {
 
           <div>
             <label className="block text-sm mb-1">
-              To
+              {t("to")}
             </label>
 
             <input
@@ -110,8 +112,8 @@ export default function UsersPage() {
         <DataTable
           data={filteredOffers}
           columns={columns}
-          title="Users"
-          searchPlaceholder="Search users..."
+          title={t("title")}
+          searchPlaceholder={t("searchPlaceholder")}
           isLoading={isLoading}
         />
     </>

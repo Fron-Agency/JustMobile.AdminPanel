@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -39,15 +40,6 @@ function getLogoUrl(fileUrl: string | null): string | null {
   return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${fileUrl}`
 }
 
-async function uploadLogo(file: File): Promise<string> {
-  const fd = new FormData()
-  fd.append("file", file)
-  const res = await fetch("/api/providers/logo", { method: "POST", body: fd })
-  if (!res.ok) throw new Error("Logo upload failed")
-  const { file_url } = await res.json()
-  return file_url
-}
-
 const emptyProvider: Omit<Provider, "id" | "created_at"> = {
   category_id: "",
   name: "",
@@ -56,6 +48,17 @@ const emptyProvider: Omit<Provider, "id" | "created_at"> = {
 }
 
 export default function ProvidersPage() {
+  const t = useTranslations("Providers")
+
+  async function uploadLogo(file: File): Promise<string> {
+    const fd = new FormData()
+    fd.append("file", file)
+    const res = await fetch("/api/providers/logo", { method: "POST", body: fd })
+    if (!res.ok) throw new Error(t("logoUploadFailed"))
+    const { file_url } = await res.json()
+    return file_url
+  }
+
   const [providers, setProviders] = useState<Provider[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -78,8 +81,8 @@ export default function ProvidersPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.name.trim()) newErrors.name = "Name is required"
-    if (!formData.category_id) newErrors.category_id = "Category is required"
+    if (!formData.name.trim()) newErrors.name = t("nameRequired")
+    if (!formData.category_id) newErrors.category_id = t("categoryRequired")
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -119,24 +122,24 @@ export default function ProvidersPage() {
 
       if (!res.ok) {
         const errorText = await res.text()
-        throw new Error(errorText || "Failed to update provider status")
+        throw new Error(errorText || t("failedToUpdateStatus"))
       }
 
       const updated = await res.json()
       setProviders((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
       setFeedback({
         tone: "success",
-        title: isActive ? "Provider activated" : "Provider deactivated",
-        description: `${prov.name} is now ${isActive ? "active" : "inactive"}.`,
+        title: isActive ? t("providerActivated") : t("providerDeactivated"),
+        description: t("statusChangedDescription", { name: prov.name, status: isActive ? t("active") : t("inactive") }),
       })
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Something went wrong"
+      const message = e instanceof Error ? e.message : t("somethingWentWrong")
       setFeedback({
         tone: "destructive",
-        title: "Could not update provider status",
+        title: t("couldNotUpdateStatus"),
         description: message,
       })
-    } 
+    }
     finally {
       setToggleLoading((prev) => ({ ...prev, [prov.id]: false }))
     }
@@ -145,7 +148,7 @@ export default function ProvidersPage() {
   const columns: Column<Provider>[] = [
     {
       key: "file_url",
-      label: "Logo",
+      label: t("columns.logo"),
       render: (value) => {
         const url = getLogoUrl(value)
         return url
@@ -155,12 +158,12 @@ export default function ProvidersPage() {
     },
     {
       key: "name",
-      label: "Name",
+      label: t("columns.name"),
       render: (value) => <span className="font-medium text-foreground">{value}</span>,
     },
     {
       key: "category_id",
-      label: "Category",
+      label: t("columns.category"),
       render: (value) => {
         const category = categories.find((c) => c.id === value)
         return <span className="text-muted-foreground text-sm">{category?.name ?? "—"}</span>
@@ -168,13 +171,13 @@ export default function ProvidersPage() {
     },
     {
       key: "created_at",
-      label: "Created",
+      label: t("columns.created"),
       render: (value) => <span className="text-muted-foreground text-sm">{value}</span>,
       hidden: true,
     },
     {
       key: "is_active",
-      label: "Active",
+      label: t("columns.active"),
       render: (value, item) => {
         const isToggling = toggleLoading[item.id]
         return (
@@ -187,7 +190,7 @@ export default function ProvidersPage() {
             {isToggling ? (
               <Spinner className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <FieldLabel>{value ? "On" : "Off"}</FieldLabel>
+              <FieldLabel>{value ? t("on") : t("off")}</FieldLabel>
             )}
           </Field>
         )
@@ -205,11 +208,11 @@ export default function ProvidersPage() {
         try {
           file_url = await uploadLogo(logoFile)
         } catch {
-          setFeedback({ tone: "destructive", title: "Logo upload failed" })
+          setFeedback({ tone: "destructive", title: t("logoUploadFailed") })
           return
         }
       }
-  
+
       const res = await fetch("/api/providers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -219,24 +222,24 @@ export default function ProvidersPage() {
           file_url,
         }),
       })
-  
+
       if (!res.ok) {
         const errorText = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not add provider",
-          description: errorText || "Request failed",
+          title: t("couldNotAddProvider"),
+          description: errorText || t("requestFailed"),
         })
         return
       }
-  
+
       const created = await res.json()
       setProviders((prev) => [created, ...prev])
       setIsAddDialogOpen(false)
       setFeedback({
         tone: "success",
-        title: "Provider added",
-        description: `${created.name} has been created.`,
+        title: t("providerAdded"),
+        description: t("providerCreatedDescription", { name: created.name }),
       })
     } finally {
       setIsLoading(false)
@@ -254,45 +257,45 @@ export default function ProvidersPage() {
         try {
           newFileUrl = await uploadLogo(logoFile)
         } catch {
-          setFeedback({ tone: "destructive", title: "Logo upload failed" })
+          setFeedback({ tone: "destructive", title: t("logoUploadFailed") })
           return
         }
       }
-  
+
       const payload: Partial<Provider> = {
         name: formData.name,
         category_id: formData.category_id,
         is_active: formData.is_active,
         ...(newFileUrl !== undefined && { file_url: newFileUrl }),
       }
-  
+
       const res = await fetch(`/api/providers/${editing.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
-  
+
       if (!res.ok) {
         const text = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not update provider",
-          description: text || "Request failed",
+          title: t("couldNotUpdateProvider"),
+          description: text || t("requestFailed"),
         })
         return
       }
-  
+
       const updated = await res.json()
-      setProviders((prev) => 
+      setProviders((prev) =>
         prev.map((p) => (p.id === editing.id ? updated : p))
       )
-  
+
       setIsEditDialogOpen(false)
       setEditing(null)
       setFeedback({
         tone: "success",
-        title: "Provider updated",
-        description: `${updated.name} has been updated.`,
+        title: t("providerUpdated"),
+        description: t("providerUpdatedDescription", { name: updated.name }),
       })
     } finally {
       setIsLoading(false);
@@ -307,25 +310,25 @@ export default function ProvidersPage() {
       const res = await fetch(`/api/providers/${providerToDelete.id}`, {
         method: "DELETE",
       })
-  
+
       if (!res.ok) {
         const errorText = await res.text()
         setFeedback({
           tone: "destructive",
-          title: "Could not delete provider",
-          description: errorText || "Request failed",
+          title: t("couldNotDeleteProvider"),
+          description: errorText || t("requestFailed"),
         })
         return
       }
-  
+
       const name = providerToDelete.name
       setProviders((prev) => prev.filter((p) => p.id !== providerToDelete.id))
       setIsDeleteDialogOpen(false)
       setProviderToDelete(null)
       setFeedback({
         tone: "success",
-        title: "Provider deleted",
-        description: `${name} has been deleted.`,
+        title: t("providerDeleted"),
+        description: t("providerDeletedDescription", { name }),
       })
     } finally {
       setIsLoading(false);
@@ -334,7 +337,7 @@ export default function ProvidersPage() {
 
   const handleView = (provider: Provider) => {
     // For future expansion - maybe show provider details or associated plans?
-    alert(`Viewing provider: ${provider.name}`)
+    alert(t("viewingProvider", { name: provider.name }))
   }
 
   useEffect(() => {
@@ -371,30 +374,30 @@ export default function ProvidersPage() {
       <DataTable
         data={providers}
         columns={columns}
-        title="Providers"
-        searchPlaceholder="Search providers..."
+        title={t("table.title")}
+        searchPlaceholder={t("table.searchPlaceholder")}
         searchFields={["name"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onView={handleView}
         isLoading={isLoading}
-        addButtonText="Add Provider"
+        addButtonText={t("table.addButton")}
       />
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Provider</DialogTitle>
+            <DialogTitle>{t("addDialog.title")}</DialogTitle>
             <DialogDescription>
-              Add a new provider to the system.
+              {t("addDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
-                Name
+                {t("form.name")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -410,12 +413,12 @@ export default function ProvidersPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="category" className="text-right">
-                Category
+                {t("form.category")}
               </Label>
               <div className="col-span-3">
                 <Select value={formData.category_id} onValueChange={(v) => setFormData({ ...formData, category_id: v })}>
                   <SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder={t("form.selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.filter(v => v.is_active === true).map((c) => (
@@ -427,7 +430,7 @@ export default function ProvidersPage() {
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Logo</Label>
+              <Label className="text-right">{t("form.logo")}</Label>
               <div className="col-span-3">
                 <Input
                   type="file"
@@ -439,14 +442,14 @@ export default function ProvidersPage() {
                   }}
                 />
                 {logoPreview && (
-                  <img src={logoPreview} alt="Preview" className="mt-2 h-12 w-12 object-contain rounded border" />
+                  <img src={logoPreview} alt={t("form.preview")} className="mt-2 h-12 w-12 object-contain rounded border" />
                 )}
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button onClick={confirmAdd} disabled={isLoading}>
-              { isLoading ? "Adding..." : "Add Provider" }
+              { isLoading ? t("addDialog.adding") : t("addDialog.addProvider") }
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -456,15 +459,15 @@ export default function ProvidersPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Provider</DialogTitle>
+            <DialogTitle>{t("editDialog.title")}</DialogTitle>
             <DialogDescription>
-              Update provider information.
+              {t("editDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-name" className="text-right">
-                Name
+                {t("form.name")}
               </Label>
               <div className="col-span-3">
                 <Input
@@ -480,12 +483,12 @@ export default function ProvidersPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-category" className="text-right">
-                Category
+                {t("form.category")}
               </Label>
               <div className="col-span-3">
                 <Select value={formData.category_id} onValueChange={(v) => setFormData({ ...formData, category_id: v })}>
                   <SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder={t("form.selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
@@ -497,7 +500,7 @@ export default function ProvidersPage() {
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Logo</Label>
+              <Label className="text-right">{t("form.logo")}</Label>
               <div className="col-span-3">
                 <Input
                   type="file"
@@ -509,14 +512,14 @@ export default function ProvidersPage() {
                   }}
                 />
                 {logoPreview && (
-                  <img src={logoPreview} alt="Preview" className="mt-2 h-12 w-12 object-contain rounded border" />
+                  <img src={logoPreview} alt={t("form.preview")} className="mt-2 h-12 w-12 object-contain rounded border" />
                 )}
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button onClick={confirmEdit} disabled={isLoading}>
-              { isLoading ? "Saving Changes..." : "Save Changes" }
+              { isLoading ? t("editDialog.saving") : t("editDialog.saveChanges") }
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -526,16 +529,15 @@ export default function ProvidersPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Provider</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {providerToDelete?.name}? This action
-              cannot be undone.
+              {t("deleteDialog.description", { name: providerToDelete?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
-              { isLoading ? "Deleting..." : "Delete" }
+              { isLoading ? t("deleteDialog.deleting") : t("deleteDialog.delete") }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

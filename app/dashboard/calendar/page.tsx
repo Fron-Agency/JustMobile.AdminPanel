@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { Calendar, dateFnsLocalizer, Views, type View } from "react-big-calendar"
 import { format, parse, startOfWeek, getDay } from "date-fns"
-import { enUS } from "date-fns/locale"
+import { enUS, de } from "date-fns/locale"
+import { useLocale, useTranslations } from "next-intl"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import "./calendar-theme.css"
 import {
@@ -18,27 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Candidates, CandidateStatus } from "@/app/api/modules/candidates/candidates.types"
 
-const locales = { "en-US": enUS }
-
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-  getDay,
-  locales,
-})
-
-// Force 24-hour time everywhere in the calendar (gutter, event labels,
-// agenda view) instead of date-fns' default 12-hour AM/PM formatting.
-const calendarFormats = {
-  timeGutterFormat: (date: Date) => format(date, "HH:mm"),
-  eventTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
-    `${format(start, "HH:mm")} – ${format(end, "HH:mm")}`,
-  agendaTimeFormat: (date: Date) => format(date, "HH:mm"),
-  agendaTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
-    `${format(start, "HH:mm")} – ${format(end, "HH:mm")}`,
-  dayHeaderFormat: (date: Date) => format(date, "EEEE dd/MM"),
-}
+const locales = { en: enUS, de }
 
 const STATUS_BADGE_VARIANT: Record<CandidateStatus, "default" | "secondary" | "destructive" | "outline"> = {
   new: "secondary",
@@ -56,6 +37,38 @@ interface InterviewEvent {
 }
 
 export default function CalendarPage() {
+  const t = useTranslations("Calendar")
+  const tStatus = useTranslations("Candidates.status")
+  const locale = useLocale()
+  const dateFnsLocale = locale === "de" ? de : enUS
+
+  const localizer = useMemo(
+    () =>
+      dateFnsLocalizer({
+        format,
+        parse,
+        startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
+        getDay,
+        locales,
+      }),
+    []
+  )
+
+  // Force 24-hour time everywhere in the calendar (gutter, event labels,
+  // agenda view) instead of date-fns' default 12-hour AM/PM formatting.
+  const calendarFormats = useMemo(
+    () => ({
+      timeGutterFormat: (date: Date) => format(date, "HH:mm"),
+      eventTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
+        `${format(start, "HH:mm")} – ${format(end, "HH:mm")}`,
+      agendaTimeFormat: (date: Date) => format(date, "HH:mm"),
+      agendaTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
+        `${format(start, "HH:mm")} – ${format(end, "HH:mm")}`,
+      dayHeaderFormat: (date: Date) => format(date, "EEEE dd/MM", { locale: dateFnsLocale }),
+    }),
+    [dateFnsLocale]
+  )
+
   const [candidates, setCandidates] = useState<Candidates[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [view, setView] = useState<View>(Views.WEEK)
@@ -89,20 +102,21 @@ export default function CalendarPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Interview Calendar</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">
-          All scheduled candidate interviews across Optimus Marketing.
+          {t("description")}
         </p>
       </div>
 
       <div className="rounded-lg border border-border bg-card p-4" style={{ height: "75vh" }}>
         {isLoading ? (
           <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            Loading schedule…
+            {t("loadingSchedule")}
           </div>
         ) : (
           <Calendar
             localizer={localizer}
+            culture={locale}
             events={events}
             formats={calendarFormats}
             view={view}
@@ -124,29 +138,29 @@ export default function CalendarPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{selected?.candidate.firstname} {selected?.candidate.lastname}</DialogTitle>
-            <DialogDescription>Scheduled interview details.</DialogDescription>
+            <DialogDescription>{t("eventDialog.description")}</DialogDescription>
           </DialogHeader>
           {selected && (
             <div className="grid gap-3 py-2 text-sm">
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">When</span>
+                <span className="text-muted-foreground">{t("eventDialog.when")}</span>
                 <span className="col-span-2">
                   {format(selected.start, "dd/MM/yyyy HH:mm")}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Email</span>
+                <span className="text-muted-foreground">{t("eventDialog.email")}</span>
                 <span className="col-span-2">{selected.candidate.email}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <span className="text-muted-foreground">Phone</span>
+                <span className="text-muted-foreground">{t("eventDialog.phone")}</span>
                 <span className="col-span-2">{selected.candidate.phone_number}</span>
               </div>
               <div className="grid grid-cols-3 gap-2 items-center">
-                <span className="text-muted-foreground">Status</span>
+                <span className="text-muted-foreground">{t("eventDialog.status")}</span>
                 <div className="col-span-2">
                   <Badge variant={STATUS_BADGE_VARIANT[selected.candidate.status]}>
-                    {selected.candidate.status}
+                    {tStatus(selected.candidate.status)}
                   </Badge>
                 </div>
               </div>
@@ -154,11 +168,11 @@ export default function CalendarPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelected(null)}>
-              Close
+              {t("eventDialog.close")}
             </Button>
             {selected && (
               <Button asChild>
-                <a href={`/dashboard/candidates`}>Go to candidates</a>
+                <a href={`/dashboard/candidates`}>{t("eventDialog.goToCandidates")}</a>
               </Button>
             )}
           </DialogFooter>

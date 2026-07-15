@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
@@ -25,11 +26,11 @@ import type {
 } from "@/app/api/modules/plans_home/plans_home.type"
 import { Plus, Trash2 } from "lucide-react"
 
-const LANGUAGES: { code: PlanHomeLanguage; label: string }[] = [
-  { code: "en", label: "🇬🇧 English" },
-  { code: "de", label: "🇩🇪 German" },
-  { code: "fr", label: "🇫🇷 French" },
-  { code: "it", label: "🇮🇹 Italian" },
+const LANGUAGES: { code: PlanHomeLanguage; flag: string }[] = [
+  { code: "en", flag: "🇬🇧" },
+  { code: "de", flag: "🇩🇪" },
+  { code: "fr", flag: "🇫🇷" },
+  { code: "it", flag: "🇮🇹" },
 ]
 
 const emptyBlock = (): PlanHomeJsonBlock => ({ title: "", features: [] })
@@ -92,14 +93,18 @@ function getContentFeatureCount(block: PlanHomeContentBlock | null) {
   return Math.max(...LANGUAGES.map(({ code }) => block[code]?.features.length ?? 0), 0)
 }
 
+type PlansHomeT = ReturnType<typeof useTranslations<"PlansHome">>
+
 function LanguageBlockEditor({
   label,
   value,
   onChange,
+  t,
 }: {
   label: string
   value: PlanHomeJsonBlock
   onChange: (v: PlanHomeJsonBlock) => void
+  t: PlansHomeT
 }) {
   const addFeature = () =>
     onChange({ ...value, features: [...value.features, { label: "", value: "" }] })
@@ -116,11 +121,11 @@ function LanguageBlockEditor({
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <Label className="text-xs">Section Title</Label>
+        <Label className="text-xs">{t("form.sectionTitle")}</Label>
         <Input
           value={value.title}
           onChange={(e) => onChange({ ...value, title: e.target.value })}
-          placeholder={`e.g. ${label}`}
+          placeholder={t("form.sectionTitlePlaceholder", { label })}
           className="mt-1 h-8 text-xs"
         />
       </div>
@@ -130,14 +135,14 @@ function LanguageBlockEditor({
             <Input
               value={f.label}
               onChange={(e) => updateFeature(i, "label", e.target.value)}
-              placeholder="Label"
+              placeholder={t("form.label")}
               className="h-8 text-xs"
             />
             <div className="flex gap-1 items-center">
               <Input
                 value={f.value}
                 onChange={(e) => updateFeature(i, "value", e.target.value)}
-                placeholder="Value"
+                placeholder={t("form.value")}
                 className="h-8 text-xs flex-1"
               />
               <button
@@ -152,7 +157,7 @@ function LanguageBlockEditor({
         ))}
         <Button type="button" variant="outline" size="sm" onClick={addFeature} className="gap-1 h-7 text-xs w-full">
           <Plus className="w-3 h-3" />
-          Add feature
+          {t("form.addFeature")}
         </Button>
       </div>
     </div>
@@ -163,10 +168,12 @@ function LocalizedJsonBlockEditor({
   label,
   value,
   onChange,
+  t,
 }: {
   label: string
   value: LocalizedBlockForm
   onChange: (v: LocalizedBlockForm) => void
+  t: PlansHomeT
 }) {
   const updateLanguage = (code: PlanHomeLanguage, block: PlanHomeJsonBlock) =>
     onChange({ ...value, [code]: block })
@@ -175,13 +182,14 @@ function LocalizedJsonBlockEditor({
     <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
       <div className="grid grid-cols-4 gap-3">
-        {LANGUAGES.map(({ code, label: langLabel }) => (
+        {LANGUAGES.map(({ code, flag }) => (
           <div key={code} className="border rounded-md p-2 bg-background">
-            <p className="text-xs font-medium mb-2">{langLabel}</p>
+            <p className="text-xs font-medium mb-2">{flag} {t(`form.languages.${code}`)}</p>
             <LanguageBlockEditor
               label={label}
               value={value[code]}
               onChange={(block) => updateLanguage(code, block)}
+              t={t}
             />
           </div>
         ))}
@@ -191,6 +199,8 @@ function LocalizedJsonBlockEditor({
 }
 
 export default function PlansHomePage() {
+  const t = useTranslations("PlansHome")
+
   const [plans, setPlans] = useState<PlanHomeWithProvider[]>([])
   const [providers, setProviders] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -212,7 +222,7 @@ export default function PlansHomePage() {
         return r.json()
       })
       .then(setPlans)
-      .catch((e) => setFeedback({ tone: "destructive", title: "Failed to load plans", description: e.message }))
+      .catch((e) => setFeedback({ tone: "destructive", title: t("failedToLoadPlans"), description: e.message }))
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -224,9 +234,9 @@ export default function PlansHomePage() {
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!formData.name.trim()) e.name = "Name is required"
-    if (!formData.provider_id) e.provider_id = "Provider is required"
-    if (formData.price <= 0) e.price = "Price must be greater than 0"
+    if (!formData.name.trim()) e.name = t("nameRequired")
+    if (!formData.provider_id) e.provider_id = t("providerRequired")
+    if (formData.price <= 0) e.price = t("priceGreaterThanZero")
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -261,12 +271,12 @@ export default function PlansHomePage() {
         body: JSON.stringify(buildPayload()),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message ?? "Failed to create plan")
+      if (!res.ok) throw new Error(data.message ?? t("failedToCreatePlan"))
       setPlans((prev) => [data, ...prev])
       setIsAddDialogOpen(false)
-      setFeedback({ tone: "success", title: "Plan created", description: data.name })
+      setFeedback({ tone: "success", title: t("planCreated"), description: data.name })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Failed to create plan", description: e instanceof Error ? e.message : undefined })
+      setFeedback({ tone: "destructive", title: t("failedToCreatePlan"), description: e instanceof Error ? e.message : undefined })
     } finally {
       setIsLoading(false)
     }
@@ -301,12 +311,12 @@ export default function PlansHomePage() {
         body: JSON.stringify(buildPayload()),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message ?? "Failed to update plan")
+      if (!res.ok) throw new Error(data.message ?? t("failedToUpdatePlan"))
       setPlans((prev) => prev.map((p) => (p.id === data.id ? data : p)))
       setIsEditDialogOpen(false)
-      setFeedback({ tone: "success", title: "Plan updated", description: data.name })
+      setFeedback({ tone: "success", title: t("planUpdated"), description: data.name })
     } catch (e) {
-      setFeedback({ tone: "destructive", title: "Failed to update plan", description: e instanceof Error ? e.message : undefined })
+      setFeedback({ tone: "destructive", title: t("failedToUpdatePlan"), description: e instanceof Error ? e.message : undefined })
     } finally {
       setIsLoading(false)
     }
@@ -324,9 +334,9 @@ export default function PlansHomePage() {
       await fetch(`/api/plans_home/${planToDelete.id}`, { method: "DELETE" })
       setPlans((prev) => prev.filter((p) => p.id !== planToDelete.id))
       setIsDeleteDialogOpen(false)
-      setFeedback({ tone: "success", title: "Plan deleted", description: planToDelete.name })
+      setFeedback({ tone: "success", title: t("planDeleted"), description: planToDelete.name })
     } catch {
-      setFeedback({ tone: "destructive", title: "Failed to delete plan" })
+      setFeedback({ tone: "destructive", title: t("failedToDeletePlan") })
     } finally {
       setIsLoading(false)
     }
@@ -335,75 +345,75 @@ export default function PlansHomePage() {
   const columns: Column<PlanHomeWithProvider>[] = [
     {
       key: "name",
-      label: "Name",
+      label: t("columns.name"),
       render: (v) => <span className="font-medium text-foreground">{v}</span>,
     },
     {
       key: "provider_name",
-      label: "Provider",
+      label: t("columns.provider"),
       render: (v) => <span className="text-muted-foreground text-sm">{v ?? "—"}</span>,
     },
     {
       key: "price",
-      label: "Price",
+      label: t("columns.price"),
       render: (v) => <span className="text-muted-foreground text-sm">CHF {v}/mo</span>,
     },
     {
       key: "discount_price",
-      label: "Discounted",
+      label: t("columns.discounted"),
       render: (v) => v != null
         ? <span className="text-green-600 text-sm">CHF {v}/mo</span>
         : <span className="text-muted-foreground text-sm">—</span>,
     },
     {
       key: "without_mobile_price",
-      label: "Without Mobile",
+      label: t("columns.withoutMobile"),
       render: (v) => v != null
         ? <span className="text-muted-foreground text-sm">CHF {v}/mo</span>
         : <span className="text-muted-foreground text-sm">—</span>,
     },
     {
       key: "contract_duration",
-      label: "Contract",
-      render: (v) => <span className="text-muted-foreground text-sm">{v ?? "—"}</span>,
+      label: t("columns.contract"),
+      render: (v) => <span className="text-muted-foreground text-sm">{v ?? "—"}/mo</span>,
     },
     {
       key: "internet_content",
-      label: "Internet",
+      label: t("columns.internet"),
       render: (v: PlanHomeWithProvider["internet_content"]) => {
         const count = getContentFeatureCount(v)
         return count > 0
-          ? <span className="text-muted-foreground text-sm">{count} feature{count !== 1 ? "s" : ""}</span>
+          ? <span className="text-muted-foreground text-sm">{t("featuresCount", { count })}</span>
           : <span className="text-muted-foreground text-sm">—</span>
       },
     },
     {
       key: "tv",
-      label: "TV",
+      label: t("columns.tv"),
       render: (v: PlanHomeWithProvider["tv"]) => {
         const count = getContentFeatureCount(v)
         return count > 0
-          ? <span className="text-muted-foreground text-sm">{count} feature{count !== 1 ? "s" : ""}</span>
+          ? <span className="text-muted-foreground text-sm">{t("featuresCount", { count })}</span>
           : <span className="text-muted-foreground text-sm">—</span>
       },
     },
     {
       key: "telephony",
-      label: "Telephony",
+      label: t("columns.telephony"),
       render: (v: PlanHomeWithProvider["telephony"]) => {
         const count = getContentFeatureCount(v)
         return count > 0
-          ? <span className="text-muted-foreground text-sm">{count} feature{count !== 1 ? "s" : ""}</span>
+          ? <span className="text-muted-foreground text-sm">{t("featuresCount", { count })}</span>
           : <span className="text-muted-foreground text-sm">—</span>
       },
     },
     {
       key: "other",
-      label: "Other",
+      label: t("columns.other"),
       render: (v: PlanHomeWithProvider["other"]) => {
         const count = getContentFeatureCount(v)
         return count > 0
-          ? <span className="text-muted-foreground text-sm">{count} feature{count !== 1 ? "s" : ""}</span>
+          ? <span className="text-muted-foreground text-sm">{t("featuresCount", { count })}</span>
           : <span className="text-muted-foreground text-sm">—</span>
       },
     }
@@ -413,7 +423,7 @@ export default function PlansHomePage() {
     <div className="flex flex-col gap-6 py-2 max-h-[65vh] overflow-y-auto pr-1">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <Label>Name</Label>
+          <Label>{t("form.name")}</Label>
           <Input
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -423,10 +433,10 @@ export default function PlansHomePage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Provider</Label>
+          <Label>{t("form.provider")}</Label>
           <Select value={formData.provider_id} onValueChange={(v) => setFormData({ ...formData, provider_id: v })}>
             <SelectTrigger className={errors.provider_id ? "border-red-500" : ""}>
-              <SelectValue placeholder="Select provider" />
+              <SelectValue placeholder={t("form.selectProvider")} />
             </SelectTrigger>
             <SelectContent>
               {providers.map((p) => (
@@ -440,7 +450,7 @@ export default function PlansHomePage() {
 
       <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-1">
-          <Label>Price (CHF)</Label>
+          <Label>{t("form.priceChf")}</Label>
           <Input
             type="number"
             value={formData.price}
@@ -451,7 +461,7 @@ export default function PlansHomePage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Discounted Price <span className="text-muted-foreground font-normal">(optional)</span></Label>
+          <Label>{t("form.discountedPrice")} <span className="text-muted-foreground font-normal">{t("form.optional")}</span></Label>
           <Input
             type="number"
             placeholder="—"
@@ -461,7 +471,7 @@ export default function PlansHomePage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Without Mobile Price <span className="text-muted-foreground font-normal">(optional)</span></Label>
+          <Label>{t("form.withoutMobilePrice")} <span className="text-muted-foreground font-normal">{t("form.optional")}</span></Label>
           <Input
             type="number"
             placeholder="—"
@@ -472,35 +482,39 @@ export default function PlansHomePage() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label>Contract Duration <span className="text-muted-foreground font-normal">(optional)</span></Label>
+        <Label>{t("form.contractDuration")} <span className="text-muted-foreground font-normal">{t("form.optional")}</span></Label>
         <Input
-          placeholder="e.g. 24 months"
+          placeholder={t("form.contractDurationPlaceholder")}
           value={formData.contract_duration ?? ""}
           onChange={(e) => setFormData({ ...formData, contract_duration: e.target.value })}
         />
       </div>
 
       <div className="flex flex-col gap-3 mt-1">
-        <p className="text-sm font-medium text-foreground">Content Sections</p>
+        <p className="text-sm font-medium text-foreground">{t("form.contentSections")}</p>
         <LocalizedJsonBlockEditor
-          label="Internet"
+          label={t("form.internet")}
           value={formData.internet_content}
           onChange={(v) => setFormData({ ...formData, internet_content: v })}
+          t={t}
         />
         <LocalizedJsonBlockEditor
-          label="TV"
+          label={t("form.tv")}
           value={formData.tv}
           onChange={(v) => setFormData({ ...formData, tv: v })}
+          t={t}
         />
         <LocalizedJsonBlockEditor
-          label="Telephony"
+          label={t("form.telephony")}
           value={formData.telephony}
           onChange={(v) => setFormData({ ...formData, telephony: v })}
+          t={t}
         />
         <LocalizedJsonBlockEditor
-          label="Other"
+          label={t("form.other")}
           value={formData.other}
           onChange={(v) => setFormData({ ...formData, other: v })}
+          t={t}
         />
       </div>
     </div>
@@ -522,26 +536,26 @@ export default function PlansHomePage() {
       <DataTable
         data={plans}
         columns={columns}
-        title="Home Plans"
-        searchPlaceholder="Search plans..."
+        title={t("table.title")}
+        searchPlaceholder={t("table.searchPlaceholder")}
         searchFields={["name", "provider_name"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
         isLoading={isLoading}
-        addButtonText="Add Home Plan"
+        addButtonText={t("table.addButton")}
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="w-[95vw] sm:max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Add Home Plan</DialogTitle>
-            <DialogDescription>Create a new home internet / TV / telephony plan.</DialogDescription>
+            <DialogTitle>{t("addDialog.title")}</DialogTitle>
+            <DialogDescription>{t("addDialog.description")}</DialogDescription>
           </DialogHeader>
           {formFields}
           <DialogFooter>
             <Button onClick={confirmAdd} disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Plan"}
+              {isLoading ? t("addDialog.adding") : t("addDialog.addPlan")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -550,13 +564,13 @@ export default function PlansHomePage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="w-[95vw] sm:max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Edit Home Plan</DialogTitle>
-            <DialogDescription>Update plan details and content sections.</DialogDescription>
+            <DialogTitle>{t("editDialog.title")}</DialogTitle>
+            <DialogDescription>{t("editDialog.description")}</DialogDescription>
           </DialogHeader>
           {formFields}
           <DialogFooter>
             <Button onClick={confirmEdit} disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
+              {isLoading ? t("editDialog.saving") : t("editDialog.saveChanges")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -565,15 +579,18 @@ export default function PlansHomePage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Home Plan</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{planToDelete?.name}</strong>? This cannot be undone.
+              {t.rich("deleteDialog.description", {
+                name: planToDelete?.name ?? "",
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={isLoading}>
-              {isLoading ? "Deleting..." : "Delete"}
+              {isLoading ? t("deleteDialog.deleting") : t("deleteDialog.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
