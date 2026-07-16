@@ -1,38 +1,24 @@
 "use client"
 
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, Wifi } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { createClient } from "@/utils/supabase/client"
 
 function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const token = searchParams.get("token")
 
-  const [status, setStatus] = useState<"verifying" | "ready" | "invalid">("verifying")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-
-  useEffect(() => {
-    const code = searchParams.get("code")
-    if (!code) {
-      setStatus("invalid")
-      return
-    }
-
-    const supabase = createClient()
-    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-      setStatus(error ? "invalid" : "ready")
-    })
-  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,13 +35,17 @@ function ResetPasswordForm() {
 
     setIsLoading(true)
 
-    const supabase = createClient()
-    const { error: updateError } = await supabase.auth.updateUser({ password })
+    const res = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, newPassword: password }),
+    })
 
     setIsLoading(false)
 
-    if (updateError) {
-      setError(updateError.message)
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.message ?? "Something went wrong")
       return
     }
 
@@ -81,23 +71,19 @@ function ResetPasswordForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {status === "verifying" && (
-              <p className="text-sm text-muted-foreground">Verifying reset link...</p>
-            )}
-
-            {status === "invalid" && (
+            {!token && (
               <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-                This reset link is invalid or has expired. Please request a new one from the login page.
+                This reset link is invalid. Please request a new one from the login page.
               </div>
             )}
 
-            {status === "ready" && success && (
+            {token && success && (
               <div className="rounded-md bg-primary/10 border border-primary/20 px-4 py-3 text-sm text-foreground">
                 Password updated. Redirecting to login...
               </div>
             )}
 
-            {status === "ready" && !success && (
+            {token && !success && (
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                 {error && (
                   <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
