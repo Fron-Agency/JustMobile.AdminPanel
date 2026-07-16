@@ -236,6 +236,7 @@ export default function CandidatesPage() {
   const [isSavingInterviewDate, setIsSavingInterviewDate] = useState(false)
   const [languageFilter, setLanguageFilter] = useState<string>(ALL_LANGUAGES_VALUE)
   const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES_VALUE)
+  const [favoriteFilter, setFavoriteFilter] = useState(false)
   const [feedback, setFeedback] = useState<{
     tone: FeedbackAlertTone
     title: string
@@ -494,10 +495,14 @@ export default function CandidatesPage() {
   )
   const totalCount = languageFilteredCandidates.length
 
-  const filteredCandidates =
+  const statusFilteredCandidates =
     statusFilter === ALL_STATUSES_VALUE
       ? languageFilteredCandidates
       : languageFilteredCandidates.filter((c) => c.status === statusFilter)
+
+  const filteredCandidates = favoriteFilter
+    ? statusFilteredCandidates.filter((c) => c.is_favorite)
+    : statusFilteredCandidates
 
   const columns: Column<Candidates>[] = useMemo(() => [
     {
@@ -665,6 +670,16 @@ export default function CandidatesPage() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant={favoriteFilter ? "default" : "outline"}
+            size="sm"
+            className="gap-2"
+            onClick={() => setFavoriteFilter((prev) => !prev)}
+          >
+            <Star className={`w-4 h-4 ${favoriteFilter ? "fill-current" : ""}`} />
+            {t("favoritesOnly")}
+          </Button>
         </div>
         <Button variant="outline" size="sm" className="gap-2" onClick={openImportDialog}>
           <Upload className="w-4 h-4" />

@@ -773,6 +773,7 @@
     "all": "All",
     "language": "Language",
     "allLanguages": "All languages",
+    "favoritesOnly": "Favorites only",
     "importCsv": "Import CSV",
     "table": {
       "title": "Candidates",
