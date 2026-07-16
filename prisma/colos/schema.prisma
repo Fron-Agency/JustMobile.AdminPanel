@@ -27,9 +27,22 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sessions UserSession[]
+  sessions     UserSession[]
+  resetTokens  PasswordResetToken[]
 
   @@map("colos_users")
+}
+
+model PasswordResetToken {
+  token     String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("colos_password_reset_tokens")
 }
 
 model UserSession {
