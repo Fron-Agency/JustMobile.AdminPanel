@@ -773,6 +773,8 @@
     "all": "All",
     "language": "Language",
     "allLanguages": "All languages",
+    "month": "Month",
+    "allMonths": "All months",
     "favoritesOnly": "Favorites only",
     "importCsv": "Import CSV",
     "table": {

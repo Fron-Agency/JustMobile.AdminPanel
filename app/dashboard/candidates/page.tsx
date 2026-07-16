@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -44,6 +44,22 @@ import { parseOptimusCandidatesCsv, type ImportParseResult } from "./csv-import"
 const STATUS_OPTIONS: CandidateStatus[] = [...CANDIDATE_STATUSES]
 const ALL_LANGUAGES_VALUE = "all"
 const ALL_STATUSES_VALUE = "all"
+const ALL_MONTHS_VALUE = "all"
+
+// "YYYY-MM" for the calendar month a `created_at` (date column) falls in.
+function monthKeyOf(value: string): string {
+  return value.slice(0, 7)
+}
+
+function currentMonthKey(): string {
+  return monthKeyOf(new Date().toISOString())
+}
+
+// "2026-07" -> "July 2026" (localized)
+function formatMonthLabel(monthKey: string, locale: string): string {
+  const [year, month] = monthKey.split("-").map(Number)
+  return new Date(year, month - 1, 1).toLocaleDateString(locale, { month: "long", year: "numeric" })
+}
 
 // Short 2-letter code for compact table badges, e.g. "DE C1".
 const LANGUAGE_CODES: Record<CandidateLanguage, string> = {
@@ -220,6 +236,7 @@ function LanguageBadges({ languages }: { languages: Partial<Record<CandidateLang
 
 export default function CandidatesPage() {
   const t = useTranslations("Candidates")
+  const locale = useLocale()
 
   const [candidates, setCandidates] = useState<Candidates[]>([])
   const [viewing, setViewing] = useState<Candidates | null>(null)
@@ -237,6 +254,7 @@ export default function CandidatesPage() {
   const [languageFilter, setLanguageFilter] = useState<string>(ALL_LANGUAGES_VALUE)
   const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES_VALUE)
   const [favoriteFilter, setFavoriteFilter] = useState(false)
+  const [monthFilter, setMonthFilter] = useState<string>(currentMonthKey())
   const [feedback, setFeedback] = useState<{
     tone: FeedbackAlertTone
     title: string
@@ -481,10 +499,21 @@ export default function CandidatesPage() {
     }
   }
 
+  const monthOptions = useMemo(() => {
+    const keys = new Set(candidates.map((c) => monthKeyOf(c.created_at)))
+    keys.add(currentMonthKey())
+    return Array.from(keys).sort().reverse()
+  }, [candidates])
+
+  const monthFilteredCandidates =
+    monthFilter === ALL_MONTHS_VALUE
+      ? candidates
+      : candidates.filter((c) => monthKeyOf(c.created_at) === monthFilter)
+
   const languageFilteredCandidates =
     languageFilter === ALL_LANGUAGES_VALUE
-      ? candidates
-      : candidates.filter((c) => Boolean(c.languages?.[languageFilter as CandidateLanguage]))
+      ? monthFilteredCandidates
+      : monthFilteredCandidates.filter((c) => Boolean(c.languages?.[languageFilter as CandidateLanguage]))
 
   const statusCounts = STATUS_OPTIONS.reduce(
     (acc, status) => {
@@ -656,6 +685,20 @@ export default function CandidatesPage() {
       </div>
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{t("month")}</span>
+          <Select value={monthFilter} onValueChange={setMonthFilter}>
+            <SelectTrigger size="sm" className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_MONTHS_VALUE}>{t("allMonths")}</SelectItem>
+              {monthOptions.map((month) => (
+                <SelectItem key={month} value={month}>
+                  {formatMonthLabel(month, locale)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <span className="text-sm text-muted-foreground">{t("language")}</span>
           <Select value={languageFilter} onValueChange={setLanguageFilter}>
             <SelectTrigger size="sm" className="w-[180px]">
