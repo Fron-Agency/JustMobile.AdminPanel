@@ -17,16 +17,10 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import type { Candidates, CandidateStatus } from "@/app/api/modules/candidates/candidates.types"
+import type { Candidates } from "@/app/api/modules/candidates/candidates.types"
+import { CANDIDATE_STATUS_COLORS } from "@/app/api/modules/candidates/candidates.types"
 
 const locales = { en: enUS, de }
-
-const STATUS_BADGE_VARIANT: Record<CandidateStatus, "default" | "secondary" | "destructive" | "outline"> = {
-  new: "secondary",
-  reviewed: "outline",
-  accepted: "default",
-  rejected: "destructive",
-}
 
 interface InterviewEvent {
   id: string
@@ -159,7 +153,7 @@ export default function CalendarPage() {
               <div className="grid grid-cols-3 gap-2 items-center">
                 <span className="text-muted-foreground">{t("eventDialog.status")}</span>
                 <div className="col-span-2">
-                  <Badge variant={STATUS_BADGE_VARIANT[selected.candidate.status]}>
+                  <Badge variant="outline" className={CANDIDATE_STATUS_COLORS[selected.candidate.status]}>
                     {tStatus(selected.candidate.status)}
                   </Badge>
                 </div>

@@ -717,9 +717,18 @@
   "Candidates": {
     "status": {
       "new": "Neu",
-      "reviewed": "In Prüfung",
+      "initialContact": "Erstkontakt",
+      "phoneInterviewScheduled": "Telefoninterview geplant",
+      "phoneInterviewConducted": "Telefoninterview durchgeführt",
+      "inPersonInterviewScheduled": "Persönliches Interview geplant",
+      "inPersonInterviewConducted": "Persönliches Interview durchgeführt",
+      "trialShiftScheduled": "Probearbeiten geplant",
+      "trialShiftCompleted": "Probearbeiten abgeschlossen",
+      "offerSent": "Angebot versendet",
       "accepted": "Angenommen",
-      "rejected": "Abgelehnt"
+      "rejected": "Abgelehnt",
+      "noResponse": "Keine Rückmeldung",
+      "talentPool": "Talent Pool"
     },
     "languages": {
       "german": "Deutsch",
@@ -731,6 +740,7 @@
       "english": "Englisch"
     },
     "columns": {
+      "favorite": "Favorit",
       "name": "Vorname",
       "email": "E-Mail",
       "phone": "Telefon",
@@ -744,6 +754,9 @@
       "applied": "Beworben",
       "interview": "Vorstellungsgespräch"
     },
+    "markFavorite": "Als Favorit markieren",
+    "unmarkFavorite": "Aus Favoriten entfernen",
+    "couldNotUpdateFavorite": "Favorit konnte nicht aktualisiert werden",
     "couldNotUpdateStatus": "Status konnte nicht aktualisiert werden",
     "requestFailed": "Anfrage fehlgeschlagen",
     "statusUpdated": "Status aktualisiert",

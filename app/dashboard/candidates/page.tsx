@@ -36,21 +36,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { Upload, CalendarIcon } from "lucide-react"
+import { Upload, CalendarIcon, Star } from "lucide-react"
 import type { Candidates, CandidateStatus, CandidateLanguage, CefrLevel } from "@/app/api/modules/candidates/candidates.types"
-import { CANDIDATE_LANGUAGES } from "@/app/api/modules/candidates/candidates.types"
+import { CANDIDATE_LANGUAGES, CANDIDATE_STATUSES, CANDIDATE_STATUS_COLORS } from "@/app/api/modules/candidates/candidates.types"
 import { parseOptimusCandidatesCsv, type ImportParseResult } from "./csv-import"
 
-const STATUS_OPTIONS: CandidateStatus[] = ["new", "reviewed", "accepted", "rejected"]
+const STATUS_OPTIONS: CandidateStatus[] = [...CANDIDATE_STATUSES]
 const ALL_LANGUAGES_VALUE = "all"
 const ALL_STATUSES_VALUE = "all"
-
-const STATUS_BADGE_VARIANT: Record<CandidateStatus, "default" | "secondary" | "destructive" | "outline"> = {
-  new: "secondary",
-  reviewed: "outline",
-  accepted: "default",
-  rejected: "destructive",
-}
 
 // Short 2-letter code for compact table badges, e.g. "DE C1".
 const LANGUAGE_CODES: Record<CandidateLanguage, string> = {
@@ -235,6 +228,7 @@ export default function CandidatesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null)
+  const [savingFavoriteId, setSavingFavoriteId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [notesDraft, setNotesDraft] = useState("")
   const [isSavingNotes, setIsSavingNotes] = useState(false)
@@ -305,6 +299,34 @@ export default function CandidatesPage() {
       setFeedback({ tone: "success", title: t("statusUpdated") })
     } finally {
       setSavingStatusId(null)
+    }
+  }
+
+  const handleToggleFavorite = async (candidateId: string, isFavorite: boolean) => {
+    setSavingFavoriteId(candidateId)
+
+    try {
+      const res = await fetch(`/api/candidates/${candidateId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_favorite: isFavorite }),
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        setFeedback({
+          tone: "destructive",
+          title: t("couldNotUpdateFavorite"),
+          description: text || t("requestFailed"),
+        })
+        return
+      }
+
+      const updated = await res.json()
+      setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+      setViewing((prev) => (prev?.id === updated.id ? updated : prev))
+    } finally {
+      setSavingFavoriteId(null)
     }
   }
 
@@ -479,6 +501,24 @@ export default function CandidatesPage() {
 
   const columns: Column<Candidates>[] = useMemo(() => [
     {
+      key: "is_favorite",
+      label: t("columns.favorite"),
+      render: (value: boolean | null, item) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleToggleFavorite(item.id, !value)
+          }}
+          disabled={savingFavoriteId === item.id}
+          className="text-muted-foreground hover:text-foreground disabled:opacity-50"
+          aria-label={t(value ? "unmarkFavorite" : "markFavorite")}
+        >
+          <Star className={`w-4 h-4 ${value ? "fill-yellow-400 text-yellow-400" : ""}`} />
+        </button>
+      ),
+    },
+    {
       key: "firstname",
       label: t("columns.name"),
       render: (_value, item) => (
@@ -539,7 +579,7 @@ export default function CandidatesPage() {
             disabled={savingStatusId === item.id}
           >
             <SelectTrigger size="sm" className="w-fit h-7 text-xs border-none shadow-none px-1 gap-1 bg-transparent hover:bg-muted/40">
-              <Badge variant={STATUS_BADGE_VARIANT[value]}>{t(`status.${value}`)}</Badge>
+              <Badge variant="outline" className={CANDIDATE_STATUS_COLORS[value]}>{t(`status.${value}`)}</Badge>
             </SelectTrigger>
             <SelectContent>
               {STATUS_OPTIONS.map((status) => (
@@ -568,7 +608,7 @@ export default function CandidatesPage() {
       ),
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [savingStatusId])
+  ], [savingStatusId, savingFavoriteId])
 
   return (
     <>
@@ -646,8 +686,19 @@ export default function CandidatesPage() {
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
               {viewing ? `${viewing.firstname} ${viewing.lastname}` : t("viewDialog.defaultTitle")}
+              {viewing && (
+                <button
+                  type="button"
+                  onClick={() => handleToggleFavorite(viewing.id, !viewing.is_favorite)}
+                  disabled={savingFavoriteId === viewing.id}
+                  className="text-muted-foreground hover:text-foreground disabled:opacity-50"
+                  aria-label={t(viewing.is_favorite ? "unmarkFavorite" : "markFavorite")}
+                >
+                  <Star className={`w-4 h-4 ${viewing.is_favorite ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                </button>
+              )}
             </DialogTitle>
             <DialogDescription>{t("viewDialog.description")}</DialogDescription>
           </DialogHeader>

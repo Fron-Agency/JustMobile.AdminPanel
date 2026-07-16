@@ -717,9 +717,18 @@
   "Candidates": {
     "status": {
       "new": "New",
-      "reviewed": "Reviewing",
+      "initialContact": "Initial contact",
+      "phoneInterviewScheduled": "Phone interview scheduled",
+      "phoneInterviewConducted": "Phone interview conducted",
+      "inPersonInterviewScheduled": "In-person interview scheduled",
+      "inPersonInterviewConducted": "In-person interview conducted",
+      "trialShiftScheduled": "Trial shift scheduled",
+      "trialShiftCompleted": "Trial shift completed",
+      "offerSent": "Offer sent",
       "accepted": "Accepted",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "noResponse": "No response",
+      "talentPool": "Talent pool"
     },
     "languages": {
       "german": "German",
@@ -731,6 +740,7 @@
       "english": "English"
     },
     "columns": {
+      "favorite": "Favorite",
       "name": "Name",
       "email": "Email",
       "phone": "Phone",
@@ -744,6 +754,9 @@
       "applied": "Applied",
       "interview": "Interview"
     },
+    "markFavorite": "Mark as favorite",
+    "unmarkFavorite": "Remove from favorites",
+    "couldNotUpdateFavorite": "Could not update favorite",
     "couldNotUpdateStatus": "Could not update status",
     "requestFailed": "Request failed",
     "statusUpdated": "Status updated",

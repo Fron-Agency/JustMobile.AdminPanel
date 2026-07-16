@@ -1,18 +1,22 @@
 import { z } from "zod"
-import { CANDIDATE_LANGUAGES, CEFR_LEVELS } from "./candidates.types"
+import { CANDIDATE_LANGUAGES, CANDIDATE_STATUSES, CEFR_LEVELS } from "./candidates.types"
 
 export const updateCandidateSchema = z
   .object({
-    status: z.enum(["new", "reviewed", "accepted", "rejected"]).optional(),
+    status: z.enum(CANDIDATE_STATUSES).optional(),
     notes: z.string().trim().max(5000).nullable().optional(),
     // ISO timestamp (e.g. from <input type="datetime-local">), null clears it.
     interview_date: z.string().trim().min(1).nullable().optional(),
+    is_favorite: z.boolean().optional(),
   })
   .refine(
     (data) =>
-      data.status !== undefined || data.notes !== undefined || data.interview_date !== undefined,
+      data.status !== undefined ||
+      data.notes !== undefined ||
+      data.interview_date !== undefined ||
+      data.is_favorite !== undefined,
     {
-      message: "Provide at least one of status, notes, or interview_date.",
+      message: "Provide at least one of status, notes, interview_date, or is_favorite.",
     }
   )
 
@@ -46,7 +50,7 @@ export const importCandidateSchema = z.object({
   languages: z.record(z.enum(CANDIDATE_LANGUAGES), z.enum(CEFR_LEVELS)).default({}),
   previous_role: z.string().trim().max(200).default(""),
   why_us: z.string().trim().max(5000).default(""),
-  status: z.enum(["new", "reviewed", "accepted", "rejected"]).default("new"),
+  status: z.enum(CANDIDATE_STATUSES).default("new"),
   // ISO date (YYYY-MM-DD), from the CSV's Timestamp column — lets imported rows
   // show their real application date instead of the import moment. Omitted/empty
   // falls back to the DB column default (today) via CandidatesRepository.bulkInsert.
