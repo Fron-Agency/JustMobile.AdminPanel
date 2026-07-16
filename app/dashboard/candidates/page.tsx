@@ -589,7 +589,7 @@ export default function CandidatesPage() {
             <SelectContent>
               {STATUS_OPTIONS.map((status) => (
                 <SelectItem key={status} value={status}>
-                  {t(`status.${status}`)}
+                  <Badge variant="outline" className={CANDIDATE_STATUS_COLORS[status]}>{t(`status.${status}`)}</Badge>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -763,7 +763,7 @@ export default function CandidatesPage() {
                     <SelectContent>
                       {STATUS_OPTIONS.map((status) => (
                         <SelectItem key={status} value={status}>
-                          {t(`status.${status}`)}
+                          <Badge variant="outline" className={CANDIDATE_STATUS_COLORS[status]}>{t(`status.${status}`)}</Badge>
                         </SelectItem>
                       ))}
                     </SelectContent>
