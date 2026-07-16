@@ -33,6 +33,13 @@ export default function LoginPage() {
   const [changeError, setChangeError] = useState<string | null>(null)
   const [changeLoading, setChangeLoading] = useState(false)
 
+  // Forgot-password modal state
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState("")
+  const [forgotError, setForgotError] = useState<string | null>(null)
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotSent, setForgotSent] = useState(false)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -93,6 +100,35 @@ export default function LoginPage() {
     router.push("/dashboard")
   }
 
+  const openForgotPassword = () => {
+    setForgotEmail(form.email)
+    setForgotError(null)
+    setForgotSent(false)
+    setShowForgotPassword(true)
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotError(null)
+    setForgotLoading(true)
+
+    const res = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: forgotEmail }),
+    })
+
+    setForgotLoading(false)
+
+    if (!res.ok) {
+      const data = await res.json()
+      setForgotError(data.message ?? "Something went wrong")
+      return
+    }
+
+    setForgotSent(true)
+  }
+
   return (
     <>
       <div className="min-h-screen flex">
@@ -150,7 +186,16 @@ export default function LoginPage() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="password" className="text-foreground">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password" className="text-foreground">Password</Label>
+                      <button
+                        type="button"
+                        onClick={openForgotPassword}
+                        className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
                     <div className="relative">
                       <Input
                         id="password"
@@ -234,6 +279,47 @@ export default function LoginPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forgot password modal */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset your password</DialogTitle>
+            <DialogDescription>
+              Enter your email address and we&apos;ll send you a link to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          {forgotSent ? (
+            <div className="rounded-md bg-primary/10 border border-primary/20 px-4 py-3 text-sm text-foreground">
+              If an account exists for that email, a reset link is on its way.
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="flex flex-col gap-4 py-2">
+              {forgotError && (
+                <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+                  {forgotError}
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="forgot-email">Email address</Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="admin@justmobile.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <DialogFooter className="pt-2">
+                <Button type="submit" disabled={forgotLoading} className="w-full">
+                  {forgotLoading ? "Sending..." : "Send reset link"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </>
