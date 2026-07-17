@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { FileText, Eye, RotateCw, Mail, PenLine } from "lucide-react"
+import { FileText, RotateCw, PenLine } from "lucide-react"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
@@ -25,7 +25,6 @@ export default function ColosQuotesPage() {
   const [quotes, setQuotes] = useState<QuoteRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState<Record<string, boolean>>({})
-  const [emailLoading, setEmailLoading] = useState<Record<string, boolean>>({})
   const [feedback, setFeedback] = useState<{
     tone: FeedbackAlertTone
     title: string
@@ -78,35 +77,6 @@ export default function ColosQuotesPage() {
     }
   }
 
-  const handleViewPdf = (row: QuoteRow) => {
-    window.open(`/api/colos/quotes/${row.quoteId}/pdf-url`, "_blank", "noopener,noreferrer")
-  }
-
-  const handleSendEmail = async (row: QuoteRow) => {
-    setEmailLoading((prev) => ({ ...prev, [row.id]: true }))
-    try {
-      const res = await fetch("/api/colos/resend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quoteId: row.quoteId }),
-      })
-      if (!res.ok) {
-        const errorBody = await res.json().catch(() => null)
-        throw new Error(errorBody?.message || "Failed to send email")
-      }
-      setFeedback({
-        tone: "success",
-        title: "Email sent",
-        description: `The mandate PDF has been emailed to ${row.email}.`,
-      })
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Something went wrong"
-      setFeedback({ tone: "destructive", title: "Could not send email", description: message })
-    } finally {
-      setEmailLoading((prev) => ({ ...prev, [row.id]: false }))
-    }
-  }
-
   const columns: Column<QuoteRow>[] = [
     { key: "name", label: "Name", render: (value) => <span className="font-medium text-foreground">{value}</span> },
     { key: "email", label: "Email", render: (value) => <span className="text-muted-foreground text-sm">{value}</span> },
@@ -140,14 +110,8 @@ export default function ColosQuotesPage() {
           )
         }
 
-        const isSendingEmail = emailLoading[item.id]
-
         return (
           <div className="flex items-center gap-1">
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => handleViewPdf(item)}>
-              <Eye className="w-3.5 h-3.5" />
-              View
-            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -156,16 +120,6 @@ export default function ColosQuotesPage() {
             >
               <PenLine className="w-3.5 h-3.5" />
               {item.signedAt ? "Re-sign" : "Sign"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1"
-              disabled={isSendingEmail}
-              onClick={() => handleSendEmail(item)}
-            >
-              {isSendingEmail ? <Spinner className="h-3.5 w-3.5" /> : <Mail className="w-3.5 h-3.5" />}
-              Email
             </Button>
             {item.signedAt ? (
               <span className="text-xs text-muted-foreground">

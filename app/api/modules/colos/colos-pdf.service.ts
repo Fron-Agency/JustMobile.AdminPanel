@@ -3,12 +3,21 @@ import { put, get } from "@vercel/blob"
 import { ColosQuoteService } from "./colos-quotes.service"
 import { LeadPdfRepository } from "./lead-pdf.repository"
 import { ColosMandatePdf } from "./colos-pdf.template"
+import type { ColosPdfLang } from "./colos-pdf.languages"
+
+async function loadSignatureSrc(pathname: string | null | undefined) {
+  if (!pathname) return undefined
+  const result = await get(pathname, { access: "private" })
+  if (!result?.stream) return undefined
+  const arrayBuffer = await new Response(result.stream).arrayBuffer()
+  return `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`
+}
 
 export const ColosPdfService = {
-  async generateAndStore(quoteId: number) {
+  async generateAndStore(quoteId: number, lang: ColosPdfLang = "fr") {
     const quote = await ColosQuoteService.getById(quoteId)
 
-    const buffer = await renderToBuffer(ColosMandatePdf({ quote }))
+    const buffer = await renderToBuffer(ColosMandatePdf({ quote, lang }))
     const pathname = `quote-${quoteId}.pdf`
 
     await put(pathname, buffer, {
@@ -66,6 +75,18 @@ export const ColosPdfService = {
       workerSignatureUrl: workerSignaturePathname,
       signedAt: new Date(),
     })
+  },
+
+  async renderForViewing(quoteId: number, lang: ColosPdfLang) {
+    const quote = await ColosQuoteService.getById(quoteId)
+    const record = await LeadPdfRepository.findByQuoteId(quoteId)
+
+    const [clientSignatureSrc, workerSignatureSrc] = await Promise.all([
+      loadSignatureSrc(record?.clientSignatureUrl),
+      loadSignatureSrc(record?.workerSignatureUrl),
+    ])
+
+    return renderToBuffer(ColosMandatePdf({ quote, lang, clientSignatureSrc, workerSignatureSrc }))
   },
 
   async getFile(quoteId: number) {

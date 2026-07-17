@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server"
 import { ColosPdfService } from "@/app/api/modules/colos/colos-pdf.service"
+import { COLOS_PDF_LANGUAGES, type ColosPdfLang } from "@/app/api/modules/colos/colos-pdf.languages"
 import { requireColosAuth } from "@/utils/colos/require-auth"
 
+const VALID_LANGS = new Set(COLOS_PDF_LANGUAGES.map((l) => l.code))
+
+function parseLang(value: string | null): ColosPdfLang {
+  return value && VALID_LANGS.has(value as ColosPdfLang) ? (value as ColosPdfLang) : "fr"
+}
+
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireColosAuth()
@@ -11,12 +18,10 @@ export async function GET(
 
   try {
     const { id } = await params
-    const file = await ColosPdfService.getFile(Number(id))
-    if (!file) {
-      return NextResponse.json({ message: "No PDF generated yet" }, { status: 404 })
-    }
+    const lang = parseLang(new URL(req.url).searchParams.get("lang"))
+    const buffer = await ColosPdfService.renderForViewing(Number(id), lang)
 
-    return new NextResponse(file.stream as unknown as ReadableStream, {
+    return new NextResponse(buffer, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="quote-${id}.pdf"`,
