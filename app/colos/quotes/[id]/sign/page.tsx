@@ -23,6 +23,7 @@ export default function ColosSignPage({ params }: { params: Promise<{ id: string
   const [quote, setQuote] = useState<QuoteDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [wantsToResign, setWantsToResign] = useState(false)
   const [feedback, setFeedback] = useState<{
     tone: FeedbackAlertTone
     title: string
@@ -73,7 +74,11 @@ export default function ColosSignPage({ params }: { params: Promise<{ id: string
         const body = await res.json().catch(() => null)
         throw new Error(body?.message || "Failed to save signatures")
       }
-      setFeedback({ tone: "success", title: "Mandate signed", description: "Redirecting to the quotes list…" })
+      setFeedback({
+        tone: "success",
+        title: quote?.signedAt ? "Mandate re-signed" : "Mandate signed",
+        description: "Redirecting to the quotes list…",
+      })
       setTimeout(() => router.push("/colos"), 1200)
     } catch (e) {
       const message = e instanceof Error ? e.message : "Something went wrong"
@@ -102,7 +107,9 @@ export default function ColosSignPage({ params }: { params: Promise<{ id: string
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Sign mandate</h1>
+        <h1 className="text-xl font-semibold text-foreground">
+          {quote.signedAt ? "Re-sign mandate" : "Sign mandate"}
+        </h1>
         <p className="text-sm text-muted-foreground">
           {quote.name} · {quote.town} · {today}
         </p>
@@ -116,12 +123,20 @@ export default function ColosSignPage({ params }: { params: Promise<{ id: string
         />
       ) : null}
 
-      {quote.signedAt ? (
-        <FeedbackAlert
-          tone="success"
-          title="Already signed"
-          description={`This mandate was signed on ${new Date(quote.signedAt).toLocaleString()}.`}
-        />
+      {quote.signedAt && !wantsToResign ? (
+        <div className="space-y-3">
+          <FeedbackAlert
+            tone="default"
+            title="This mandate was already signed"
+            description={`Signed on ${new Date(quote.signedAt).toLocaleString()}. Do you want to update the signatures?`}
+          />
+          <div className="flex gap-2">
+            <Button onClick={() => setWantsToResign(true)}>Yes, update signatures</Button>
+            <Button variant="outline" onClick={() => router.push("/colos")}>
+              Cancel
+            </Button>
+          </div>
+        </div>
       ) : (
         <>
           <section className="space-y-2">
@@ -160,7 +175,7 @@ export default function ColosSignPage({ params }: { params: Promise<{ id: string
 
           <Button className="w-full gap-2" disabled={isSubmitting} onClick={handleSubmit}>
             {isSubmitting ? <Spinner className="h-4 w-4" /> : null}
-            Submit signatures
+            {quote.signedAt ? "Submit new signatures" : "Submit signatures"}
           </Button>
         </>
       )}

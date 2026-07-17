@@ -142,30 +142,6 @@ export default function ColosQuotesPage() {
 
         const isSendingEmail = emailLoading[item.id]
 
-        if (item.signedAt) {
-          return (
-            <div className="flex items-center gap-1">
-              <Button size="sm" variant="outline" className="gap-1" onClick={() => handleViewPdf(item)}>
-                <Eye className="w-3.5 h-3.5" />
-                View
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1"
-                disabled={isSendingEmail}
-                onClick={() => handleSendEmail(item)}
-              >
-                {isSendingEmail ? <Spinner className="h-3.5 w-3.5" /> : <Mail className="w-3.5 h-3.5" />}
-                Email
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                Signed {new Date(item.signedAt).toLocaleDateString()}
-              </span>
-            </div>
-          )
-        }
-
         return (
           <div className="flex items-center gap-1">
             <Button size="sm" variant="outline" className="gap-1" onClick={() => handleViewPdf(item)}>
@@ -179,7 +155,7 @@ export default function ColosQuotesPage() {
               onClick={() => router.push(`/colos/quotes/${item.quoteId}/sign`)}
             >
               <PenLine className="w-3.5 h-3.5" />
-              Sign
+              {item.signedAt ? "Re-sign" : "Sign"}
             </Button>
             <Button
               size="sm"
@@ -191,6 +167,11 @@ export default function ColosQuotesPage() {
               {isSendingEmail ? <Spinner className="h-3.5 w-3.5" /> : <Mail className="w-3.5 h-3.5" />}
               Email
             </Button>
+            {item.signedAt ? (
+              <span className="text-xs text-muted-foreground">
+                Signed {new Date(item.signedAt).toLocaleDateString()}
+              </span>
+            ) : null}
             <Button
               size="icon"
               variant="ghost"

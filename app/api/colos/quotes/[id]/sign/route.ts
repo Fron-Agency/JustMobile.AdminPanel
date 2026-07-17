@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { ColosPdfService } from "@/app/api/modules/colos/colos-pdf.service"
-import { LeadPdfRepository } from "@/app/api/modules/colos/lead-pdf.repository"
 import { requireColosAuth } from "@/utils/colos/require-auth"
 
 const DATA_URL_PREFIX = /^data:image\/png;base64,/
@@ -23,11 +22,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const { id } = await params
     const quoteId = Number(id)
-
-    const existing = await LeadPdfRepository.findByQuoteId(quoteId)
-    if (existing?.signedAt) {
-      return NextResponse.json({ message: "This mandate has already been signed." }, { status: 409 })
-    }
 
     const body = await req.json().catch(() => null)
     const clientSignaturePng = decodePngDataUrl(body?.clientSignature)
