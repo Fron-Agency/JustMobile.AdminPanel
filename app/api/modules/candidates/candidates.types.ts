@@ -79,6 +79,8 @@ export interface Candidates {
   /** ISO timestamp (timestamptz) of the scheduled interview, or null if unscheduled. */
   interview_date: string | null
   is_favorite: boolean | null
+  /** Google Calendar event id backing interview_date, or null if unsynced/unscheduled. */
+  google_event_id: string | null
 }
 
 export interface UpdateCandidateDto {
@@ -86,4 +88,5 @@ export interface UpdateCandidateDto {
   notes?: string | null
   interview_date?: string | null
   is_favorite?: boolean
+  google_event_id?: string | null
 }

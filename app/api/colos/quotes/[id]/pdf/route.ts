@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { ColosPdfService } from "@/app/api/modules/colos/colos-pdf.service"
+import { LeadPdfRepository } from "@/app/api/modules/colos/lead-pdf.repository"
 import { requireColosAuth } from "@/utils/colos/require-auth"
 
 export async function POST(
@@ -11,7 +12,17 @@ export async function POST(
 
   try {
     const { id } = await params
-    const record = await ColosPdfService.generateAndStore(Number(id))
+    const quoteId = Number(id)
+
+    const existing = await LeadPdfRepository.findByQuoteId(quoteId)
+    if (existing?.signedAt) {
+      return NextResponse.json(
+        { message: "This mandate has already been signed and cannot be regenerated." },
+        { status: 409 }
+      )
+    }
+
+    const record = await ColosPdfService.generateAndStore(quoteId)
     return NextResponse.json(record)
   } catch (error) {
     return NextResponse.json(

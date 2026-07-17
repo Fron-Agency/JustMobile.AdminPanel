@@ -1,6 +1,7 @@
 import { CandidatesRepository } from "./candidates.repository"
 import type { CreateCandidateInput, ImportCandidateInput, UpdateCandidateInput } from "./candidates.validation"
-import type { Candidates } from "./candidates.types"
+import type { Candidates, UpdateCandidateDto } from "./candidates.types"
+import { upsertInterviewEvent, deleteInterviewEvent } from "@/lib/google-calendar"
 
 export interface ImportCandidatesResult {
   imported: number
@@ -56,12 +57,31 @@ export const CandidatesService = {
   },
 
   async update(id: string, input: UpdateCandidateInput): Promise<Candidates> {
-    await CandidatesService.getById(id)
-    return CandidatesRepository.update(id, input)
+    const existing = await CandidatesService.getById(id)
+
+    const payload: UpdateCandidateDto = { ...input }
+
+    if (input.interview_date !== undefined && input.interview_date !== existing.interview_date) {
+      if (input.interview_date) {
+        payload.google_event_id = await upsertInterviewEvent({
+          eventId: existing.google_event_id,
+          candidateName: `${existing.firstname} ${existing.lastname}`,
+          interviewDate: input.interview_date,
+        })
+      } else if (existing.google_event_id) {
+        await deleteInterviewEvent(existing.google_event_id)
+        payload.google_event_id = null
+      }
+    }
+
+    return CandidatesRepository.update(id, payload)
   },
 
   async delete(id: string): Promise<void> {
-    await CandidatesService.getById(id)
+    const existing = await CandidatesService.getById(id)
+    if (existing.google_event_id) {
+      await deleteInterviewEvent(existing.google_event_id)
+    }
     return CandidatesRepository.delete(id)
   },
 }

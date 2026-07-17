@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { FileText, Eye, RotateCw, Mail } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { FileText, Eye, RotateCw, Mail, PenLine } from "lucide-react"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
@@ -14,11 +15,13 @@ type QuoteJson = Omit<ColosQuote, "id" | "createdAt" | "updatedAt"> & {
   updatedAt: string
   pdfUrl: string | null
   pdfGeneratedAt: string | null
+  signedAt: string | null
 }
 
 type QuoteRow = Omit<QuoteJson, "id"> & { id: string; quoteId: number }
 
 export default function ColosQuotesPage() {
+  const router = useRouter()
   const [quotes, setQuotes] = useState<QuoteRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState<Record<string, boolean>>({})
@@ -139,11 +142,34 @@ export default function ColosQuotesPage() {
 
         const isSendingEmail = emailLoading[item.id]
 
+        if (item.signedAt) {
+          return (
+            <div className="flex items-center gap-1">
+              <Button size="sm" variant="outline" className="gap-1" onClick={() => handleViewPdf(item)}>
+                <Eye className="w-3.5 h-3.5" />
+                View
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Signed {new Date(item.signedAt).toLocaleDateString()}
+              </span>
+            </div>
+          )
+        }
+
         return (
           <div className="flex items-center gap-1">
             <Button size="sm" variant="outline" className="gap-1" onClick={() => handleViewPdf(item)}>
               <Eye className="w-3.5 h-3.5" />
               View
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              onClick={() => router.push(`/colos/quotes/${item.quoteId}/sign`)}
+            >
+              <PenLine className="w-3.5 h-3.5" />
+              Sign
             </Button>
             <Button
               size="sm"

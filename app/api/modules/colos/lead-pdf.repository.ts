@@ -22,4 +22,15 @@ export const LeadPdfRepository = {
       update: { pdfUrl, pdfGeneratedAt: new Date() },
     })
   },
+
+  async upsertSigned(
+    quoteId: number,
+    data: { pdfUrl: string; clientSignatureUrl: string; workerSignatureUrl: string; signedAt: Date }
+  ): Promise<LeadPdf> {
+    return colosPrisma.leadPdf.upsert({
+      where: { quoteId },
+      create: { quoteId, ...data },
+      update: { ...data, pdfGeneratedAt: new Date() },
+    })
+  },
 }

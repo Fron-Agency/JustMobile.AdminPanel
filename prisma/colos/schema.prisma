@@ -88,5 +88,9 @@ model LeadPdf {
   pdfUrl         String
   pdfGeneratedAt DateTime @default(now())
 
+  clientSignatureUrl String?
+  workerSignatureUrl String?
+  signedAt           DateTime?
+
   @@map("colos_lead_pdfs")
 }

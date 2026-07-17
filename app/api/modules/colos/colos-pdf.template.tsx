@@ -90,6 +90,11 @@ const styles = StyleSheet.create({
     borderBottomColor: "#1a1a1a",
     paddingBottom: 2,
   },
+  signatureImage: {
+    marginTop: 12,
+    height: 40,
+    objectFit: "contain",
+  },
   table: {
     marginTop: 10,
   },
@@ -132,10 +137,20 @@ function Watermark() {
   return <Image style={styles.watermark} src={LOGO_SRC} fixed />
 }
 
-export function ColosMandatePdf({ quote }: { quote: ColosQuote }) {
+export function ColosMandatePdf({
+  quote,
+  clientSignatureSrc,
+  workerSignatureSrc,
+}: {
+  quote: ColosQuote
+  clientSignatureSrc?: string
+  workerSignatureSrc?: string
+}) {
   const address = quote.town.includes(quote.postcode)
     ? quote.town
     : [quote.postcode, quote.town].filter(Boolean).join(" ")
+
+  const signatureDate = new Date().toLocaleDateString("fr-CH")
 
   return (
     <Document>
@@ -231,13 +246,21 @@ export function ColosMandatePdf({ quote }: { quote: ColosQuote }) {
         <View style={styles.signatureBlock} wrap={false}>
           <View style={styles.signatureCol}>
             <Text>Lieu, date</Text>
-            <View style={styles.signatureLine} />
+            <Text style={styles.signatureLine}>{address}, {signatureDate}</Text>
           </View>
           <View style={styles.signatureCol}>
             <Text>Le mandant: (signature):</Text>
-            <View style={styles.signatureLine} />
+            {clientSignatureSrc ? (
+              <Image style={styles.signatureImage} src={clientSignatureSrc} />
+            ) : (
+              <View style={styles.signatureLine} />
+            )}
             <Text style={{ marginTop: 20 }}>Le mandataire; COLOS SA</Text>
-            <View style={styles.signatureLine} />
+            {workerSignatureSrc ? (
+              <Image style={styles.signatureImage} src={workerSignatureSrc} />
+            ) : (
+              <View style={styles.signatureLine} />
+            )}
           </View>
         </View>
 
