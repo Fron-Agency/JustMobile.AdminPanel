@@ -149,6 +149,16 @@ export default function ColosQuotesPage() {
                 <Eye className="w-3.5 h-3.5" />
                 View
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                disabled={isSendingEmail}
+                onClick={() => handleSendEmail(item)}
+              >
+                {isSendingEmail ? <Spinner className="h-3.5 w-3.5" /> : <Mail className="w-3.5 h-3.5" />}
+                Email
+              </Button>
               <span className="text-xs text-muted-foreground">
                 Signed {new Date(item.signedAt).toLocaleDateString()}
               </span>
