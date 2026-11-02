@@ -22,6 +22,8 @@ import {
   Check,
   Contact,
   CalendarDays,
+  TrendingUp,
+  Target,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -77,6 +79,8 @@ const navItems: NavItem[] = [
   { href: "/dashboard/quotes", labelKey: "leads", icon: FileText, platforms: ["justcompare"] },
   { href: "/dashboard/candidates", labelKey: "candidates", icon: Contact, platforms: ["optimusmarketing"] },
   { href: "/dashboard/calendar", labelKey: "calendar", icon: CalendarDays, platforms: ["optimusmarketing"] },
+  { href: "/dashboard/user_sales", labelKey: "salesAgents", icon: TrendingUp, platforms: ["optimusmarketing"] },
+  { href: "/dashboard/user_targets", labelKey: "targets", icon: Target, platforms: ["optimusmarketing"] },
 ]
 
 type SidebarNavProps = {

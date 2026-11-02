@@ -19,7 +19,9 @@
     "partners": "Partner",
     "support": "Support",
     "candidates": "Kandidaten",
-    "calendar": "Kalender"
+    "calendar": "Kalender",
+    "salesAgents": "Sales-Agenten",
+    "targets": "Ziele"
   },
   "Topbar": {
     "subtitle": "JustMobile Admin-Panel",
@@ -521,6 +523,102 @@
       "description": "Kategorieinformationen aktualisieren.",
       "saving": "Änderungen werden gespeichert...",
       "saveChanges": "Änderungen speichern"
+    }
+  },
+  "UserSales": {
+    "failedToLoad": "Sales-Agenten konnten nicht geladen werden",
+    "firstNameRequired": "Vorname ist erforderlich",
+    "lastNameRequired": "Nachname ist erforderlich",
+    "salesInvalid": "Sales muss eine Zahl ab 0 sein",
+    "failedToCreate": "Sales-Agent konnte nicht erstellt werden",
+    "agentCreated": "Sales-Agent erstellt",
+    "failedToUpdate": "Sales-Agent konnte nicht aktualisiert werden",
+    "agentUpdated": "Sales-Agent aktualisiert",
+    "agentDeleted": "Sales-Agent gelöscht",
+    "failedToDelete": "Sales-Agent konnte nicht gelöscht werden",
+    "columns": {
+      "name": "Name",
+      "sales": "Sales",
+      "createdAt": "Erstellt"
+    },
+    "form": {
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "sales": "Sales"
+    },
+    "table": {
+      "title": "Sales-Agenten",
+      "searchPlaceholder": "Agenten suchen...",
+      "addButton": "Agent hinzufügen"
+    },
+    "addDialog": {
+      "title": "Sales-Agent hinzufügen",
+      "description": "Neue Agenten starten mit 0 Sales.",
+      "adding": "Wird hinzugefügt...",
+      "add": "Agent hinzufügen"
+    },
+    "editDialog": {
+      "title": "Sales-Agent bearbeiten",
+      "description": "Name oder Sales des Agenten anpassen.",
+      "saving": "Wird gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    },
+    "deleteDialog": {
+      "title": "Sales-Agent löschen",
+      "description": "<strong>{name}</strong> löschen? Dies kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    }
+  },
+  "UserTargets": {
+    "failedToLoad": "Ziele konnten nicht geladen werden",
+    "targetInvalid": "Ziel muss eine Zahl ab 0 sein",
+    "startDateRequired": "Startdatum ist erforderlich",
+    "endBeforeStart": "Enddatum muss am oder nach dem Startdatum liegen",
+    "failedToCreate": "Ziel konnte nicht erstellt werden",
+    "targetCreated": "Ziel erstellt",
+    "failedToUpdate": "Ziel konnte nicht aktualisiert werden",
+    "targetUpdated": "Ziel aktualisiert",
+    "targetDeleted": "Ziel gelöscht",
+    "failedToDelete": "Ziel konnte nicht gelöscht werden",
+    "openEnded": "Unbefristet",
+    "columns": {
+      "name": "Name",
+      "target": "Ziel",
+      "startDate": "Startdatum",
+      "endDate": "Enddatum"
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "z. B. November 2026",
+      "target": "Ziel",
+      "startDate": "Startdatum",
+      "endDate": "Enddatum (optional)"
+    },
+    "table": {
+      "title": "Ziele",
+      "searchPlaceholder": "Ziele suchen...",
+      "addButton": "Ziel hinzufügen"
+    },
+    "addDialog": {
+      "title": "Ziel hinzufügen",
+      "description": "Ziel und Zeitraum festlegen.",
+      "adding": "Wird hinzugefügt...",
+      "add": "Ziel hinzufügen"
+    },
+    "editDialog": {
+      "title": "Ziel bearbeiten",
+      "description": "Ziel oder Zeitraum anpassen.",
+      "saving": "Wird gespeichert...",
+      "saveChanges": "Änderungen speichern"
+    },
+    "deleteDialog": {
+      "title": "Ziel löschen",
+      "description": "<strong>{name}</strong> löschen? Dies kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
     }
   },
   "Countries": {

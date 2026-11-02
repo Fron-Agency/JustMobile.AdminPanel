@@ -19,7 +19,9 @@
     "partners": "Partners",
     "support": "Support",
     "candidates": "Candidates",
-    "calendar": "Calendar"
+    "calendar": "Calendar",
+    "salesAgents": "Sales Agents",
+    "targets": "Targets"
   },
   "Topbar": {
     "subtitle": "JustMobile Admin Panel",
@@ -521,6 +523,102 @@
       "description": "Update category information.",
       "saving": "Saving Changes...",
       "saveChanges": "Save Changes"
+    }
+  },
+  "UserSales": {
+    "failedToLoad": "Failed to load sales agents",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "salesInvalid": "Sales must be a number of 0 or more",
+    "failedToCreate": "Failed to create sales agent",
+    "agentCreated": "Sales agent created",
+    "failedToUpdate": "Failed to update sales agent",
+    "agentUpdated": "Sales agent updated",
+    "agentDeleted": "Sales agent deleted",
+    "failedToDelete": "Failed to delete sales agent",
+    "columns": {
+      "name": "Name",
+      "sales": "Sales",
+      "createdAt": "Created"
+    },
+    "form": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "sales": "Sales"
+    },
+    "table": {
+      "title": "Sales Agents",
+      "searchPlaceholder": "Search agents...",
+      "addButton": "Add Agent"
+    },
+    "addDialog": {
+      "title": "Add Sales Agent",
+      "description": "New agents start with 0 sales.",
+      "adding": "Adding...",
+      "add": "Add Agent"
+    },
+    "editDialog": {
+      "title": "Edit Sales Agent",
+      "description": "Update the agent's name or sales.",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete Sales Agent",
+      "description": "Delete <strong>{name}</strong>? This cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    }
+  },
+  "UserTargets": {
+    "failedToLoad": "Failed to load targets",
+    "targetInvalid": "Target must be a number of 0 or more",
+    "startDateRequired": "Start date is required",
+    "endBeforeStart": "End date must be on or after the start date",
+    "failedToCreate": "Failed to create target",
+    "targetCreated": "Target created",
+    "failedToUpdate": "Failed to update target",
+    "targetUpdated": "Target updated",
+    "targetDeleted": "Target deleted",
+    "failedToDelete": "Failed to delete target",
+    "openEnded": "Open-ended",
+    "columns": {
+      "name": "Name",
+      "target": "Target",
+      "startDate": "Start date",
+      "endDate": "End date"
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. November 2026",
+      "target": "Target",
+      "startDate": "Start date",
+      "endDate": "End date (optional)"
+    },
+    "table": {
+      "title": "Targets",
+      "searchPlaceholder": "Search targets...",
+      "addButton": "Add Target"
+    },
+    "addDialog": {
+      "title": "Add Target",
+      "description": "Set a target and the period it applies to.",
+      "adding": "Adding...",
+      "add": "Add Target"
+    },
+    "editDialog": {
+      "title": "Edit Target",
+      "description": "Update the target or its period.",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete Target",
+      "description": "Delete <strong>{name}</strong>? This cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "delete": "Delete"
     }
   },
   "Countries": {
