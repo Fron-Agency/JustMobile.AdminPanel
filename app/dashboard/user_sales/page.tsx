@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
+import { createClient } from "@/utils/supabase/client"
 import type { UserSales } from "@/app/api/modules/user_sales/user_sales.types"
 
 const emptyForm = { first_name: "", last_name: "", sales: "0" }
@@ -23,6 +24,23 @@ type FormState = typeof emptyForm
 
 const bySalesDesc = (a: UserSales, b: UserSales) =>
   b.sales - a.sales || a.last_name.localeCompare(b.last_name)
+
+// Realtime payloads may carry `numeric` columns as strings; keep `sales` a number.
+const normalize = (row: UserSales): UserSales => ({ ...row, sales: Number(row.sales) })
+
+// Replace by id, or append. Our own save and its realtime echo both land here,
+// so whichever arrives second is a no-op instead of a duplicate row.
+const upsertById = (list: UserSales[], row: UserSales) =>
+  (list.some((a) => a.id === row.id) ? list.map((a) => (a.id === row.id ? row : a)) : [...list, row]).sort(
+    bySalesDesc
+  )
+
+const pad2 = (n: number) => String(n).padStart(2, "0")
+
+const formatDate = (timestamp: string) => {
+  const d = new Date(timestamp)
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`
+}
 
 export default function UserSalesPage() {
   const t = useTranslations("UserSales")
@@ -41,14 +59,31 @@ export default function UserSalesPage() {
   const [agentToDelete, setAgentToDelete] = useState<UserSales | null>(null)
 
   useEffect(() => {
+    const supabase = createClient()
+
     fetch("/api/user_sales")
       .then(async (r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
       })
-      .then(setAgents)
+      .then((rows: UserSales[]) => setAgents(rows.map(normalize)))
       .catch((e) => setFeedback({ tone: "destructive", title: t("failedToLoad"), description: e.message }))
       .finally(() => setIsLoading(false))
+
+    // Live updates from other admins / the database (Realtime is enabled on user_sales).
+    const channel = supabase
+      .channel("admin-user-sales")
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_sales" }, (payload) => {
+        if (payload.eventType === "DELETE") {
+          const id = (payload.old as Partial<UserSales>).id
+          if (id) setAgents((prev) => prev.filter((a) => a.id !== id))
+        } else {
+          setAgents((prev) => upsertById(prev, normalize(payload.new as UserSales)))
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   const fullName = (a: { first_name: string; last_name: string }) => `${a.first_name} ${a.last_name}`
@@ -82,7 +117,7 @@ export default function UserSalesPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message ?? t("failedToCreate"))
-      setAgents((prev) => [...prev, data].sort(bySalesDesc))
+      setAgents((prev) => upsertById(prev, normalize(data)))
       setIsAddDialogOpen(false)
       setFeedback({ tone: "success", title: t("agentCreated"), description: fullName(data) })
     } catch (e) {
@@ -114,7 +149,7 @@ export default function UserSalesPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message ?? t("failedToUpdate"))
-      setAgents((prev) => prev.map((a) => (a.id === data.id ? data : a)).sort(bySalesDesc))
+      setAgents((prev) => upsertById(prev, normalize(data)))
       setIsEditDialogOpen(false)
       setFeedback({ tone: "success", title: t("agentUpdated"), description: fullName(data) })
     } catch (e) {
@@ -160,7 +195,7 @@ export default function UserSalesPage() {
       key: "created_at",
       label: t("columns.createdAt"),
       render: (v: string) => (
-        <span className="text-muted-foreground text-sm">{new Date(v).toLocaleDateString("de-CH")}</span>
+        <span className="text-muted-foreground text-sm">{formatDate(v)}</span>
       ),
     },
   ]

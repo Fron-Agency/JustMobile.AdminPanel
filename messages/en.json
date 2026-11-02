@@ -594,7 +594,8 @@
       "namePlaceholder": "e.g. November 2026",
       "target": "Target",
       "startDate": "Start date",
-      "endDate": "End date (optional)"
+      "endDate": "End date (optional)",
+      "pickDate": "dd/mm/yyyy"
     },
     "table": {
       "title": "Targets",

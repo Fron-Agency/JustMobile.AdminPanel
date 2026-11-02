@@ -16,15 +16,90 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { createClient } from "@/utils/supabase/client"
 import type { UserTarget } from "@/app/api/modules/user_targets/user_targets.types"
+import { CalendarIcon, X } from "lucide-react"
 
 const emptyForm = { target_name: "", target: "", start_date: "", end_date: "" }
 type FormState = typeof emptyForm
 
 const byStartDateDesc = (a: UserTarget, b: UserTarget) => b.start_date.localeCompare(a.start_date)
 
-// "YYYY-MM-DD" -> "DD.MM.YYYY" without going through Date (no time-zone shift).
-const formatDate = (iso: string) => iso.split("-").reverse().join(".")
+// Realtime payloads may carry `numeric` columns as strings; keep `target` a number.
+const normalize = (row: UserTarget): UserTarget => ({ ...row, target: Number(row.target) })
+
+// Replace by id, or append. Our own save and its realtime echo both land here,
+// so whichever arrives second is a no-op instead of a duplicate row.
+const upsertById = (list: UserTarget[], row: UserTarget) =>
+  (list.some((x) => x.id === row.id) ? list.map((x) => (x.id === row.id ? row : x)) : [...list, row]).sort(
+    byStartDateDesc
+  )
+
+const pad2 = (n: number) => String(n).padStart(2, "0")
+
+// "YYYY-MM-DD" -> "DD/MM/YYYY" without going through Date (no time-zone shift).
+const formatDate = (iso: string) => {
+  const [y, m, d] = iso.split("-")
+  return `${d}/${m}/${y}`
+}
+
+const isoToLocalDate = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number)
+  return new Date(y, m - 1, d)
+}
+
+const localDateToIso = (date: Date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+
+// Always shows dd/mm/yyyy; a native <input type="date"> follows the browser locale.
+function DatePicker({
+  value,
+  onChange,
+  placeholder,
+  minDate,
+  clearable = false,
+  invalid = false,
+}: {
+  value: string
+  onChange: (next: string) => void
+  placeholder: string
+  minDate?: string
+  clearable?: boolean
+  invalid?: boolean
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className={`flex-1 justify-start font-normal text-foreground ${invalid ? "border-red-500" : ""}`}
+          >
+            <CalendarIcon className="w-4 h-4 mr-2 text-muted-foreground" />
+            {value ? formatDate(value) : <span className="text-muted-foreground">{placeholder}</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={value ? isoToLocalDate(value) : undefined}
+            defaultMonth={value ? isoToLocalDate(value) : minDate ? isoToLocalDate(minDate) : undefined}
+            onSelect={(date: Date | undefined) => date && onChange(localDateToIso(date))}
+            disabled={minDate ? { before: isoToLocalDate(minDate) } : undefined}
+            captionLayout="dropdown"
+          />
+        </PopoverContent>
+      </Popover>
+      {clearable && value && (
+        <Button type="button" variant="ghost" size="icon" onClick={() => onChange("")}>
+          <X className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
+  )
+}
 
 export default function UserTargetsPage() {
   const t = useTranslations("UserTargets")
@@ -43,14 +118,31 @@ export default function UserTargetsPage() {
   const [targetToDelete, setTargetToDelete] = useState<UserTarget | null>(null)
 
   useEffect(() => {
+    const supabase = createClient()
+
     fetch("/api/user_targets")
       .then(async (r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
       })
-      .then(setTargets)
+      .then((rows: UserTarget[]) => setTargets(rows.map(normalize)))
       .catch((e) => setFeedback({ tone: "destructive", title: t("failedToLoad"), description: e.message }))
       .finally(() => setIsLoading(false))
+
+    // Live updates from other admins / the database (Realtime is enabled on user_targets).
+    const channel = supabase
+      .channel("admin-user-targets")
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_targets" }, (payload) => {
+        if (payload.eventType === "DELETE") {
+          const id = (payload.old as Partial<UserTarget>).id
+          if (id) setTargets((prev) => prev.filter((x) => x.id !== id))
+        } else {
+          setTargets((prev) => upsertById(prev, normalize(payload.new as UserTarget)))
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   const labelOf = (target: UserTarget) => target.target_name || formatDate(target.start_date)
@@ -91,7 +183,7 @@ export default function UserTargetsPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message ?? t("failedToCreate"))
-      setTargets((prev) => [...prev, data].sort(byStartDateDesc))
+      setTargets((prev) => upsertById(prev, normalize(data)))
       setIsAddDialogOpen(false)
       setFeedback({ tone: "success", title: t("targetCreated"), description: labelOf(data) })
     } catch (e) {
@@ -124,7 +216,7 @@ export default function UserTargetsPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message ?? t("failedToUpdate"))
-      setTargets((prev) => prev.map((x) => (x.id === data.id ? data : x)).sort(byStartDateDesc))
+      setTargets((prev) => upsertById(prev, normalize(data)))
       setIsEditDialogOpen(false)
       setFeedback({ tone: "success", title: t("targetUpdated"), description: labelOf(data) })
     } catch (e) {
@@ -205,22 +297,23 @@ export default function UserTargetsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
           <Label>{t("form.startDate")}</Label>
-          <Input
-            type="date"
+          <DatePicker
             value={formData.start_date}
-            onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-            className={errors.start_date ? "border-red-500" : ""}
+            onChange={(start_date) => setFormData({ ...formData, start_date })}
+            placeholder={t("form.pickDate")}
+            invalid={!!errors.start_date}
           />
           {errors.start_date && <p className="text-red-500 text-xs">{errors.start_date}</p>}
         </div>
         <div className="flex flex-col gap-1">
           <Label>{t("form.endDate")}</Label>
-          <Input
-            type="date"
+          <DatePicker
             value={formData.end_date}
-            min={formData.start_date || undefined}
-            onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-            className={errors.end_date ? "border-red-500" : ""}
+            onChange={(end_date) => setFormData({ ...formData, end_date })}
+            placeholder={t("form.pickDate")}
+            minDate={formData.start_date || undefined}
+            clearable
+            invalid={!!errors.end_date}
           />
           {errors.end_date && <p className="text-red-500 text-xs">{errors.end_date}</p>}
         </div>

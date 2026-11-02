@@ -594,7 +594,8 @@
       "namePlaceholder": "z. B. November 2026",
       "target": "Ziel",
       "startDate": "Startdatum",
-      "endDate": "Enddatum (optional)"
+      "endDate": "Enddatum (optional)",
+      "pickDate": "TT/MM/JJJJ"
     },
     "table": {
       "title": "Ziele",
