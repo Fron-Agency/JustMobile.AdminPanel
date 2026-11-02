@@ -9,6 +9,9 @@ async function client(asService = false) {
   return asService ? adminClient : createClient(await cookies())
 }
 
+// `numeric` can come back as a string; keep `target` a number for callers.
+const normalize = (row: UserTarget): UserTarget => ({ ...row, target: Number(row.target) })
+
 export const UserTargetsRepository = {
   async findAll(asService = false): Promise<UserTarget[]> {
     const supabase = await client(asService)
@@ -17,7 +20,7 @@ export const UserTargetsRepository = {
       .select("*")
       .order("start_date", { ascending: false })
     if (error) throw new Error(error.message)
-    return data
+    return data.map(normalize)
   },
 
   async findById(id: string, asService = false): Promise<UserTarget | null> {
@@ -28,7 +31,7 @@ export const UserTargetsRepository = {
       .eq("id", id)
       .maybeSingle()
     if (error) throw new Error(error.message)
-    return data
+    return data ? normalize(data) : null
   },
 
   async create(payload: CreateUserTargetDto): Promise<UserTarget> {
@@ -39,7 +42,7 @@ export const UserTargetsRepository = {
       .select()
       .single()
     if (error) throw new Error(error.message)
-    return data
+    return normalize(data)
   },
 
   async update(id: string, payload: UpdateUserTargetDto): Promise<UserTarget> {
@@ -51,9 +54,10 @@ export const UserTargetsRepository = {
       .select()
       .single()
     if (error) throw new Error(error.message)
-    return data
+    return normalize(data)
   },
 
+  // agent_sales rows of this target are removed by the FK's ON DELETE CASCADE.
   async delete(id: string): Promise<void> {
     const supabase = await client()
     const { error } = await supabase.from("user_targets").delete().eq("id", id)

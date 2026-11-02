@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { UserSalesService } from "@/app/api/modules/user_sales/user_sales.service"
-import { updateUserSalesSchema } from "@/app/api/modules/user_sales/user_sales.validation"
+import { AgentSalesService } from "@/app/api/modules/agent_sales/agent_sales.service"
+import { updateAgentSaleSchema } from "@/app/api/modules/agent_sales/agent_sales.validation"
 import { requireAuth } from "@/utils/supabase/require-auth"
 import { requireAuthOrApiKey } from "@/utils/supabase/require-auth-or-api-key"
 
@@ -13,11 +13,11 @@ export async function GET(
 
   try {
     const { id } = await params
-    const userSales = await UserSalesService.getById(id, auth.via === "apiKey")
-    return NextResponse.json(userSales)
+    const sale = await AgentSalesService.getById(id, auth.via === "apiKey")
+    return NextResponse.json(sale)
   } catch (error) {
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Sales agent not found" },
+      { message: error instanceof Error ? error.message : "Agent sales entry not found" },
       { status: 404 }
     )
   }
@@ -33,12 +33,12 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await req.json()
-    const parsed = updateUserSalesSchema.parse(body)
-    const updated = await UserSalesService.update(id, parsed)
+    const parsed = updateAgentSaleSchema.parse(body)
+    const updated = await AgentSalesService.update(id, parsed)
     return NextResponse.json(updated)
   } catch (error) {
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Failed to update sales agent" },
+      { message: error instanceof Error ? error.message : "Failed to update sales" },
       { status: 400 }
     )
   }
@@ -53,11 +53,11 @@ export async function DELETE(
 
   try {
     const { id } = await params
-    await UserSalesService.delete(id)
+    await AgentSalesService.delete(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Failed to delete sales agent" },
+      { message: error instanceof Error ? error.message : "Failed to delete sales" },
       { status: 400 }
     )
   }

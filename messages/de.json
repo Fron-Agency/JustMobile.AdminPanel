@@ -20,8 +20,9 @@
     "support": "Support",
     "candidates": "Kandidaten",
     "calendar": "Kalender",
-    "salesAgents": "Sales-Agenten",
-    "targets": "Ziele"
+    "agents": "Agenten",
+    "targets": "Ziele",
+    "sales": "Sales"
   },
   "Topbar": {
     "subtitle": "JustMobile Admin-Panel",
@@ -525,51 +526,89 @@
       "saveChanges": "Änderungen speichern"
     }
   },
-  "UserSales": {
-    "failedToLoad": "Sales-Agenten konnten nicht geladen werden",
+  "Agents": {
+    "failedToLoad": "Agenten konnten nicht geladen werden",
     "firstNameRequired": "Vorname ist erforderlich",
     "lastNameRequired": "Nachname ist erforderlich",
-    "salesInvalid": "Sales muss eine Zahl ab 0 sein",
-    "failedToCreate": "Sales-Agent konnte nicht erstellt werden",
-    "agentCreated": "Sales-Agent erstellt",
-    "failedToUpdate": "Sales-Agent konnte nicht aktualisiert werden",
-    "agentUpdated": "Sales-Agent aktualisiert",
-    "agentDeleted": "Sales-Agent gelöscht",
-    "failedToDelete": "Sales-Agent konnte nicht gelöscht werden",
+    "failedToCreate": "Agent konnte nicht erstellt werden",
+    "agentCreated": "Agent erstellt",
+    "failedToUpdate": "Agent konnte nicht aktualisiert werden",
+    "agentUpdated": "Agent aktualisiert",
+    "agentDeleted": "Agent gelöscht",
+    "failedToDelete": "Agent konnte nicht gelöscht werden",
     "columns": {
       "name": "Name",
-      "sales": "Sales",
       "createdAt": "Erstellt"
     },
     "form": {
       "firstName": "Vorname",
-      "lastName": "Nachname",
-      "sales": "Sales"
+      "lastName": "Nachname"
     },
     "table": {
-      "title": "Sales-Agenten",
+      "title": "Agenten",
       "searchPlaceholder": "Agenten suchen...",
       "addButton": "Agent hinzufügen"
     },
     "addDialog": {
-      "title": "Sales-Agent hinzufügen",
-      "description": "Neue Agenten starten mit 0 Sales.",
+      "title": "Agent hinzufügen",
+      "description": "Neue Agenten starten bei jedem Ziel mit 0 Sales.",
       "adding": "Wird hinzugefügt...",
       "add": "Agent hinzufügen"
     },
     "editDialog": {
-      "title": "Sales-Agent bearbeiten",
-      "description": "Name oder Sales des Agenten anpassen.",
+      "title": "Agent bearbeiten",
+      "description": "Namen des Agenten anpassen.",
       "saving": "Wird gespeichert...",
       "saveChanges": "Änderungen speichern"
     },
     "deleteDialog": {
-      "title": "Sales-Agent löschen",
-      "description": "<strong>{name}</strong> löschen? Dies kann nicht rückgängig gemacht werden.",
+      "title": "Agent löschen",
+      "description": "<strong>{name}</strong> löschen? Der gesamte Sales-Verlauf dieses Agenten wird ebenfalls gelöscht. Dies kann nicht rückgängig gemacht werden.",
       "cancel": "Abbrechen",
       "deleting": "Wird gelöscht...",
       "delete": "Löschen"
+    },
+    "history": {
+      "title": "Sales-Verlauf: {name}",
+      "description": "Sales pro Ziel, neueste zuerst.",
+      "loading": "Wird geladen...",
+      "empty": "Noch keine Ziele.",
+      "failedToLoad": "Sales-Verlauf konnte nicht geladen werden",
+      "target": "Ziel",
+      "period": "Zeitraum",
+      "sales": "Sales",
+      "goal": "Ziel"
     }
+  },
+  "AgentSales": {
+    "title": "Sales",
+    "description": "Sales pro Agent für ein Ziel erfassen. Agenten ohne Sales starten bei 0.",
+    "selectTarget": "Ziel auswählen",
+    "period": "Zeitraum",
+    "targetPerAgent": "Ziel pro Agent",
+    "reached": "Ziel erreicht",
+    "save": "Speichern",
+    "saving": "Wird gespeichert...",
+    "discard": "Änderungen verwerfen",
+    "saved": "Sales gespeichert",
+    "savedCount": "{count} Agent(en) aktualisiert",
+    "failedToSave": "Sales konnten nicht gespeichert werden",
+    "failedToLoadTargets": "Ziele konnten nicht geladen werden",
+    "failedToLoadBoard": "Sales konnten nicht geladen werden",
+    "discardConfirm": "Es gibt ungespeicherte Änderungen. Verwerfen?",
+    "noTargets": "Noch keine Ziele.",
+    "createTarget": "Ziel erstellen",
+    "noAgents": "Noch keine Agenten.",
+    "createAgent": "Agent hinzufügen",
+    "columns": {
+      "agent": "Agent",
+      "sales": "Sales",
+      "progress": "Fortschritt",
+      "status": "Status"
+    },
+    "statusReached": "erreicht",
+    "statusRemaining": "noch {count}",
+    "total": "Team total"
   },
   "UserTargets": {
     "failedToLoad": "Ziele konnten nicht geladen werden",
@@ -616,7 +655,7 @@
     },
     "deleteDialog": {
       "title": "Ziel löschen",
-      "description": "<strong>{name}</strong> löschen? Dies kann nicht rückgängig gemacht werden.",
+      "description": "<strong>{name}</strong> löschen? Alle für dieses Ziel erfassten Sales der Agenten werden ebenfalls gelöscht. Dies kann nicht rückgängig gemacht werden.",
       "cancel": "Abbrechen",
       "deleting": "Wird gelöscht...",
       "delete": "Löschen"

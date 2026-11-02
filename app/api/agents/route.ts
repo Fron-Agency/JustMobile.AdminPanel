@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { UserSalesService } from "@/app/api/modules/user_sales/user_sales.service"
-import { createUserSalesSchema } from "@/app/api/modules/user_sales/user_sales.validation"
+import { AgentsService } from "@/app/api/modules/agents/agents.service"
+import { createAgentSchema } from "@/app/api/modules/agents/agents.validation"
 import { requireAuth } from "@/utils/supabase/require-auth"
 import { requireAuthOrApiKey } from "@/utils/supabase/require-auth-or-api-key"
 
@@ -10,8 +10,8 @@ export async function GET(request: Request) {
   if (auth instanceof NextResponse) return auth
 
   try {
-    const userSales = await UserSalesService.getAll(auth.via === "apiKey")
-    return NextResponse.json(userSales)
+    const agents = await AgentsService.getAll(auth.via === "apiKey")
+    return NextResponse.json(agents)
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Something went wrong" },
@@ -26,9 +26,9 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const parsed = createUserSalesSchema.parse(body)
-    const userSales = await UserSalesService.create(parsed)
-    return NextResponse.json(userSales, { status: 201 })
+    const parsed = createAgentSchema.parse(body)
+    const agent = await AgentsService.create(parsed)
+    return NextResponse.json(agent, { status: 201 })
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Something went wrong" },

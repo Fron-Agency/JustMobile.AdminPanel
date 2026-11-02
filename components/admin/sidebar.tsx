@@ -79,8 +79,9 @@ const navItems: NavItem[] = [
   { href: "/dashboard/quotes", labelKey: "leads", icon: FileText, platforms: ["justcompare"] },
   { href: "/dashboard/candidates", labelKey: "candidates", icon: Contact, platforms: ["optimusmarketing"] },
   { href: "/dashboard/calendar", labelKey: "calendar", icon: CalendarDays, platforms: ["optimusmarketing"] },
-  { href: "/dashboard/user_sales", labelKey: "salesAgents", icon: TrendingUp, platforms: ["optimusmarketing"] },
+  { href: "/dashboard/agents", labelKey: "agents", icon: Users, platforms: ["optimusmarketing"] },
   { href: "/dashboard/user_targets", labelKey: "targets", icon: Target, platforms: ["optimusmarketing"] },
+  { href: "/dashboard/agent_sales", labelKey: "sales", icon: TrendingUp, platforms: ["optimusmarketing"] },
 ]
 
 type SidebarNavProps = {

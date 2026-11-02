@@ -14,38 +14,31 @@ import {
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 import { createClient } from "@/utils/supabase/client"
-import type { UserSales } from "@/app/api/modules/user_sales/user_sales.types"
+import { formatNumber, formatPeriod, formatTimestampDate } from "@/lib/sales-format"
+import type { Agent } from "@/app/api/modules/agents/agents.types"
+import type { AgentHistoryEntry } from "@/app/api/modules/agent_sales/agent_sales.types"
 
-const emptyForm = { first_name: "", last_name: "", sales: "0" }
+const emptyForm = { first_name: "", last_name: "" }
 type FormState = typeof emptyForm
 
-const bySalesDesc = (a: UserSales, b: UserSales) =>
-  b.sales - a.sales || a.last_name.localeCompare(b.last_name)
-
-// Realtime payloads may carry `numeric` columns as strings; keep `sales` a number.
-const normalize = (row: UserSales): UserSales => ({ ...row, sales: Number(row.sales) })
+const byName = (a: Agent, b: Agent) =>
+  a.first_name.localeCompare(b.first_name) || a.last_name.localeCompare(b.last_name)
 
 // Replace by id, or append. Our own save and its realtime echo both land here,
 // so whichever arrives second is a no-op instead of a duplicate row.
-const upsertById = (list: UserSales[], row: UserSales) =>
-  (list.some((a) => a.id === row.id) ? list.map((a) => (a.id === row.id ? row : a)) : [...list, row]).sort(
-    bySalesDesc
-  )
+const upsertById = (list: Agent[], row: Agent) =>
+  (list.some((a) => a.id === row.id) ? list.map((a) => (a.id === row.id ? row : a)) : [...list, row]).sort(byName)
 
-const pad2 = (n: number) => String(n).padStart(2, "0")
+const fullName = (a: { first_name: string; last_name: string }) => `${a.first_name} ${a.last_name}`
 
-const formatDate = (timestamp: string) => {
-  const d = new Date(timestamp)
-  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`
-}
+export default function AgentsPage() {
+  const t = useTranslations("Agents")
 
-export default function UserSalesPage() {
-  const t = useTranslations("UserSales")
-
-  const [agents, setAgents] = useState<UserSales[]>([])
+  const [agents, setAgents] = useState<Agent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [feedback, setFeedback] = useState<{ tone: FeedbackAlertTone; title: string; description?: string } | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -56,29 +49,33 @@ export default function UserSalesPage() {
 
   const [formData, setFormData] = useState<FormState>(emptyForm)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [agentToDelete, setAgentToDelete] = useState<UserSales | null>(null)
+  const [agentToDelete, setAgentToDelete] = useState<Agent | null>(null)
+
+  const [historyAgent, setHistoryAgent] = useState<Agent | null>(null)
+  const [history, setHistory] = useState<AgentHistoryEntry[]>([])
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
 
-    fetch("/api/user_sales")
+    fetch("/api/agents")
       .then(async (r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
       })
-      .then((rows: UserSales[]) => setAgents(rows.map(normalize)))
+      .then(setAgents)
       .catch((e) => setFeedback({ tone: "destructive", title: t("failedToLoad"), description: e.message }))
       .finally(() => setIsLoading(false))
 
-    // Live updates from other admins / the database (Realtime is enabled on user_sales).
+    // Live updates from other admins / the database (Realtime is enabled on agents).
     const channel = supabase
-      .channel("admin-user-sales")
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_sales" }, (payload) => {
+      .channel("admin-agents")
+      .on("postgres_changes", { event: "*", schema: "public", table: "agents" }, (payload) => {
         if (payload.eventType === "DELETE") {
-          const id = (payload.old as Partial<UserSales>).id
+          const id = (payload.old as Partial<Agent>).id
           if (id) setAgents((prev) => prev.filter((a) => a.id !== id))
         } else {
-          setAgents((prev) => upsertById(prev, normalize(payload.new as UserSales)))
+          setAgents((prev) => upsertById(prev, payload.new as Agent))
         }
       })
       .subscribe()
@@ -86,16 +83,10 @@ export default function UserSalesPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const fullName = (a: { first_name: string; last_name: string }) => `${a.first_name} ${a.last_name}`
-
-  const validate = (withSales: boolean) => {
+  const validate = () => {
     const e: Record<string, string> = {}
     if (!formData.first_name.trim()) e.first_name = t("firstNameRequired")
     if (!formData.last_name.trim()) e.last_name = t("lastNameRequired")
-    if (withSales) {
-      const sales = Number(formData.sales)
-      if (formData.sales.trim() === "" || !Number.isFinite(sales) || sales < 0) e.sales = t("salesInvalid")
-    }
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -107,17 +98,17 @@ export default function UserSalesPage() {
   }
 
   const confirmAdd = async () => {
-    if (!validate(false)) return
+    if (!validate()) return
     setIsLoading(true)
     try {
-      const res = await fetch("/api/user_sales", {
+      const res = await fetch("/api/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ first_name: formData.first_name, last_name: formData.last_name }),
+        body: JSON.stringify(formData),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message ?? t("failedToCreate"))
-      setAgents((prev) => upsertById(prev, normalize(data)))
+      setAgents((prev) => upsertById(prev, data))
       setIsAddDialogOpen(false)
       setFeedback({ tone: "success", title: t("agentCreated"), description: fullName(data) })
     } catch (e) {
@@ -127,29 +118,25 @@ export default function UserSalesPage() {
     }
   }
 
-  const handleEdit = (agent: UserSales) => {
-    setFormData({ first_name: agent.first_name, last_name: agent.last_name, sales: String(agent.sales) })
+  const handleEdit = (agent: Agent) => {
+    setFormData({ first_name: agent.first_name, last_name: agent.last_name })
     setEditingId(agent.id)
     setErrors({})
     setIsEditDialogOpen(true)
   }
 
   const confirmEdit = async () => {
-    if (!editingId || !validate(true)) return
+    if (!editingId || !validate()) return
     setIsLoading(true)
     try {
-      const res = await fetch(`/api/user_sales/${editingId}`, {
+      const res = await fetch(`/api/agents/${editingId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          sales: Number(formData.sales),
-        }),
+        body: JSON.stringify(formData),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message ?? t("failedToUpdate"))
-      setAgents((prev) => upsertById(prev, normalize(data)))
+      setAgents((prev) => upsertById(prev, data))
       setIsEditDialogOpen(false)
       setFeedback({ tone: "success", title: t("agentUpdated"), description: fullName(data) })
     } catch (e) {
@@ -159,7 +146,7 @@ export default function UserSalesPage() {
     }
   }
 
-  const handleDelete = (agent: UserSales) => {
+  const handleDelete = (agent: Agent) => {
     setAgentToDelete(agent)
     setIsDeleteDialogOpen(true)
   }
@@ -168,7 +155,7 @@ export default function UserSalesPage() {
     if (!agentToDelete) return
     setIsLoading(true)
     try {
-      const res = await fetch(`/api/user_sales/${agentToDelete.id}`, { method: "DELETE" })
+      const res = await fetch(`/api/agents/${agentToDelete.id}`, { method: "DELETE" })
       if (!res.ok) throw new Error()
       setAgents((prev) => prev.filter((a) => a.id !== agentToDelete.id))
       setIsDeleteDialogOpen(false)
@@ -180,28 +167,37 @@ export default function UserSalesPage() {
     }
   }
 
-  const columns: Column<UserSales>[] = [
+  const handleViewHistory = async (agent: Agent) => {
+    setHistoryAgent(agent)
+    setHistory([])
+    setIsHistoryLoading(true)
+    try {
+      const res = await fetch(`/api/agents/${agent.id}/sales`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message ?? t("history.failedToLoad"))
+      setHistory(data)
+    } catch (e) {
+      setFeedback({ tone: "destructive", title: t("history.failedToLoad"), description: e instanceof Error ? e.message : undefined })
+    } finally {
+      setIsHistoryLoading(false)
+    }
+  }
+
+  const columns: Column<Agent>[] = [
     {
       key: "first_name",
       label: t("columns.name"),
       render: (_, item) => <span className="font-medium text-foreground">{fullName(item)}</span>,
     },
     {
-      key: "sales",
-      label: t("columns.sales"),
-      render: (v: number) => <span className="tabular-nums">{Number(v).toLocaleString("de-CH")}</span>,
-    },
-    {
       key: "created_at",
       label: t("columns.createdAt"),
-      render: (v: string) => (
-        <span className="text-muted-foreground text-sm">{formatDate(v)}</span>
-      ),
+      render: (v: string) => <span className="text-muted-foreground text-sm">{formatTimestampDate(v)}</span>,
     },
   ]
 
-  const nameFields = (
-    <>
+  const formFields = (
+    <div className="flex flex-col gap-4 py-2">
       <div className="flex flex-col gap-1">
         <Label>{t("form.firstName")}</Label>
         <Input
@@ -220,7 +216,7 @@ export default function UserSalesPage() {
         />
         {errors.last_name && <p className="text-red-500 text-xs">{errors.last_name}</p>}
       </div>
-    </>
+    </div>
   )
 
   return (
@@ -245,6 +241,7 @@ export default function UserSalesPage() {
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onView={handleViewHistory}
         isLoading={isLoading}
         addButtonText={t("table.addButton")}
       />
@@ -255,7 +252,7 @@ export default function UserSalesPage() {
             <DialogTitle>{t("addDialog.title")}</DialogTitle>
             <DialogDescription>{t("addDialog.description")}</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-2">{nameFields}</div>
+          {formFields}
           <DialogFooter>
             <Button onClick={confirmAdd} disabled={isLoading}>
               {isLoading ? t("addDialog.adding") : t("addDialog.add")}
@@ -270,26 +267,51 @@ export default function UserSalesPage() {
             <DialogTitle>{t("editDialog.title")}</DialogTitle>
             <DialogDescription>{t("editDialog.description")}</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-2">
-            {nameFields}
-            <div className="flex flex-col gap-1">
-              <Label>{t("form.sales")}</Label>
-              <Input
-                type="number"
-                min={0}
-                step="any"
-                value={formData.sales}
-                onChange={(e) => setFormData({ ...formData, sales: e.target.value })}
-                className={errors.sales ? "border-red-500" : ""}
-              />
-              {errors.sales && <p className="text-red-500 text-xs">{errors.sales}</p>}
-            </div>
-          </div>
+          {formFields}
           <DialogFooter>
             <Button onClick={confirmEdit} disabled={isLoading}>
               {isLoading ? t("editDialog.saving") : t("editDialog.saveChanges")}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!historyAgent} onOpenChange={(open) => !open && setHistoryAgent(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("history.title", { name: historyAgent ? fullName(historyAgent) : "" })}</DialogTitle>
+            <DialogDescription>{t("history.description")}</DialogDescription>
+          </DialogHeader>
+          {isHistoryLoading ? (
+            <p className="text-sm text-muted-foreground py-4">{t("history.loading")}</p>
+          ) : history.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">{t("history.empty")}</p>
+          ) : (
+            <div className="max-h-[60vh] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("history.target")}</TableHead>
+                    <TableHead>{t("history.period")}</TableHead>
+                    <TableHead className="text-right">{t("history.sales")}</TableHead>
+                    <TableHead className="text-right">{t("history.goal")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {history.map((h) => (
+                    <TableRow key={h.user_target_id}>
+                      <TableCell className="font-medium">{h.target_name ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatPeriod(h.start_date, h.end_date)}</TableCell>
+                      <TableCell className={`text-right tabular-nums ${h.sales >= h.target ? "text-green-600 dark:text-green-400 font-semibold" : ""}`}>
+                        {formatNumber(h.sales)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{formatNumber(h.target)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

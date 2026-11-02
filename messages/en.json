@@ -20,8 +20,9 @@
     "support": "Support",
     "candidates": "Candidates",
     "calendar": "Calendar",
-    "salesAgents": "Sales Agents",
-    "targets": "Targets"
+    "agents": "Agents",
+    "targets": "Targets",
+    "sales": "Sales"
   },
   "Topbar": {
     "subtitle": "JustMobile Admin Panel",
@@ -525,51 +526,89 @@
       "saveChanges": "Save Changes"
     }
   },
-  "UserSales": {
-    "failedToLoad": "Failed to load sales agents",
+  "Agents": {
+    "failedToLoad": "Failed to load agents",
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",
-    "salesInvalid": "Sales must be a number of 0 or more",
-    "failedToCreate": "Failed to create sales agent",
-    "agentCreated": "Sales agent created",
-    "failedToUpdate": "Failed to update sales agent",
-    "agentUpdated": "Sales agent updated",
-    "agentDeleted": "Sales agent deleted",
-    "failedToDelete": "Failed to delete sales agent",
+    "failedToCreate": "Failed to create agent",
+    "agentCreated": "Agent created",
+    "failedToUpdate": "Failed to update agent",
+    "agentUpdated": "Agent updated",
+    "agentDeleted": "Agent deleted",
+    "failedToDelete": "Failed to delete agent",
     "columns": {
       "name": "Name",
-      "sales": "Sales",
       "createdAt": "Created"
     },
     "form": {
       "firstName": "First name",
-      "lastName": "Last name",
-      "sales": "Sales"
+      "lastName": "Last name"
     },
     "table": {
-      "title": "Sales Agents",
+      "title": "Agents",
       "searchPlaceholder": "Search agents...",
       "addButton": "Add Agent"
     },
     "addDialog": {
-      "title": "Add Sales Agent",
-      "description": "New agents start with 0 sales.",
+      "title": "Add Agent",
+      "description": "New agents start with 0 sales on every target.",
       "adding": "Adding...",
       "add": "Add Agent"
     },
     "editDialog": {
-      "title": "Edit Sales Agent",
-      "description": "Update the agent's name or sales.",
+      "title": "Edit Agent",
+      "description": "Update the agent's name.",
       "saving": "Saving...",
       "saveChanges": "Save Changes"
     },
     "deleteDialog": {
-      "title": "Delete Sales Agent",
-      "description": "Delete <strong>{name}</strong>? This cannot be undone.",
+      "title": "Delete Agent",
+      "description": "Delete <strong>{name}</strong>? All of this agent's sales history is deleted too. This cannot be undone.",
       "cancel": "Cancel",
       "deleting": "Deleting...",
       "delete": "Delete"
+    },
+    "history": {
+      "title": "Sales history: {name}",
+      "description": "Sales per target, newest first.",
+      "loading": "Loading...",
+      "empty": "No targets yet.",
+      "failedToLoad": "Failed to load sales history",
+      "target": "Target",
+      "period": "Period",
+      "sales": "Sales",
+      "goal": "Goal"
     }
+  },
+  "AgentSales": {
+    "title": "Sales",
+    "description": "Enter each agent's sales for a target. Agents without sales start at 0.",
+    "selectTarget": "Select a target",
+    "period": "Period",
+    "targetPerAgent": "Target per agent",
+    "reached": "Target reached",
+    "save": "Save",
+    "saving": "Saving...",
+    "discard": "Discard changes",
+    "saved": "Sales saved",
+    "savedCount": "{count} agent(s) updated",
+    "failedToSave": "Failed to save sales",
+    "failedToLoadTargets": "Failed to load targets",
+    "failedToLoadBoard": "Failed to load sales",
+    "discardConfirm": "You have unsaved changes. Discard them?",
+    "noTargets": "No targets yet.",
+    "createTarget": "Create a target",
+    "noAgents": "No agents yet.",
+    "createAgent": "Add an agent",
+    "columns": {
+      "agent": "Agent",
+      "sales": "Sales",
+      "progress": "Progress",
+      "status": "Status"
+    },
+    "statusReached": "Reached",
+    "statusRemaining": "{count} to go",
+    "total": "Team total"
   },
   "UserTargets": {
     "failedToLoad": "Failed to load targets",
@@ -616,7 +655,7 @@
     },
     "deleteDialog": {
       "title": "Delete Target",
-      "description": "Delete <strong>{name}</strong>? This cannot be undone.",
+      "description": "Delete <strong>{name}</strong>? All agents' sales recorded for this target are deleted too. This cannot be undone.",
       "cancel": "Cancel",
       "deleting": "Deleting...",
       "delete": "Delete"
