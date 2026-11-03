@@ -25,11 +25,11 @@ function zurichDate(timestamp: string): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Zurich" }).format(new Date(timestamp))
 }
 
-// An agent belongs on a target's board if the target applies to their team,
-// or if they already have numbers recorded for it (e.g. they changed team
-// later), so history is never hidden.
-function belongsToTarget(target: UserTarget, agent: Agent, hasSalesRow: boolean): boolean {
-  return hasSalesRow || targetAppliesToAgent(target.team, agent.team)
+// A team target's board shows only agents currently in that team; a target
+// without a team shows everyone. Numbers an agent recorded before moving to
+// another team stay in the DB and in their history, just not on this board.
+function belongsToTarget(target: UserTarget, agent: Agent): boolean {
+  return targetAppliesToAgent(target.team, agent.team)
 }
 
 const notInTeam = (agent: Agent, target: UserTarget) =>
@@ -74,7 +74,7 @@ export const AgentSalesService = {
       AgentSalesRepository.findByTargetAndAgent(input.user_target_id, input.agent_id),
     ])
 
-    if (!belongsToTarget(target, agent, !!existing)) throw notInTeam(agent, target)
+    if (!belongsToTarget(target, agent)) throw notInTeam(agent, target)
 
     return existing
       ? AgentSalesRepository.update(existing.id, pickCategories(input))
@@ -108,7 +108,7 @@ export const AgentSalesService = {
     const saleByAgent = new Map(sales.map((s) => [s.agent_id, s]))
 
     const entries: TargetBoardEntry[] = agents
-      .filter((agent) => belongsToTarget(target, agent, saleByAgent.has(agent.id)))
+      .filter((agent) => belongsToTarget(target, agent))
       .map((agent) => {
         const sale = saleByAgent.get(agent.id)
         return {
@@ -148,7 +148,7 @@ export const AgentSalesService = {
     for (const entry of input.entries) {
       const agent = agentById.get(entry.agent_id)
       if (!agent) throw new Error(`Agent not found: ${entry.agent_id}`)
-      if (!belongsToTarget(target, agent, existingByAgent.has(agent.id))) throw notInTeam(agent, target)
+      if (!belongsToTarget(target, agent)) throw notInTeam(agent, target)
     }
 
     await Promise.all(
