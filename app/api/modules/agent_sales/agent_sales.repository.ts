@@ -1,25 +1,44 @@
 import { createClient } from "@/utils/supabase/server"
 import { adminClient } from "@/utils/supabase/admin"
 import { cookies } from "next/headers"
-import type {
-  AgentSale,
-  AgentSalesFilter,
-  CreateAgentSaleDto,
-  UpdateAgentSaleDto,
+import {
+  SALES_CATEGORIES,
+  type AgentSale,
+  type AgentSalesFilter,
+  type CreateAgentSaleDto,
+  type SalesCategory,
+  type UpdateAgentSaleDto,
 } from "./agent_sales.types"
 
-// The DB column is spelled "agnet_id". It is only referenced here; the rest of
-// the app uses `agent_id`. If the column is renamed, update these two lines.
+// DB column names, where they differ from the API names. Both typos live only
+// here; if the columns are renamed, update this block.
 const AGENT_ID_COLUMN = "agnet_id"
-type AgentSaleRow = { id: string; user_target_id: string; agnet_id: string; sales: number | string }
+const CATEGORY_COLUMN: Record<SalesCategory, string> = {
+  sales: "sales",
+  mietkaution: "mietkatution",
+  termine: "termine",
+  yallo_lebara: "yallo_lebara",
+  salt: "salt",
+  salt_ret: "salt_ret",
+}
 
-// `numeric` can come back as a string; keep `sales` a number for callers.
+type AgentSaleRow = Record<string, string | number | null>
+
+// NULL means nothing entered yet -> 0. `numeric` may come back as a string.
 const toAgentSale = (row: AgentSaleRow): AgentSale => ({
-  id: row.id,
-  user_target_id: row.user_target_id,
-  agent_id: row[AGENT_ID_COLUMN],
-  sales: Number(row.sales),
+  id: String(row.id),
+  user_target_id: String(row.user_target_id),
+  agent_id: String(row[AGENT_ID_COLUMN]),
+  ...(Object.fromEntries(
+    SALES_CATEGORIES.map((c) => [c, Number(row[CATEGORY_COLUMN[c]] ?? 0)])
+  ) as Record<SalesCategory, number>),
 })
+
+// Only the categories present in `values` are written.
+const toCategoryColumns = (values: Partial<Record<SalesCategory, number>>) =>
+  Object.fromEntries(
+    SALES_CATEGORIES.filter((c) => values[c] !== undefined).map((c) => [CATEGORY_COLUMN[c], values[c]])
+  )
 
 // asService: the OptimusMarketing website reads through an API key with no
 // Supabase session, so those reads use the service-role client to bypass RLS.
@@ -49,8 +68,6 @@ export const AgentSalesRepository = {
     return data ? toAgentSale(data as AgentSaleRow) : null
   },
 
-  // limit(1): the table has no unique (target, agent) constraint yet, so tolerate
-  // an accidental duplicate instead of failing the read.
   async findByTargetAndAgent(userTargetId: string, agentId: string): Promise<AgentSale | null> {
     const supabase = await client()
     const { data, error } = await supabase
@@ -58,7 +75,6 @@ export const AgentSalesRepository = {
       .select("*")
       .eq("user_target_id", userTargetId)
       .eq(AGENT_ID_COLUMN, agentId)
-      .limit(1)
       .maybeSingle()
     if (error) throw new Error(error.message)
     return data ? toAgentSale(data as AgentSaleRow) : null
@@ -68,7 +84,13 @@ export const AgentSalesRepository = {
     const supabase = await client()
     const { data, error } = await supabase
       .from("agent_sales")
-      .insert([{ user_target_id: payload.user_target_id, [AGENT_ID_COLUMN]: payload.agent_id, sales: payload.sales }])
+      .insert([
+        {
+          user_target_id: payload.user_target_id,
+          [AGENT_ID_COLUMN]: payload.agent_id,
+          ...toCategoryColumns(payload),
+        },
+      ])
       .select()
       .single()
     if (error) throw new Error(error.message)
@@ -79,7 +101,7 @@ export const AgentSalesRepository = {
     const supabase = await client()
     const { data, error } = await supabase
       .from("agent_sales")
-      .update({ sales: payload.sales })
+      .update(toCategoryColumns(payload))
       .eq("id", id)
       .select()
       .single()

@@ -20,7 +20,11 @@ import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-
 import { createClient } from "@/utils/supabase/client"
 import { distinctTeams, formatNumber, formatPeriod, formatTimestampDate } from "@/lib/sales-format"
 import type { Agent } from "@/app/api/modules/agents/agents.types"
-import type { AgentHistoryEntry } from "@/app/api/modules/agent_sales/agent_sales.types"
+import {
+  SALES_CATEGORIES,
+  TARGET_CATEGORY,
+  type AgentHistoryEntry,
+} from "@/app/api/modules/agent_sales/agent_sales.types"
 
 const emptyForm = { first_name: "", last_name: "", team: "" }
 type FormState = typeof emptyForm
@@ -37,6 +41,7 @@ const fullName = (a: { first_name: string; last_name: string }) => `${a.first_na
 
 export default function AgentsPage() {
   const t = useTranslations("Agents")
+  const tSales = useTranslations("AgentSales")
 
   const [agents, setAgents] = useState<Agent[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -302,7 +307,7 @@ export default function AgentsPage() {
       </Dialog>
 
       <Dialog open={!!historyAgent} onOpenChange={(open) => !open && setHistoryAgent(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle>{t("history.title", { name: historyAgent ? fullName(historyAgent) : "" })}</DialogTitle>
             <DialogDescription>{t("history.description")}</DialogDescription>
@@ -312,14 +317,16 @@ export default function AgentsPage() {
           ) : history.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">{t("history.empty")}</p>
           ) : (
-            <div className="max-h-[60vh] overflow-y-auto">
+            <div className="max-h-[60vh] overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("history.target")}</TableHead>
                     <TableHead>{t("history.team")}</TableHead>
                     <TableHead>{t("history.period")}</TableHead>
-                    <TableHead className="text-right">{t("history.sales")}</TableHead>
+                    {SALES_CATEGORIES.map((c) => (
+                      <TableHead key={c} className="text-right">{tSales(`categories.${c}`)}</TableHead>
+                    ))}
                     <TableHead className="text-right">{t("history.goal")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -329,9 +336,18 @@ export default function AgentsPage() {
                       <TableCell className="font-medium">{h.target_name ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{h.team ?? t("history.allTeams")}</TableCell>
                       <TableCell className="text-muted-foreground">{formatPeriod(h.start_date, h.end_date)}</TableCell>
-                      <TableCell className={`text-right tabular-nums ${h.sales >= h.target ? "text-green-600 dark:text-green-400 font-semibold" : ""}`}>
-                        {formatNumber(h.sales)}
-                      </TableCell>
+                      {SALES_CATEGORIES.map((c) => (
+                        <TableCell
+                          key={c}
+                          className={`text-right tabular-nums ${
+                            c === TARGET_CATEGORY && h.target > 0 && h[c] >= h.target
+                              ? "text-green-600 dark:text-green-400 font-semibold"
+                              : ""
+                          }`}
+                        >
+                          {formatNumber(h[c])}
+                        </TableCell>
+                      ))}
                       <TableCell className="text-right tabular-nums text-muted-foreground">{formatNumber(h.target)}</TableCell>
                     </TableRow>
                   ))}

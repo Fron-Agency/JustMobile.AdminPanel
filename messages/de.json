@@ -587,7 +587,7 @@
   },
   "AgentSales": {
     "title": "Sales",
-    "description": "Sales pro Agent für ein Ziel erfassen. Agenten ohne Sales starten bei 0.",
+    "description": "Zahlen pro Agent und Kategorie für ein Ziel erfassen. Alles startet bei 0.",
     "selectTarget": "Ziel auswählen",
     "period": "Zeitraum",
     "targetPerAgent": "Ziel pro Agent",
@@ -616,6 +616,14 @@
       "status": "Status"
     },
     "statusReached": "erreicht",
+    "categories": {
+      "sales": "Sales",
+      "mietkaution": "Mietkaution",
+      "termine": "Termine",
+      "yallo_lebara": "Yallo/Lebara",
+      "salt": "Salt",
+      "salt_ret": "Salt Ret."
+    },
     "statusRemaining": "noch {count}",
     "total": "Team total"
   },

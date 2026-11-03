@@ -587,7 +587,7 @@
   },
   "AgentSales": {
     "title": "Sales",
-    "description": "Enter each agent's sales for a target. Agents without sales start at 0.",
+    "description": "Enter each agent's numbers per category for a target. Everything starts at 0.",
     "selectTarget": "Select a target",
     "period": "Period",
     "targetPerAgent": "Target per agent",
@@ -616,6 +616,14 @@
       "status": "Status"
     },
     "statusReached": "Reached",
+    "categories": {
+      "sales": "Sales",
+      "mietkaution": "Mietkaution",
+      "termine": "Appointments",
+      "yallo_lebara": "Yallo/Lebara",
+      "salt": "Salt",
+      "salt_ret": "Salt Ret."
+    },
     "statusRemaining": "{count} to go",
     "total": "Team total"
   },

@@ -17,12 +17,18 @@ import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-
 import { createClient } from "@/utils/supabase/client"
 import { findActiveTarget, formatNumber, formatPeriod } from "@/lib/sales-format"
 import type { UserTarget } from "@/app/api/modules/user_targets/user_targets.types"
-import type { TargetBoard } from "@/app/api/modules/agent_sales/agent_sales.types"
+import {
+  SALES_CATEGORIES,
+  TARGET_CATEGORY,
+  type SalesCategory,
+  type TargetBoard,
+} from "@/app/api/modules/agent_sales/agent_sales.types"
 
-// Unsaved input per agent id, kept as the raw input string.
+// Unsaved input per cell, keyed "<agentId>:<category>", kept as the raw input string.
 type Drafts = Record<string, string>
+const cellKey = (agentId: string, category: SalesCategory) => `${agentId}:${category}`
 
-const parseSales = (raw: string): number | null => {
+const parseAmount = (raw: string): number | null => {
   if (raw.trim() === "") return null
   const n = Number(raw)
   return Number.isFinite(n) && n >= 0 ? n : null
@@ -114,16 +120,17 @@ export default function AgentSalesPage() {
     }
   }, [loadTargets, loadBoard])
 
-  const dirtyIds = useMemo(
-    () =>
-      Object.keys(drafts).filter((agentId) => {
-        const saved = board?.agents.find((a) => a.agent_id === agentId)?.sales
-        return parseSales(drafts[agentId]) !== saved
-      }),
-    [drafts, board]
-  )
-  const invalidIds = dirtyIds.filter((id) => parseSales(drafts[id]) === null)
-  const hasChanges = dirtyIds.length > 0
+  // Cells whose draft differs from the saved value.
+  const dirtyKeys = useMemo(() => {
+    const savedByAgent = new Map((board?.agents ?? []).map((a) => [a.agent_id, a]))
+    return Object.keys(drafts).filter((key) => {
+      const [agentId, category] = key.split(":") as [string, SalesCategory]
+      return parseAmount(drafts[key]) !== savedByAgent.get(agentId)?.[category]
+    })
+  }, [drafts, board])
+  const invalidKeys = new Set(dirtyKeys.filter((key) => parseAmount(drafts[key]) === null))
+  const dirtyKeySet = new Set(dirtyKeys)
+  const hasChanges = dirtyKeys.length > 0
 
   // Warn before leaving the page with unsaved changes.
   useEffect(() => {
@@ -139,21 +146,29 @@ export default function AgentSalesPage() {
   }
 
   const save = async () => {
-    if (!selectedTargetId || !hasChanges || invalidIds.length > 0) return
+    if (!selectedTargetId || !hasChanges || invalidKeys.size > 0) return
+
+    // One entry per agent, carrying only the categories that were edited.
+    const entriesByAgent = new Map<string, Record<string, string | number>>()
+    for (const key of dirtyKeys) {
+      const [agentId, category] = key.split(":")
+      const entry = entriesByAgent.get(agentId) ?? { agent_id: agentId }
+      entry[category] = parseAmount(drafts[key])!
+      entriesByAgent.set(agentId, entry)
+    }
+
     setIsSaving(true)
     try {
       const res = await fetch(`/api/user_targets/${selectedTargetId}/sales`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          entries: dirtyIds.map((agent_id) => ({ agent_id, sales: parseSales(drafts[agent_id]) })),
-        }),
+        body: JSON.stringify({ entries: [...entriesByAgent.values()] }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message ?? t("failedToSave"))
       setBoard(data)
       setDrafts({})
-      setFeedback({ tone: "success", title: t("saved"), description: t("savedCount", { count: dirtyIds.length }) })
+      setFeedback({ tone: "success", title: t("saved"), description: t("savedCount", { count: entriesByAgent.size }) })
     } catch (e) {
       setFeedback({ tone: "destructive", title: t("failedToSave"), description: e instanceof Error ? e.message : undefined })
     } finally {
@@ -161,13 +176,19 @@ export default function AgentSalesPage() {
     }
   }
 
+  // Current value of a cell: a valid draft, else the saved value.
+  const valueOf = (entry: TargetBoard["agents"][number], category: SalesCategory) => {
+    const draft = drafts[cellKey(entry.agent_id, category)]
+    return draft !== undefined ? parseAmount(draft) ?? entry[category] : entry[category]
+  }
+
   const target = board?.target
-  const rows = (board?.agents ?? []).map((entry) => {
-    const draft = drafts[entry.agent_id]
-    const value = draft !== undefined ? parseSales(draft) ?? entry.sales : entry.sales
-    return { ...entry, input: draft ?? String(entry.sales), value }
-  })
-  const total = rows.reduce((sum, r) => sum + r.value, 0)
+  const goal = target?.target ?? 0
+  const rows = board?.agents ?? []
+  const totals = Object.fromEntries(
+    SALES_CATEGORIES.map((c) => [c, rows.reduce((sum, r) => sum + valueOf(r, c), 0)])
+  ) as Record<SalesCategory, number>
+  const reachedCount = goal > 0 ? rows.filter((r) => valueOf(r, TARGET_CATEGORY) >= goal).length : 0
 
   return (
     <div className="flex flex-col gap-4">
@@ -201,7 +222,7 @@ export default function AgentSalesPage() {
           <Button variant="outline" onClick={() => setDrafts({})} disabled={!hasChanges || isSaving}>
             {t("discard")}
           </Button>
-          <Button onClick={save} disabled={!hasChanges || invalidIds.length > 0 || isSaving}>
+          <Button onClick={save} disabled={!hasChanges || invalidKeys.size > 0 || isSaving}>
             {isSaving ? t("saving") : t("save")}
           </Button>
         </div>
@@ -219,13 +240,13 @@ export default function AgentSalesPage() {
           </div>
           <div>
             <span className="text-muted-foreground">{t("targetPerAgent")}: </span>
-            <span className="font-medium tabular-nums">{formatNumber(target.target)}</span>
+            <span className="font-medium tabular-nums">
+              {formatNumber(target.target)} {t(`categories.${TARGET_CATEGORY}`)}
+            </span>
           </div>
           <div>
             <span className="text-muted-foreground">{t("reached")}: </span>
-            <span className="font-medium tabular-nums">
-              {rows.filter((r) => r.value >= target.target).length} / {rows.length}
-            </span>
+            <span className="font-medium tabular-nums">{reachedCount} / {rows.length}</span>
           </div>
         </div>
       )}
@@ -249,37 +270,47 @@ export default function AgentSalesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12">#</TableHead>
-                <TableHead>{t("columns.agent")}</TableHead>
+                <TableHead className="w-10">#</TableHead>
+                <TableHead className="min-w-40">{t("columns.agent")}</TableHead>
                 <TableHead>{t("columns.team")}</TableHead>
-                <TableHead className="w-36">{t("columns.sales")}</TableHead>
-                <TableHead className="min-w-40">{t("columns.progress")}</TableHead>
-                <TableHead className="text-right">{t("columns.status")}</TableHead>
+                {SALES_CATEGORIES.map((c) => (
+                  <TableHead key={c} className={`min-w-24 ${c === TARGET_CATEGORY ? "text-primary" : ""}`}>
+                    {t(`categories.${c}`)}
+                  </TableHead>
+                ))}
+                <TableHead className="min-w-36">{t("columns.progress")}</TableHead>
+                <TableHead className="text-right min-w-24">{t("columns.status")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row, index) => {
-                const goal = target?.target ?? 0
-                const reached = goal > 0 && row.value >= goal
-                const percent = goal > 0 ? Math.min(100, (row.value / goal) * 100) : 0
-                const isDirty = dirtyIds.includes(row.agent_id)
-                const isInvalid = invalidIds.includes(row.agent_id)
+                const progressValue = valueOf(row, TARGET_CATEGORY)
+                const reached = goal > 0 && progressValue >= goal
+                const percent = goal > 0 ? Math.min(100, (progressValue / goal) * 100) : 0
                 return (
                   <TableRow key={row.agent_id}>
                     <TableCell className="text-muted-foreground tabular-nums">{index + 1}</TableCell>
                     <TableCell className="font-medium">{row.first_name} {row.last_name}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{row.team ?? "—"}</TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        min={0}
-                        step="any"
-                        value={row.input}
-                        onChange={(e) => setDrafts((d) => ({ ...d, [row.agent_id]: e.target.value }))}
-                        className={`h-8 tabular-nums ${isInvalid ? "border-red-500" : isDirty ? "border-primary" : ""}`}
-                      />
-                    </TableCell>
+                    {SALES_CATEGORIES.map((c) => {
+                      const key = cellKey(row.agent_id, c)
+                      return (
+                        <TableCell key={c}>
+                          <Input
+                            type="number"
+                            inputMode="decimal"
+                            min={0}
+                            step="any"
+                            aria-label={`${row.first_name} ${row.last_name} – ${t(`categories.${c}`)}`}
+                            value={drafts[key] ?? String(row[c])}
+                            onChange={(e) => setDrafts((d) => ({ ...d, [key]: e.target.value }))}
+                            className={`h-8 w-20 tabular-nums ${
+                              invalidKeys.has(key) ? "border-red-500" : dirtyKeySet.has(key) ? "border-primary" : ""
+                            }`}
+                          />
+                        </TableCell>
+                      )
+                    })}
                     <TableCell>
                       <Progress
                         value={percent}
@@ -291,7 +322,7 @@ export default function AgentSalesPage() {
                         <span className="font-semibold text-green-600 dark:text-green-400">{t("statusReached")}</span>
                       ) : (
                         <span className="text-muted-foreground">
-                          {t("statusRemaining", { count: formatNumber(Math.max(0, goal - row.value)) })}
+                          {t("statusRemaining", { count: formatNumber(Math.max(0, goal - progressValue)) })}
                         </span>
                       )}
                     </TableCell>
@@ -304,7 +335,9 @@ export default function AgentSalesPage() {
                 <TableCell />
                 <TableCell className="font-semibold">{t("total")}</TableCell>
                 <TableCell />
-                <TableCell className="font-semibold tabular-nums">{formatNumber(total)}</TableCell>
+                {SALES_CATEGORIES.map((c) => (
+                  <TableCell key={c} className="font-semibold tabular-nums">{formatNumber(totals[c])}</TableCell>
+                ))}
                 <TableCell colSpan={2} />
               </TableRow>
             </TableFooter>
