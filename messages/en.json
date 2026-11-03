@@ -538,11 +538,14 @@
     "failedToDelete": "Failed to delete agent",
     "columns": {
       "name": "Name",
-      "createdAt": "Created"
+      "createdAt": "Created",
+      "team": "Team"
     },
     "form": {
       "firstName": "First name",
-      "lastName": "Last name"
+      "lastName": "Last name",
+      "team": "Team",
+      "teamPlaceholder": "e.g. A"
     },
     "table": {
       "title": "Agents",
@@ -576,6 +579,8 @@
       "failedToLoad": "Failed to load sales history",
       "target": "Target",
       "period": "Period",
+      "team": "Team",
+      "allTeams": "All teams",
       "sales": "Sales",
       "goal": "Goal"
     }
@@ -586,6 +591,8 @@
     "selectTarget": "Select a target",
     "period": "Period",
     "targetPerAgent": "Target per agent",
+    "team": "Team",
+    "allTeams": "All teams",
     "reached": "Target reached",
     "save": "Save",
     "saving": "Saving...",
@@ -599,9 +606,11 @@
     "noTargets": "No targets yet.",
     "createTarget": "Create a target",
     "noAgents": "No agents yet.",
+    "noAgentsInTeam": "No agents in team {team} yet.",
     "createAgent": "Add an agent",
     "columns": {
       "agent": "Agent",
+      "team": "Team",
       "sales": "Sales",
       "progress": "Progress",
       "status": "Status"
@@ -622,15 +631,20 @@
     "targetDeleted": "Target deleted",
     "failedToDelete": "Failed to delete target",
     "openEnded": "Open-ended",
+    "allTeams": "All teams",
     "columns": {
       "name": "Name",
       "target": "Target",
       "startDate": "Start date",
-      "endDate": "End date"
+      "endDate": "End date",
+      "team": "Team"
     },
     "form": {
       "name": "Name",
       "namePlaceholder": "e.g. November 2026",
+      "team": "Team",
+      "teamPlaceholder": "e.g. A",
+      "teamHint": "Leave empty to apply this target to all agents.",
       "target": "Target",
       "startDate": "Start date",
       "endDate": "End date (optional)",

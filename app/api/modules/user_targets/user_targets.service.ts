@@ -1,10 +1,14 @@
 import { UserTargetsRepository } from "./user_targets.repository"
 import { isValidDateRange, type CreateUserTargetInput, type UpdateUserTargetInput } from "./user_targets.validation"
 import type { UserTarget } from "./user_targets.types"
+import { targetAppliesToAgent } from "@/lib/sales-format"
 
 export const UserTargetsService = {
-  async getAll(asService = false): Promise<UserTarget[]> {
-    return UserTargetsRepository.findAll(asService)
+  // team: only targets that apply to that team, i.e. the team's own targets
+  // plus targets without a team (those apply to everyone).
+  async getAll(asService = false, team?: string): Promise<UserTarget[]> {
+    const targets = await UserTargetsRepository.findAll(asService)
+    return team ? targets.filter((t) => targetAppliesToAgent(t.team, team)) : targets
   },
 
   async getById(id: string, asService = false): Promise<UserTarget> {

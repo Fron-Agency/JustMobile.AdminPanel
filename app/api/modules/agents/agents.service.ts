@@ -1,10 +1,13 @@
 import { AgentsRepository } from "./agents.repository"
 import type { CreateAgentInput, UpdateAgentInput } from "./agents.validation"
 import type { Agent } from "./agents.types"
+import { sameTeam } from "@/lib/sales-format"
 
 export const AgentsService = {
-  async getAll(asService = false): Promise<Agent[]> {
-    return AgentsRepository.findAll(asService)
+  // team: only agents of that team (case-insensitive).
+  async getAll(asService = false, team?: string): Promise<Agent[]> {
+    const agents = await AgentsRepository.findAll(asService)
+    return team ? agents.filter((a) => sameTeam(a.team, team)) : agents
   },
 
   async getById(id: string, asService = false): Promise<Agent> {

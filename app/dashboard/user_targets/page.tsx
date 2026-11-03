@@ -20,9 +20,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { createClient } from "@/utils/supabase/client"
 import type { UserTarget } from "@/app/api/modules/user_targets/user_targets.types"
+import type { Agent } from "@/app/api/modules/agents/agents.types"
+import { distinctTeams } from "@/lib/sales-format"
 import { CalendarIcon, X } from "lucide-react"
 
-const emptyForm = { target_name: "", target: "", start_date: "", end_date: "" }
+const emptyForm = { target_name: "", team: "", target: "", start_date: "", end_date: "" }
 type FormState = typeof emptyForm
 
 const byStartDateDesc = (a: UserTarget, b: UserTarget) => b.start_date.localeCompare(a.start_date)
@@ -116,9 +118,16 @@ export default function UserTargetsPage() {
   const [formData, setFormData] = useState<FormState>(emptyForm)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [targetToDelete, setTargetToDelete] = useState<UserTarget | null>(null)
+  // Agents are loaded only to suggest their team names in the team field.
+  const [agents, setAgents] = useState<Agent[]>([])
 
   useEffect(() => {
     const supabase = createClient()
+
+    fetch("/api/agents")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setAgents)
+      .catch(() => {})
 
     fetch("/api/user_targets")
       .then(async (r) => {
@@ -161,6 +170,7 @@ export default function UserTargetsPage() {
 
   const payload = () => ({
     target_name: formData.target_name.trim() || null,
+    team: formData.team.trim() || null,
     target: Number(formData.target),
     start_date: formData.start_date,
     end_date: formData.end_date || null,
@@ -196,6 +206,7 @@ export default function UserTargetsPage() {
   const handleEdit = (target: UserTarget) => {
     setFormData({
       target_name: target.target_name ?? "",
+      team: target.team ?? "",
       target: String(target.target),
       start_date: target.start_date,
       end_date: target.end_date ?? "",
@@ -255,6 +266,16 @@ export default function UserTargetsPage() {
         v ? <span className="font-medium text-foreground">{v}</span> : <span className="text-muted-foreground text-sm">—</span>,
     },
     {
+      key: "team",
+      label: t("columns.team"),
+      render: (v: string | null) =>
+        v ? (
+          <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-foreground">{v}</span>
+        ) : (
+          <span className="text-muted-foreground text-sm">{t("allTeams")}</span>
+        ),
+    },
+    {
       key: "target",
       label: t("columns.target"),
       render: (v: number) => <span className="tabular-nums">{Number(v).toLocaleString("de-CH")}</span>,
@@ -281,6 +302,19 @@ export default function UserTargetsPage() {
           value={formData.target_name}
           onChange={(e) => setFormData({ ...formData, target_name: e.target.value })}
         />
+      </div>
+      <div className="flex flex-col gap-1">
+        <Label>{t("form.team")}</Label>
+        <Input
+          list="target-team-options"
+          placeholder={t("form.teamPlaceholder")}
+          value={formData.team}
+          onChange={(e) => setFormData({ ...formData, team: e.target.value })}
+        />
+        <datalist id="target-team-options">
+          {distinctTeams(targets, agents).map((team) => <option key={team} value={team} />)}
+        </datalist>
+        <p className="text-xs text-muted-foreground">{t("form.teamHint")}</p>
       </div>
       <div className="flex flex-col gap-1">
         <Label>{t("form.target")}</Label>
@@ -339,7 +373,7 @@ export default function UserTargetsPage() {
         columns={columns}
         title={t("table.title")}
         searchPlaceholder={t("table.searchPlaceholder")}
-        searchFields={["target_name"]}
+        searchFields={["target_name", "team"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}

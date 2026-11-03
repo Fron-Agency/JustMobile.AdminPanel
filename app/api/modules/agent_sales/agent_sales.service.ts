@@ -8,10 +8,20 @@ import type {
   UpsertAgentSaleInput,
 } from "./agent_sales.validation"
 import type { AgentHistoryEntry, AgentSale, TargetBoard, TargetBoardEntry } from "./agent_sales.types"
+import type { Agent } from "../agents/agents.types"
+import type { UserTarget } from "../user_targets/user_targets.types"
+import { targetAppliesToAgent } from "@/lib/sales-format"
 
 // Calendar date (YYYY-MM-DD) of a timestamp in Europe/Zurich.
 function zurichDate(timestamp: string): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Zurich" }).format(new Date(timestamp))
+}
+
+// An agent belongs on a target's board if the target applies to their team,
+// or if they already have sales recorded for it (e.g. they changed team later),
+// so history is never hidden.
+function belongsToTarget(target: UserTarget, agent: Agent, hasSalesRow: boolean): boolean {
+  return hasSalesRow || targetAppliesToAgent(target.team, agent.team)
 }
 
 export const AgentSalesService = {
@@ -27,12 +37,16 @@ export const AgentSalesService = {
 
   // One row per (target, agent): update it if present, otherwise create it.
   async upsert(input: UpsertAgentSaleInput): Promise<AgentSale> {
-    await Promise.all([
+    const [target, agent, existing] = await Promise.all([
       UserTargetsService.getById(input.user_target_id),
       AgentsService.getById(input.agent_id),
+      AgentSalesRepository.findByTargetAndAgent(input.user_target_id, input.agent_id),
     ])
 
-    const existing = await AgentSalesRepository.findByTargetAndAgent(input.user_target_id, input.agent_id)
+    if (!belongsToTarget(target, agent, !!existing)) {
+      throw new Error(`${agent.first_name} ${agent.last_name} is not in team ${target.team} of this target`)
+    }
+
     return existing
       ? AgentSalesRepository.update(existing.id, { sales: input.sales })
       : AgentSalesRepository.create(input)
@@ -48,8 +62,8 @@ export const AgentSalesService = {
     return AgentSalesRepository.delete(id)
   },
 
-  // Every agent for one target, sorted by sales. Agents without a row are at 0,
-  // so new agents and new targets start from 0 without seeding rows.
+  // The target's agents (its team, or everyone if it has no team), sorted by
+  // sales. Agents without a row are at 0, so new agents and targets start from 0.
   async getTargetBoard(userTargetId: string, asService = false): Promise<TargetBoard> {
     const [target, agents, sales] = await Promise.all([
       UserTargetsService.getById(userTargetId, asService),
@@ -60,12 +74,14 @@ export const AgentSalesService = {
     const saleByAgent = new Map(sales.map((s) => [s.agent_id, s]))
 
     const entries: TargetBoardEntry[] = agents
+      .filter((agent) => belongsToTarget(target, agent, saleByAgent.has(agent.id)))
       .map((agent) => {
         const sale = saleByAgent.get(agent.id)
         return {
           agent_id: agent.id,
           first_name: agent.first_name,
           last_name: agent.last_name,
+          team: agent.team,
           sales: sale?.sales ?? 0,
           agent_sale_id: sale?.id ?? null,
         }
@@ -86,17 +102,22 @@ export const AgentSalesService = {
 
   // Saves several agents of one target in one request (the admin "Sales" grid).
   async saveTargetSales(userTargetId: string, input: SaveTargetSalesInput): Promise<TargetBoard> {
-    const [, agents, existing] = await Promise.all([
+    const [target, agents, existing] = await Promise.all([
       UserTargetsService.getById(userTargetId),
       AgentsService.getAll(),
       AgentSalesRepository.findAll({ user_target_id: userTargetId }),
     ])
 
-    const agentIds = new Set(agents.map((a) => a.id))
-    const unknown = input.entries.find((e) => !agentIds.has(e.agent_id))
-    if (unknown) throw new Error(`Agent not found: ${unknown.agent_id}`)
-
+    const agentById = new Map(agents.map((a) => [a.id, a]))
     const existingByAgent = new Map(existing.map((s) => [s.agent_id, s]))
+
+    for (const entry of input.entries) {
+      const agent = agentById.get(entry.agent_id)
+      if (!agent) throw new Error(`Agent not found: ${entry.agent_id}`)
+      if (!belongsToTarget(target, agent, existingByAgent.has(agent.id))) {
+        throw new Error(`${agent.first_name} ${agent.last_name} is not in team ${target.team} of this target`)
+      }
+    }
 
     await Promise.all(
       input.entries.map((entry) => {
@@ -111,8 +132,9 @@ export const AgentSalesService = {
     return AgentSalesService.getTargetBoard(userTargetId)
   },
 
-  // An agent's sales across targets, newest target first. Targets that ended
-  // before the agent was created are left out instead of showing a misleading 0.
+  // An agent's sales across the targets of their team (and team-less targets),
+  // newest first. Targets that ended before the agent was created are left out
+  // instead of showing a misleading 0; targets with recorded sales always stay.
   async getAgentHistory(agentId: string, asService = false): Promise<AgentHistoryEntry[]> {
     const [agent, targets, sales] = await Promise.all([
       AgentsService.getById(agentId, asService),
@@ -124,13 +146,18 @@ export const AgentSalesService = {
     const createdOn = zurichDate(agent.created_at)
 
     return targets
-      .filter((t) => saleByTarget.has(t.id) || !t.end_date || t.end_date >= createdOn)
+      .filter(
+        (t) =>
+          saleByTarget.has(t.id) ||
+          (targetAppliesToAgent(t.team, agent.team) && (!t.end_date || t.end_date >= createdOn))
+      )
       .map((t) => ({
         user_target_id: t.id,
         target_name: t.target_name,
         target: t.target,
         start_date: t.start_date,
         end_date: t.end_date,
+        team: t.team,
         sales: saleByTarget.get(t.id)?.sales ?? 0,
       }))
   },

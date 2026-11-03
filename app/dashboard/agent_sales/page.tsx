@@ -28,8 +28,11 @@ const parseSales = (raw: string): number | null => {
   return Number.isFinite(n) && n >= 0 ? n : null
 }
 
-const targetLabel = (target: UserTarget) =>
-  `${target.target_name ?? formatPeriod(target.start_date, target.end_date)}`
+// e.g. "November 2026 · Team A"; targets without a team show just the name.
+const targetLabel = (target: UserTarget) => {
+  const name = target.target_name ?? formatPeriod(target.start_date, target.end_date)
+  return target.team ? `${name} · ${target.team}` : name
+}
 
 export default function AgentSalesPage() {
   const t = useTranslations("AgentSales")
@@ -207,6 +210,10 @@ export default function AgentSalesPage() {
       {target && (
         <div className="rounded-lg border bg-card p-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
           <div>
+            <span className="text-muted-foreground">{t("team")}: </span>
+            <span className="font-medium">{target.team ?? t("allTeams")}</span>
+          </div>
+          <div>
             <span className="text-muted-foreground">{t("period")}: </span>
             <span className="font-medium">{formatPeriod(target.start_date, target.end_date)}</span>
           </div>
@@ -234,7 +241,7 @@ export default function AgentSalesPage() {
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
-          {t("noAgents")}{" "}
+          {target?.team ? t("noAgentsInTeam", { team: target.team }) : t("noAgents")}{" "}
           <Link href="/dashboard/agents" className="text-primary underline">{t("createAgent")}</Link>
         </div>
       ) : (
@@ -244,6 +251,7 @@ export default function AgentSalesPage() {
               <TableRow>
                 <TableHead className="w-12">#</TableHead>
                 <TableHead>{t("columns.agent")}</TableHead>
+                <TableHead>{t("columns.team")}</TableHead>
                 <TableHead className="w-36">{t("columns.sales")}</TableHead>
                 <TableHead className="min-w-40">{t("columns.progress")}</TableHead>
                 <TableHead className="text-right">{t("columns.status")}</TableHead>
@@ -260,6 +268,7 @@ export default function AgentSalesPage() {
                   <TableRow key={row.agent_id}>
                     <TableCell className="text-muted-foreground tabular-nums">{index + 1}</TableCell>
                     <TableCell className="font-medium">{row.first_name} {row.last_name}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{row.team ?? "—"}</TableCell>
                     <TableCell>
                       <Input
                         type="number"
@@ -294,6 +303,7 @@ export default function AgentSalesPage() {
               <TableRow>
                 <TableCell />
                 <TableCell className="font-semibold">{t("total")}</TableCell>
+                <TableCell />
                 <TableCell className="font-semibold tabular-nums">{formatNumber(total)}</TableCell>
                 <TableCell colSpan={2} />
               </TableRow>

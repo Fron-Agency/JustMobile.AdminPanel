@@ -1,4 +1,29 @@
-// Shared formatting for the OptimusMarketing sales pages (agents, targets, sales).
+// Shared helpers for the OptimusMarketing sales feature (agents, targets, sales).
+// Used by both the API modules and the dashboard pages.
+
+/** Team names are free text: compare trimmed and case-insensitively ("Team A" = "team a "). */
+export function teamKey(team: string | null | undefined): string {
+  return (team ?? "").trim().toLowerCase()
+}
+
+export function sameTeam(a: string | null | undefined, b: string | null | undefined): boolean {
+  return teamKey(a) === teamKey(b)
+}
+
+/** A target with a team counts only that team's agents; a target without a team counts everyone. */
+export function targetAppliesToAgent(targetTeam: string | null | undefined, agentTeam: string | null | undefined): boolean {
+  return teamKey(targetTeam) === "" || sameTeam(targetTeam, agentTeam)
+}
+
+/** Distinct team names (first spelling wins), sorted, for input suggestions. */
+export function distinctTeams(...lists: Array<Array<{ team: string | null }>>): string[] {
+  const byKey = new Map<string, string>()
+  for (const item of lists.flat()) {
+    const key = teamKey(item.team)
+    if (key && !byKey.has(key)) byKey.set(key, item.team!.trim())
+  }
+  return [...byKey.values()].sort((a, b) => a.localeCompare(b))
+}
 
 const pad2 = (n: number) => String(n).padStart(2, "0")
 

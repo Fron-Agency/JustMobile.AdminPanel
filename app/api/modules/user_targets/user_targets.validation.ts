@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { team } from "../agents/agents.validation"
 
 const isoDate = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
 
@@ -16,7 +17,7 @@ export function isValidDateRange(start: string, end: string | null | undefined):
 }
 
 export const createUserTargetSchema = z
-  .object({ target, start_date: isoDate, end_date: endDate, target_name: targetName })
+  .object({ target, start_date: isoDate, end_date: endDate, target_name: targetName, team })
   .refine((data) => isValidDateRange(data.start_date, data.end_date), {
     message: "End date must be on or after start date",
     path: ["end_date"],
@@ -32,9 +33,10 @@ export const updateUserTargetSchema = z
     start_date: isoDate.optional(),
     end_date: endDate,
     target_name: targetName,
+    team,
   })
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
-    message: "Provide at least one of target, start_date, end_date, or target_name.",
+    message: "Provide at least one of target, start_date, end_date, target_name, or team.",
   })
 
 export type UpdateUserTargetInput = z.infer<typeof updateUserTargetSchema>

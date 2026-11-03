@@ -4,13 +4,15 @@ import { createAgentSchema } from "@/app/api/modules/agents/agents.validation"
 import { requireAuth } from "@/utils/supabase/require-auth"
 import { requireAuthOrApiKey } from "@/utils/supabase/require-auth-or-api-key"
 
+// Optional ?team=A returns only that team's agents.
 // Admin session, or OptimusMarketing website via x-api-key (CAREERS_FORM_API_KEY).
 export async function GET(request: Request) {
   const auth = await requireAuthOrApiKey(request, process.env.CAREERS_FORM_API_KEY)
   if (auth instanceof NextResponse) return auth
 
   try {
-    const agents = await AgentsService.getAll(auth.via === "apiKey")
+    const team = new URL(request.url).searchParams.get("team")?.trim() || undefined
+    const agents = await AgentsService.getAll(auth.via === "apiKey", team)
     return NextResponse.json(agents)
   } catch (error) {
     return NextResponse.json(

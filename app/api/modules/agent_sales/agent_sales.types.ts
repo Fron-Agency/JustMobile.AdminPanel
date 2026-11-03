@@ -28,6 +28,7 @@ export interface TargetBoardEntry {
   agent_id: string
   first_name: string
   last_name: string
+  team: string | null
   sales: number
   /** agent_sales row id, or null while the agent is still at 0 with no row. */
   agent_sale_id: string | null
@@ -46,5 +47,6 @@ export interface AgentHistoryEntry {
   target: number
   start_date: string
   end_date: string | null
+  team: string | null
   sales: number
 }

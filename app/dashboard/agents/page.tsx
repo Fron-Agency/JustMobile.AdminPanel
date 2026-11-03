@@ -18,11 +18,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { FeedbackAlert, type FeedbackAlertTone } from "@/components/ui/feedback-alert"
 import { createClient } from "@/utils/supabase/client"
-import { formatNumber, formatPeriod, formatTimestampDate } from "@/lib/sales-format"
+import { distinctTeams, formatNumber, formatPeriod, formatTimestampDate } from "@/lib/sales-format"
 import type { Agent } from "@/app/api/modules/agents/agents.types"
 import type { AgentHistoryEntry } from "@/app/api/modules/agent_sales/agent_sales.types"
 
-const emptyForm = { first_name: "", last_name: "" }
+const emptyForm = { first_name: "", last_name: "", team: "" }
 type FormState = typeof emptyForm
 
 const byName = (a: Agent, b: Agent) =>
@@ -119,7 +119,7 @@ export default function AgentsPage() {
   }
 
   const handleEdit = (agent: Agent) => {
-    setFormData({ first_name: agent.first_name, last_name: agent.last_name })
+    setFormData({ first_name: agent.first_name, last_name: agent.last_name, team: agent.team ?? "" })
     setEditingId(agent.id)
     setErrors({})
     setIsEditDialogOpen(true)
@@ -190,11 +190,24 @@ export default function AgentsPage() {
       render: (_, item) => <span className="font-medium text-foreground">{fullName(item)}</span>,
     },
     {
+      key: "team",
+      label: t("columns.team"),
+      render: (v: string | null) =>
+        v ? (
+          <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-foreground">{v}</span>
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        ),
+    },
+    {
       key: "created_at",
       label: t("columns.createdAt"),
       render: (v: string) => <span className="text-muted-foreground text-sm">{formatTimestampDate(v)}</span>,
     },
   ]
+
+  // Suggest existing team names so "A" isn't typed once as "A" and once as "Team A".
+  const teamOptions = distinctTeams(agents)
 
   const formFields = (
     <div className="flex flex-col gap-4 py-2">
@@ -215,6 +228,18 @@ export default function AgentsPage() {
           className={errors.last_name ? "border-red-500" : ""}
         />
         {errors.last_name && <p className="text-red-500 text-xs">{errors.last_name}</p>}
+      </div>
+      <div className="flex flex-col gap-1">
+        <Label>{t("form.team")}</Label>
+        <Input
+          list="agent-team-options"
+          placeholder={t("form.teamPlaceholder")}
+          value={formData.team}
+          onChange={(e) => setFormData({ ...formData, team: e.target.value })}
+        />
+        <datalist id="agent-team-options">
+          {teamOptions.map((team) => <option key={team} value={team} />)}
+        </datalist>
       </div>
     </div>
   )
@@ -237,7 +262,7 @@ export default function AgentsPage() {
         columns={columns}
         title={t("table.title")}
         searchPlaceholder={t("table.searchPlaceholder")}
-        searchFields={["first_name", "last_name"]}
+        searchFields={["first_name", "last_name", "team"]}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
@@ -292,6 +317,7 @@ export default function AgentsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("history.target")}</TableHead>
+                    <TableHead>{t("history.team")}</TableHead>
                     <TableHead>{t("history.period")}</TableHead>
                     <TableHead className="text-right">{t("history.sales")}</TableHead>
                     <TableHead className="text-right">{t("history.goal")}</TableHead>
@@ -301,6 +327,7 @@ export default function AgentsPage() {
                   {history.map((h) => (
                     <TableRow key={h.user_target_id}>
                       <TableCell className="font-medium">{h.target_name ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{h.team ?? t("history.allTeams")}</TableCell>
                       <TableCell className="text-muted-foreground">{formatPeriod(h.start_date, h.end_date)}</TableCell>
                       <TableCell className={`text-right tabular-nums ${h.sales >= h.target ? "text-green-600 dark:text-green-400 font-semibold" : ""}`}>
                         {formatNumber(h.sales)}
